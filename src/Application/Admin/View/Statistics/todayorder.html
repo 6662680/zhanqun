@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>user</title>
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/default/easyui.css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/icon.css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/css/user.css">
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/locale/easyui-lang-zh_CN.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/js/user.js"></script>
+</head>
+<body class="easyui-layout">
+        <table id="dg" title="今日订单状态" class="easyui-datagrid" style="width:100%;" rownumbers="true" fitColumns="true" singleSelect="true">
+        <thead>
+            <tr>
+                <th field="name" width="20">地区</th>
+                <th field="order" width="20">下单总数量 </th>
+                <th field="unmanage" width="20">未处理数量 </th>
+                <th field="unfinished" width="20">未完成数量 </th>
+                <th field="finished" width="20">已完成数量 </th>
+                <th field="cancel" width="20">取消数量 </th>
+            </tr>
+        </thead>
+        <?php foreach($address as $k => $v) {?>
+        <tr>
+        <td><?php echo $v?></td>
+        <td><?php echo isset($data[$k]['order']) ? $data[$k]['order'] : 0;?></td>
+        <td><?php echo isset($data[$k]['unmanage']) ? $data[$k]['unmanage'] : 0;?></td>
+        <td><?php echo isset($data[$k]['unfinished']) ? $data[$k]['unfinished'] : 0;?></td>
+        <td><?php echo isset($data[$k]['finished']) ? $data[$k]['finished'] : 0;?></td>
+        <td><?php echo isset($data[$k]['cancel']) ? $data[$k]['cancel'] : 0;?></td>
+        </tr>
+        <?php }?>
+    </table>
+</body>
+</html>

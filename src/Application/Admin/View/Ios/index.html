@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/default/easyui.css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/icon.css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/css/user.css">
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/datagrid-cellediting.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/js/user.js"></script>
+    <script>
+        function actionMenu() {
+            var html = $('#id-menu-table-list').html()
+            return html;
+        }
+
+        function add() {
+            $('#id-window-edit').window('open');
+        }
+
+        function save() {
+
+            var idvalue = parseInt($('#id-form-name').val());
+            var version = $('#id-form-version').val();
+            var update = $("input[name='update']:checked").val();
+            var url = idvalue > 0 ? '/admin/ios/edit' : '/admin/ios/add';
+            var params = idvalue > 0 ? {id: idvalue, version: version, update: update} : {version: version, update: update};
+
+            $('#id-form-edit').form('submit', {
+                url: url,
+                queryParams: params,
+                onSubmit: function() {
+                    return $(this).form('enableValidation').form('validate');
+                },
+                success: function(data) {
+                    data = JSON.parse(data);
+                    if (data.code == 0) {
+                        $('#dg').datagrid('reload');
+                        $('#id-window-edit').window('close');
+                        $('#id-form-edit').form('reset');
+                    } else {
+                        $.messager.alert('出错了', data.msg);
+                    }
+                }
+            });
+        }
+
+        function cancel() {
+            $('#id-window-edit').window('close');
+            $('#id-form-edit').form('reset');
+        }
+
+        function edit() {
+            var row = $('#dg').datagrid('getSelected');
+            if (row) {
+                $('#id-window-edit').window('open');
+                $('#id-form-edit').form('load', row);
+            }
+        }
+
+        function publish() {
+            var row = $('#dg').datagrid('getSelected');
+            if (row) {
+                $.ajax({
+                    url: '/admin/ios/publish',
+                    data: {id: row.id},
+                    success: function(data) {
+                        if (data.code == 0) {
+                            $('#dg').datagrid('reload');
+                        } else {
+                            $.messager.alert('出错了', data.msg);
+                        }
+                    }
+                });
+            }
+        }
+
+    </script>
+</head>
+<body class="easyui-layout">
+
+    <div id="id-table-list-toolbar">
+        &nbsp;&nbsp;
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-add" plain="true" onclick="add();">添加</a>
+    </div>
+
+    <!-- 列表开始-->
+    <table id="dg" class="easyui-datagrid" url="/admin/ios/rows" toolbar="#id-table-list-toolbar" pagination="true" pageSize="30" pagePosition="top" rownumbers="true" fitColumns="true" singleSelect="true">
+        <thead>
+            <tr>
+                <th field="id">ID</th>
+                <th field="version" align="center">版本号</th>
+                <th field="update" align="center">是否已发布</th>
+                <th field="action" align="center" formatter="actionMenu">操作</th>
+            </tr>
+        </thead>
+    </table>
+    <!-- 列表结束-->
+
+    <!-- 操作开始-->
+    <div id="id-menu-table-list" class="hide">
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-edit" plain="true" onclick="selectedRow($(this));edit();">编辑</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" plain="true" onclick="selectedRow($(this));publish();">发布</a>
+    </div>
+    <!-- 操作结束-->
+
+    <div id="id-window-edit" class="easyui-window" title="编辑版本" closed="true" maximizable="false" minimizable="false" closable="false" collapsible="false">
+        <div class="easyui-layout" style="width:300px; height:150px;">
+            <form action="" id="id-form-edit" style="padding:10px 10px 10px 20px">
+                <div class="fitem">
+                    <input name="id" id="id-form-name" hidden="true" />
+                </div>
+
+                <div class="fitem">
+                    <label for="version">版本号：</label>
+                    <input name="version" id="id-form-version" class="easyui-textbox" required="true" />
+                </div>
+
+                <div class="fitem">
+                <label for="update">发布：</label>
+                    <input name="update" type="radio" value="0" checked="checked"/>不发布
+                    <input name="update" type="radio" value="1"/>发布
+                </div>
+
+            </form>
+
+            <div id="id-form-tool" style="text-align:center;padding:5px">
+                <a href="javascript:void(0)" class="easyui-linkbutton c6" iconCls="icon-ok" onclick="save()" style="width:90px">保存</a>
+                <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel" onclick="cancel()" style="width:90px">取消</a>
+            </div>
+
+        </div>
+    </div>
+
+</body>
+</html>

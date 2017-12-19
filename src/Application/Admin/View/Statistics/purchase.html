@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>user</title>
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/default/easyui.css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/icon.css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/css/user.css">
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/locale/easyui-lang-zh_CN.js"></script>
+    <script type="text/javascript">
+        function exportItem() {
+        	$('#org').val($('#search-org').combobox('getValues').join(','));
+        	$('#inout').val($('#search-inout').combobox('getValues').join(','));
+        	$('#type').val($('#search-type').combobox('getValues').join(','));
+        	$('#user_id').val($('#search-user').combobox('getValues').join(','));
+        	$('#search').submit();
+        }
+    </script>
+</head>
+<body>
+<body class="easyui-layout">
+    <table id="dg" title="采购入库" class="easyui-datagrid" style="width:100%;" toolbar="#toolbar" rownumbers="true" fitColumns="true" singleSelect="true">
+        <thead>
+            <tr>
+                <th field="order" width="5">城市</th>
+                <th field="order1" width="5">批次</th>
+                <th field="order2" width="5">手机型号</th>
+                <th field="order3" width="5">物料编码</th>
+                <th field="order4" width="5">物料名称</th>
+                <th field="order5" width="5">交易数量</th>
+                <th field="order6" width="5">供应商</th>
+                <th field="order7" width="5">总金额</th>
+            </tr>
+        </thead>
+    </table>
+    <div id="toolbar">
+        <form id="search" method="post" action="<?php echo U('admin/statistics/purchase');?>">
+        <p>
+            <span>日期:</span>
+            <input type="text" class="easyui-datebox" id='search-start-time' name="start_time" panelHeight="auto"> 至  <input type="text" class="easyui-datebox" id='search-end-time' name="end_time" panelHeight="auto">
+            <span>城市:</span>
+            <select class="easyui-combobox" id='search-org'>
+                <option value=''>全部</option>
+	            <?php foreach(session('organizations') as $v) { ?>
+	            <option value="<?php echo $v['id'];?>"><?php echo $v['alias'];?></option>
+	            <?php }?>
+        	</select>
+        	<input name="org" id="org" type="hidden" value="">
+        	&nbsp;
+	        <span>出入库:</span>
+	        <select class="easyui-combobox" id="search-inout" style="width: 150px;">
+	        	<option value="all">全部</option>
+	            <option value="1">入库</option>
+	            <option value="2">出库</option>
+	        </select>
+	        <input name="inout" id="inout" type="hidden" value="">
+	        &nbsp;
+	        <span>类型:</span>
+			<select class="easyui-combobox" limitToList="true" id='search-type' style="width:150px;">
+				<option value="all">全部</option>
+	            <option value="1">出入库</option>
+	            <option value="2">调拨</option>
+			</select>
+			<input name="type" id="type" type="hidden" value="">
+	        &nbsp;
+	        <span>操作人:</span>
+	        <select class="easyui-combobox" limitToList="true" id='search-user' url="/admin/statistics/user" valueField="id" textField="username" style="width:150px;">
+	        </select>
+	        <input name="user_id" id="user_id" type="hidden" value="">
+	        &nbsp;
+        	<span>批次:</span>
+            <input type="text" class="easyui-textbox" name="batch" style="width:200px;">
+            <a href="javascript:void(0)" class="easyui-linkbutton" plain="true" iconCls="icon-search" onclick="exportItem();">导出</a>
+        </p>
+        </form>
+    </div>
+</body>
+</html>

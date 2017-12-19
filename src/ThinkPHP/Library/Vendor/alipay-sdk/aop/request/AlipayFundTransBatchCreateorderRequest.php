@@ -1,0 +1,94 @@
+<?php
+/**
+ * ALIPAY API: alipay.fund.trans.batch.createorder request
+ *
+ * @author auto create
+ * @since 1.0, 2015-10-19 10:06:21
+ */
+class AlipayFundTransBatchCreateorderRequest
+{
+	/** 
+	 * 如果有创建AA收款，江湖救急等业务场景的话，创建批次后，可以调用此接口创建付款单
+	 **/
+	private $bizContent;
+
+	private $apiParas = array();
+	private $terminalType;
+	private $terminalInfo;
+	private $prodCode;
+	private $apiVersion="1.0";
+	private $notifyUrl;
+
+	
+	public function setBizContent($bizContent)
+	{
+		$this->bizContent = $bizContent;
+		$this->apiParas["biz_content"] = json_encode($bizContent);
+	}
+
+	public function getBizContent()
+	{
+		return $this->bizContent;
+	}
+
+	public function getApiMethodName()
+	{
+		return "alipay.fund.trans.batch.createorder";
+	}
+
+	public function setNotifyUrl($notifyUrl)
+	{
+		$this->notifyUrl=$notifyUrl;
+	}
+
+	public function getNotifyUrl()
+	{
+		return $this->notifyUrl;
+	}
+
+	public function getApiParas()
+	{
+		return $this->apiParas;
+	}
+
+	public function getTerminalType()
+	{
+		return $this->terminalType;
+	}
+
+	public function setTerminalType($terminalType)
+	{
+		$this->terminalType = $terminalType;
+	}
+
+	public function getTerminalInfo()
+	{
+		return $this->terminalInfo;
+	}
+
+	public function setTerminalInfo($terminalInfo)
+	{
+		$this->terminalInfo = $terminalInfo;
+	}
+
+	public function getProdCode()
+	{
+		return $this->prodCode;
+	}
+
+	public function setProdCode($prodCode)
+	{
+		$this->prodCode = $prodCode;
+	}
+
+	public function setApiVersion($apiVersion)
+	{
+		$this->apiVersion=$apiVersion;
+	}
+
+	public function getApiVersion()
+	{
+		return $this->apiVersion;
+	}
+
+}

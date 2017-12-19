@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>user</title>
+	<link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/default/easyui.css">
+	<link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/icon.css">
+	<link rel="stylesheet" type="text/css" href="__PUBLIC__/css/user.css">
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/js/user.js"></script>
+    <script type="text/javascript">
+    	var url;
+    
+	    function inoutWarehouseItem() {
+	        url = '/admin/warehouse/inoutWarehouse';
+	        $('#dlg-inout-warehouse').dialog('open').dialog('center').dialog('setTitle', '出库');
+	        $('#fm').form('clear');
+	    }
+	    
+	    function saveInoutWarehouseItem()
+	    {
+	    	$('#fm').form('submit',{
+                url: url,
+                onSubmit: function(){
+
+                    if ($(this).form('validate')) {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                },
+                success: function(result){
+                    var result = eval('('+result+')');
+
+                    if (result.success){
+                        $('#dlg-inout-warehouse').dialog('close');
+                        $('#dg').datagrid('reload');
+                    } else {
+                        $.messager.show({
+                            title: '错误',
+                            msg: result.errorMsg,
+                            showType:'fade',
+                            style:{
+                                right:'',
+                                bottom:''
+                            }
+                        });
+                    }
+                }
+            });
+	    }
+    
+        function searchItem() {
+            $('#dg').datagrid({
+                queryParams: {
+                    phone_id: $('#search-phone').combobox('getValue'),
+                    organization_id: $('#search-org').combobox('getValue'),
+                    fitting_id: $('#search-fitting-id').combobox('getValue'),
+                    category_id: $('#search-category-id').combobox('getValue'),
+                    keyword: $('#search-keyword').val(),
+                }
+            });
+        }
+
+        function detailItem() {
+            var row = $('#dg').datagrid('getSelected');
+
+            if (row) {
+                $('#dg-detail').datagrid({
+                    queryParams: {
+                        fitting_id: row.fitting_id,
+                        organization_id: row.organization_id,
+                    }
+                });
+
+                $('#dlg-detail').dialog('open').dialog('center').dialog('setTitle', '详情');
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+        function inoutItem() {
+            var row = $('#dg').datagrid('getSelected');
+
+            if (row) {
+                $('#dg-inout').datagrid({
+                    queryParams: {
+                        fitting_id: row.fitting_id,
+                        organization_id: row.organization_id,
+                    }
+                });
+
+                $('#dlg-inout').dialog('open').dialog('center').dialog('setTitle', '详情');
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+        function engineerItem() {
+            var row = $('#dg').datagrid('getSelected');
+
+            if (row) {
+                $('#dg-engineer').datagrid({
+                    queryParams: {
+                        fitting_id: row.fitting_id,
+                        organization_id: row.organization_id,
+                    }
+                });
+
+                $('#dlg-engineer').dialog('open').dialog('center').dialog('setTitle', '详情');
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+        function exportItems() 
+        {
+        	$('#organization_id').val($('#search-org').combobox('getValue'));
+            $('#phone_id').val($('#search-phone').combobox('getValue'));
+ 	        $('#keyword').val($('#search-keyword').val());
+ 	       	
+ 	        $('#fm-export').form('submit',{
+ 	               url: '/admin/warehouse/export',
+ 	               onSubmit: function(){
+ 	               },
+ 	               success: function(result){
+ 	               }
+            });
+        }
+        
+        function resetItem()
+        {
+        	var row = $('#dg').datagrid('getSelected');
+
+            if (row) {
+            	
+            	if (!confirm('确定要更新库存信息吗？')) {
+            		return false;
+            	}
+            	
+				$.get('/admin/warehouse/resetStock/id/' + row.id, function(result){
+					
+					if (result.success) {
+	                    $('#dg').datagrid('reload');
+                    } else {
+                        $.messager.show({
+                            title: '错误',
+                            msg: result.errorMsg,
+                            showType:'fade',
+                            style:{
+                                right:'',
+                                bottom:''
+                            }
+                        });
+                    }
+				});
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+        // 格式化类型
+        function formatInout(val, row) {
+            switch (val)
+            {
+            	case '1':
+                    return '<span class="label label-bg2">入库</span>';
+                    break;
+                case '2':
+                    return '<span class="label label-bg3">出库</span>';
+                    break;
+            }     
+        }
+
+        // 格式化出入库
+        function formatInoutType(val, row) {
+            switch (val)
+            {
+                case '1':
+                    return '<span class="label label_bg4">出入库</span>';
+                    break;
+                case '2':
+                    return '<span class="label label_bg1">调拨</span>';
+                    break;
+                case '3':
+                    return '<span class="label label_bg2">工程师申请</span>';
+                    break;
+                case '4':
+                    return '<span class="label label_bg3">报损</span>';
+                    break;
+            }     
+        }
+        
+        function setRowBgColor(index, row) {
+        	
+            if (parseInt(row.amount) < parseInt(row.wss_amount)) {
+                return 'color:red;';
+            }
+        }
+
+        $(function(){
+            $('#mm').menu();
+            $(document).bind('contextmenu',function(e){
+                e.preventDefault();
+                $('#mm').menu('show', {
+                    left: e.pageX,
+                    top: e.pageY
+                });
+            });
+            
+          //机型配件联动
+          var fitting_id = $('#fitting_id');
+          $('#phone_id2').combobox({
+              onChange: function(newValue, oldValue) {
+
+                  if (newValue != "") { 
+                	  fitting_id.combobox({  
+                          disabled:false,  
+                          url:'/admin/warehouse/fittings/phone_id/' + newValue, 
+                          valueField:'id',  
+                          textField:'name',  
+                          onLoadSuccess:function(){
+                          }
+                      }); 
+                  }  
+              }
+          });
+          
+          //机型配件联动
+          var s_fitting_id = $('#search-fitting-id');
+          $('#search-phone').combobox({
+              onChange: function(newValue, oldValue) {
+
+               	  s_fitting_id.combobox({  
+                         disabled:false,  
+                         url:'/admin/warehouse/fittings/phone_id/' + newValue, 
+                         valueField:'id',  
+                         textField:'name',  
+                         onLoadSuccess:function(){
+                      }
+                  }); 
+              }
+          });
+        });
+    </script>
+</head>
+<body class="easyui-layout">
+    <table id="dg" title="库存列表" class="easyui-datagrid" rowStyler="setRowBgColor" style="width:100%;" url="/admin/warehouse/rows" toolbar="#toolbar" pagination="true" pageSize="30" pagePosition="top" rownumbers="true" fitColumns="true" singleSelect="true" rownumbers="true" pagination="true">
+        <thead>
+            <tr>
+                <th field="id" width="4">ID</th>
+                <th field="organization" width="4">地区</th>
+                <th field="phone" width="10">机型</th>
+                <th field="fitting" width="10">配件</th>
+                <th field="wss_amount" width="4">安全库存</th>
+                <th field="amount" width="5">仓库数量</th>
+                <?php if (isset($buttons['显示价格'])) {?>
+                <th field="fitting_price" width="5">仓库总价</th>
+                <?php }?>
+                <th field="engineer_amount" width="6">工程师物料数量</th>
+                <?php if (isset($buttons['显示价格'])) {?>
+                <th field="engineer_price" width="6">工程师物料总价</th>
+                <th field="total_price" width="5">总价</th>
+                <?php }?>
+                <th field='action' width="20" formatter="formatRowActionButton">操作</th>
+            </tr>
+        </thead>
+    </table>
+    <div id="toolbar">
+        <span>仓库（地区）:</span> 
+        <select class="easyui-combobox nameof" id="search-org" url="/admin/warehouse/organization" valueField="id" textField="alias" style="width: 150px;" prompt="仓库"></select>
+        &nbsp;&nbsp;
+        <span>机型:</span>
+		<select class="easyui-combobox" limitToList="true" id='search-phone' url="/admin/warehouse/phones" valueField="id" textField="alias" style="width:150px;" prompt="机型">
+		</select>
+		&nbsp;&nbsp;
+        <span>配件:</span>
+		<select class="easyui-combobox" limitToList="true" id='search-fitting-id' style="width:150px;">
+		</select>
+        &nbsp;&nbsp;
+        <span>配件大类:</span>
+        <select class="easyui-combobox" limitToList="true" id="search-category-id" url="/admin/warehouse/fittingCategorys" valueField="id" textField="name" style="width:150px;">
+   		</select>
+   		&nbsp;&nbsp;
+        <span>关键字:</span>
+        <input type="text" class="easyui-textbox" id='search-keyword' panelHeight="auto">
+		<a href="javascript:void(0)" class="easyui-linkbutton" plain="true" iconCls="icon-search" onclick="searchItem()">搜索</a>
+		<a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['出入库'])) { echo 'hide';} ?>" iconCls="icon-add" plain="true" onclick="inoutWarehouseItem();">出库</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['导出'])) { echo 'hide';} ?>" iconCls="icon-export" plain="true" onclick="exportItems();">导出</a>
+    </div>
+    <div id="mm" style="width:120px;">
+        <div iconCls="icon-detail" class="<?php if(!isset($buttons['详情'])) { echo 'hide';} ?>" onclick="detailItem()"><span>详情</span></div>
+        <div iconCls="icon-reset" class="<?php if(!isset($buttons['更新库存'])) { echo 'hide';} ?>" onclick="resetItem()"><span>更新库存</span></div>
+        <div iconCls="icon-inout" class="<?php if(!isset($buttons['出入库'])) { echo 'hide';} ?>" onclick="inoutItem()"><span>出入库</span></div>
+        <div iconCls="icon-engineer" class="<?php if(!isset($buttons['工程师'])) { echo 'hide';} ?>" onclick="engineerItem()"><span>工程师</span></div>
+    </div>
+    <div id="rowmenu" class="hide">
+        <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['详情'])) { echo 'hide';} ?>" iconCls="icon-detail" plain="true" onclick="selectedRow($(this));detailItem();">详情</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['更新库存'])) { echo 'hide';} ?>" iconCls="icon-edit" plain="true" onclick="selectedRow($(this));resetItem();">更新库存</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['出入库'])) { echo 'hide';} ?>" iconCls="icon-inout" plain="true" onclick="selectedRow($(this));inoutItem();">出入库</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['工程师'])) { echo 'hide';} ?>" iconCls="icon-engineer" plain="true" onclick="selectedRow($(this));engineerItem();">工程师</a>
+    </div>
+    <!-- 详情弹窗 -->
+    <div id="dlg-detail" class="easyui-dialog" style="width:800px;min-height:500px;padding:10px 20px" closed="true" buttons="#dlg-detail-buttons">
+        <div class="ftitle">库存详情</div>
+        <table id="dg-detail" title="库存列表" class="easyui-datagrid" style="width:100%;" pagination="true" pageSize="20" pagePosition="top" rownumbers="true" fitColumns="true" singleSelect="true" rownumbers="true" pagination="true" url="/admin/warehouse/detail">
+            <thead>
+                <tr>
+                    <th field="id" width="5">ID</th>
+                    <th field="number" width="10">编号</th>
+                    <th field="organization" width="5">地区</th>
+                    <th field="batch" width="10">批次</th>
+                    <th field="fitting" width="10">配件</th>
+                    <th field="price" width="10">价格</th>
+                    <th field="provider" width="10">供应商</th>
+                    <th field="create_time" width="15" formatter="formatDate">入库时间</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+    <div id="dlg-detail-buttons">
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg-detail').dialog('close')" style="width:90px">关闭</a>
+    </div>
+    <!-- 出入库弹窗 -->
+    <div id="dlg-inout" class="easyui-dialog" style="width:1000px;min-height:500px;padding:10px 20px" closed="true" buttons="#dlg-inout-buttons">
+        <div class="ftitle">物料出入库记录</div>
+        <table id="dg-inout" title="库存列表" class="easyui-datagrid" style="width:100%;" pagination="true" pageSize="20" pagePosition="top" rownumbers="true" fitColumns="true" singleSelect="true" rownumbers="true" pagination="true" url="/admin/warehouse/inout">
+            <thead>
+                <tr>
+                    <th field="id" width="5">ID</th>
+                    <th field="type" width="5" formatter="formatInoutType">类型</th>
+                    <th field="inout" width="5" formatter="formatInout">出入库</th>
+                    <th field="organization" width="5">地区</th>
+                    <th field="batch" width="10">批次</th>
+                    <th field="fitting" width="15">配件</th>
+                    <th field="amount" width="5">数量</th>
+                    <th field="residue" width="5">剩余</th>
+                    <th field="price" width="5">价格</th>
+                    <th field="provider" width="8">供应商</th>
+                    <th field="audit" width="8">审核人</th>
+                    <th field="engineer" width="8">工程师</th>
+                    <th field="time" width="20" formatter="formatDate">时间</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+    <div id="dlg-inout-buttons">
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg-inout').dialog('close')" style="width:90px">关闭</a>
+    </div>
+    <!-- 工程师弹窗 -->
+    <div id="dlg-engineer" class="easyui-dialog" style="width:800px;min-height: 500px;padding:10px 20px" closed="true" buttons="#dlg-engineer-buttons">
+        <div class="ftitle">工程师库存详情</div>
+        <table id="dg-engineer" title="库存列表" class="easyui-datagrid" style="width:100%;" pagination="true" pageSize="20" pagePosition="top" rownumbers="true" fitColumns="true" singleSelect="true" rownumbers="true" pagination="true" url="/admin/warehouse/engineer">
+            <thead>
+                <tr>
+                    <th field="id" width="5">ID</th>
+                    <th field="organization" width="5">地区</th>
+                    <th field="engineer" width="10">工程师</th>
+                    <th field="fitting" width="10">配件</th>
+                    <th field="amount" width="10">数量</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+    <div id="dlg-engineer-buttons">
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg-engineer').dialog('close')" style="width:90px">关闭</a>
+    </div>
+    <!-- 载入弹窗 -->
+    <div id="load" class="easyui-dialog" title="消息" closed="true" style="width:200px;height:100px;padding:10px">
+        <span>处理中...</span>
+    </div>
+    <div id="dlg-export" class="easyui-dialog" style="width:700px;height:260px;padding:10px 20px" closed="true">
+        <form id="fm-export" method="post">
+        	<div class="ftitle">数据导出</div>
+        	<input type="hidden" name="organization_id" id="organization_id">
+            <input type="hidden" name="phone_id" id="phone_id">
+            <input type="hidden" name="keyword" id="keyword">
+        </form>
+    </div>
+    <!-- 设置出入库弹窗 -->
+    <div id="dlg-inout-warehouse" class="easyui-dialog" style="width:500px;min-height: 400px;padding:10px 20px" closed="true" buttons="#dlg-buttons">
+        <div class="ftitle">出库详情</div>
+        <form id="fm" method="post">
+            <div class="fitem">
+                <label>批次:</label>
+                <input class="easyui-textbox" name="batch" required="true">
+            </div>
+            <div class="fitem">
+                <label>仓库:</label>
+                <select class="easyui-combobox nameof" required="true" name="organization_id" url="/admin/warehouse/organization" valueField="id" textField="alias" style="width: 150px;" prompt="仓库"></select>
+            </div>
+            <div class="fitem">
+                <label>机型:</label>
+                <select class="easyui-combobox nameof" required="true" id="phone_id2" name="phone_id" url="/admin/warehouse/phones" valueField="id" textField="alias" style="width: 150px;" prompt="机型"></select>
+            </div>
+            <div class="fitem">
+                 <label>配件:</label>
+                 <select class="easyui-combobox nameof" required="true" id="fitting_id" name="fitting_id" url="/admin/warehouse/fittings" valueField="id" textField="name" style="width: 200px;" prompt="配件"></select>
+            </div>
+            <div class="fitem">
+                <label>数量:</label>
+                <input class="easyui-textbox" name="amount" required="true">
+            </div>
+            <div class="fitem">
+                <label>备注(50个字):</label>
+                <input class="easyui-textbox" name="remark" style="width:160px;height:60px" data-options="multiline:true">
+            </div>
+        </form>
+    </div>
+    <div id="dlg-buttons">
+    	<a href="javascript:void(0)" class="easyui-linkbutton c6" iconCls="icon-ok" onclick="saveInoutWarehouseItem()" style="width:90px">保存</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg-inout-warehouse').dialog('close')" style="width:90px">关闭</a>
+    </div>
+</body>
+</html>

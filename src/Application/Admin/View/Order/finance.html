@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>user</title>
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/default/easyui.css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/icon.css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/css/user.css">
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/locale/easyui-lang-zh_CN.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/js/user.js"></script>
+    <script type="text/javascript">
+        var url;
+        
+        function closeDialog()
+        {
+            $('#dlg-detail').dialog('close');
+            $('#dlg-remark').dialog('close');
+            $('#dlg-price').dialog('close');
+            $('#dlg-paid').dialog('close');
+        }
+
+        function detailItem()
+        {
+            var row = $('#dg').datagrid('getSelected');
+            if (row){
+                closeDialog();
+                $('#dlg-detail').dialog('open').dialog('center').dialog('setTitle','订单详情');
+                $('#fm-detail').form('load', row);
+                $('#order_log').datagrid({  
+                    url:'/admin/order/orderLog/id/' + row.id
+                });
+                
+                $('#order_phomal').datagrid({  
+                    url:'/admin/order/orderPhomal/id/' + row.id
+                });
+                
+                if (row.is_invoice == 1) {
+                    $('#fm-detail .invoice').show();
+                } else {
+                    $('#fm-detail .invoice').hide();
+                }
+                
+                $('#order_create_time').textbox('setValue', formatDate(row.create_time));
+                row.maintain_start_time > 0 && $('#order_maintain_start_time').textbox('setValue', formatDate(row.maintain_start_time));
+                row.maintain_end_time > 0 && $('#order_maintain_end_time').textbox('setValue', formatDate(row.maintain_end_time));
+                row.paid_time > 0 && $('#order_paid_time').textbox('setValue', formatDate(row.paid_time));
+                row.clearing_time > 0 && $('#order_clearing_time').textbox('setValue', formatDate(row.clearing_time));
+                row.end_time > 0 && $('#order_end_time').textbox('setValue', formatDate(row.end_time));
+                $('#order_status').html(formatOrderStatus(row.status));
+                $('#order_payment_method').html(formatOrderPaymentMethod(row.payment_method));
+                
+                url = '/admin/order/detail/id/' + row.id;
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+        
+        function showImgItem(i) 
+        {
+        	var row = $('#dg').datagrid('getSelected');
+        	
+            if (row) {
+            	
+                if (i == 1 && row.maintain_start_img) {
+                	$('#dlg-order-img').dialog('open').dialog('center').dialog('setTitle','开始维修图片');
+                	$('#order_img').attr('src', row.maintain_start_img);
+                } else if (i == 2 && row.maintain_end_img){
+                	$('#dlg-order-img').dialog('open').dialog('center').dialog('setTitle','结束维修图片');
+                	$('#order_img').attr('src', row.maintain_end_img);
+                } else if (i == 3 && row.maintain_img) {
+                	$('#dlg-order-img').dialog('open').dialog('center').dialog('setTitle','维修单图片');
+                	$('#order_img').attr('src', row.maintain_img);
+                } else {
+                	$.messager.show({
+                        title: '错误',
+                        msg: '暂无图片显示！',
+                        showType:'fade',
+                        style:{
+                            right:'',
+                            bottom:''
+                        }
+                    });
+                }
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+        
+        function saveItem(form) 
+        {
+            $(form).form('submit',{
+                url: url,
+                onSubmit: function(){
+                    
+                    if ($(this).form('validate')) {
+                        $('#load').dialog('open');
+                    };
+                    
+                    return $(this).form('validate');
+                },
+                success: function(result){
+                    $('#load').dialog('close');
+                    var result = eval('('+result+')');
+                    if (result.success){
+                        closeDialog();
+                        $('#dg').datagrid('reload');
+                    } else {
+                        $.messager.show({
+                            title: '错误',
+                            msg: result.errorMsg,
+                            showType:'fade',
+                            style:{
+                                right:'',
+                                bottom:''
+                            }
+                        });
+                    }
+                }
+            });
+        }
+        
+        function remarkItem()
+        {
+            var row = $('#dg').datagrid('getSelected');
+            if (row){
+                closeDialog();
+                $('#dlg-remark').dialog('open').dialog('center').dialog('setTitle', '订单备注');
+                $('#fm-remark').form('load', row);
+                
+                url = '/admin/order/remark/id/' + row.id;
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+        
+        function exportItem() 
+        {
+            closeDialog();
+            $('#dlg-export').dialog('open').dialog('center').dialog('setTitle', '订单导出');
+            $('#fm-export').form('clear');
+            url = '/admin/order/financeExport';
+        }
+        
+        function saveExportItem(form) 
+        {
+            $(form).form('submit',{
+                url: url,
+                onSubmit: function(){
+                },
+                success: function(result){
+                    $('#load').dialog('close');
+                    var result = eval('('+result+')');
+                    if (result.success){
+                        closeDialog();
+                        $('#dg').datagrid('reload');
+                    } else {
+                        $.messager.show({
+                            title: '错误',
+                            msg: result.errorMsg,
+                            showType:'fade',
+                            style:{
+                                right:'',
+                                bottom:''
+                            }
+                        });
+                    }
+                }
+            });
+        }
+        
+        function searchItem()
+        {
+            $('#dg').datagrid({
+                queryParams: {
+                    clearing_time_start: $('#search-clearing-time-start').combobox('getValue'),
+                    clearing_time_end: $('#search-clearing-time-end').combobox('getValue'),
+                    close_time_start: $('#search-close-time-start').combobox('getValue'),
+                    close_time_end: $('#search-close-time-end').combobox('getValue'),
+                    city: $('#search-city').textbox('getValue'),
+                    phone_id: $('#search-phone-id').combobox('getValue'),
+                    malfunction: $('#search-phone-fun').combobox('getValue'),
+                    payment_method: $('#search-payment-method').combobox('getValue'),
+                    type: $('#search-type').combobox('getValue'),
+                    status: $('#search-status').combobox('getValue'),
+                    pay_type: $('#search-paytype').combobox('getValue'),
+                    keyword: $('#search-keyword').val()
+                }
+            });
+        }
+
+        $(function(){
+            //订单维修方式切换
+            $('input[name="category"]').change(function(){
+
+                if ($(this).val() == 2) { 
+                    $('.logistics').show();
+                } else {
+                    $('.logistics').hide();
+                }
+            });
+        });
+        
+        //订单状态
+        function formatOrderStatus(val)
+        {
+            var order_staus = eval(<?php echo json_encode(C("ORDER_STATUS"))?>);
+            
+            if (val == -1 || val == -2) {
+                return '<span class="label label-bg3">' + order_staus[val] + '</span>';
+            } else if (val == 1) {
+                return '<span class="label label-bg5">' + order_staus[val] + '</span>';
+            } else if (val == 2 || val == 3 || val == 4) {
+                return '<span class="label label-bg2">' + order_staus[val] + '</span>';
+            } else if (val == 5) {
+                return '<span class="label label-bg1">' + order_staus[val] + '</span>';
+            } else if (val == 6) {
+                return '<span class="label label-bg">' + order_staus[val] + '</span>';
+            } else if (val == 7) {
+                return '<span class="label label-bg6">' + order_staus[val] + '</span>';
+            } else if (val == 8) {
+                return '<span class="label label-bg3">' + order_staus[val] + '</span>';
+            } else if (val == 11) {
+                return '<span class="label label-bg7">' + order_staus[val] + '</span>';
+            } else if (val == 12) {
+                return '<span class="label label-bg7">' + order_staus[val] + '</span>';
+            } else if (val == 21) {
+                return '<span class="label label-bg2">' + order_staus[val] + '</span>';
+            } else if (val == 22) {
+                return '<span class="label label-bg">' + order_staus[val] + '</span>';
+            }
+        }
+        
+        //订单是否结算
+        function formatOrderIsClearing(val)
+        {
+            if(val == 1) {  
+                return '<span class="label label-bg2">是<span>';  
+            } else {  
+                return '<span class="label label-bg3">否<span>';  
+            }
+        }
+        
+        //订单付款方式
+        function formatOrderPaymentMethod(val)
+        {
+            var payment = eval(<?php echo json_encode(C("ORDER_PAYMENT"))?>);
+            return payment[val];
+        }
+        
+        //订单类型
+        function formatOrderType(val)
+        {
+            var type = eval(<?php echo json_encode(C("ORDER_TYPE"))?>);
+            return type[val];
+        }
+        
+        function setPriceItem()
+        {
+            var row = $('#dg').datagrid('getSelected');
+            if (row){
+                closeDialog();
+                $('#dlg-price').dialog('open').dialog('center').dialog('setTitle', '订单改价');
+                $('#fm-price').form('clear');
+                $('#fm-price').form('load', row);
+                
+                url = '/admin/order/setPrice/id/' + row.id;
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+        
+        function savePriceItem(form) 
+        {
+            $(form).form('submit',{
+                url: url,
+                onSubmit: function(){
+                    
+                    if ($(this).form('validate')) {
+                        $('#load').dialog('open');
+                    };
+                    
+                    return $(this).form('validate');
+                },
+                success: function(result){
+                    $('#load').dialog('close');
+                    var result = eval('('+result+')');
+                    if (result.success){
+                        closeDialog();
+                        $('#dg').datagrid('reload');
+                    } else {
+                        $.messager.show({
+                            title: '错误',
+                            msg: result.errorMsg,
+                            showType:'fade',
+                            style:{
+                                right:'',
+                                bottom:''
+                            }
+                        });
+                    }
+                }
+            });
+        }
+
+        function setPaidItem()
+        {
+            var row = $('#dg').datagrid('getSelected');
+
+            if (row){
+                closeDialog();
+                $('#dlg-paid').dialog('open').dialog('center').dialog('setTitle', '修改已付款');
+                $('#fm-paid').form('clear');
+                $('#fm-paid').form('load', row);
+                
+                url = '/admin/order/setPaidAmount/id/' + row.id;
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+        
+        function savePaidItem(form) 
+        {
+            $(form).form('submit',{
+                url: url,
+                onSubmit: function(){
+                    
+                    if ($(this).form('validate')) {
+                        $('#load').dialog('open');
+                    };
+                    
+                    return $(this).form('validate');
+                },
+                success: function(result){
+                    $('#load').dialog('close');
+                    var result = eval('('+result+')');
+                    if (result.success){
+                        closeDialog();
+                        $('#dg').datagrid('reload');
+                    } else {
+                        $.messager.show({
+                            title: '错误',
+                            msg: result.errorMsg,
+                            showType:'fade',
+                            style:{
+                                right:'',
+                                bottom:''
+                            }
+                        });
+                    }
+                }
+            });
+        }
+
+        function refundItem()
+        {
+            var row = $('#dg').datagrid('getSelected');
+
+            if (row){
+                closeDialog();
+                $('#dlg-refund').dialog('open').dialog('center').dialog('setTitle', '退款');
+                $('#fm-refund').form('clear');
+                $('#fm-refund').form('load', row);
+                
+                url = '/admin/order/refund/id/' + row.id;
+
+                $('#refund_log').datagrid({  
+                    url:'/admin/order/refundLog/id/' + row.id
+                });
+
+                $('#third_party_number').combobox('reload', '/admin/order/paidLog/id/' + row.id);
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+        
+        function saveRefundItem(form) 
+        {
+            $(form).form('submit',{
+                url: url,
+                onSubmit: function(){
+                    
+                    if ($(this).form('validate')) {
+                        $('#load').dialog('open');
+                    };
+                    
+                    return $(this).form('validate');
+                },
+                success: function(result){
+                    $('#load').dialog('close');
+                    var result = eval('('+result+')');
+                    if (result.success){
+                        closeDialog();
+                        $('#dg').datagrid('reload');
+                    } else {
+                        $.messager.show({
+                            title: '错误',
+                            msg: result.errorMsg,
+                            showType:'fade',
+                            style:{
+                                right:'',
+                                bottom:''
+                            }
+                        });
+                    }
+                }
+            });
+        }
+        
+        //配件显示
+        function fittingFormatter(value, row, index)
+        {
+            if (!value) {
+                return '';
+            }
+            
+            var fittings = $.parseJSON(row.fitting);
+            var str = '';
+
+            if (row.is_color < 1) {
+                
+                for (var i in fittings) {
+                    str += fittings[i].name + ' * ' + fittings[i].amount + '<br/>';
+                }
+            } else {
+                
+                if (row.color_id > 0) {
+                    
+                    if (typeof(fittings[row.color_id]) == 'undefined') {
+                        return '';
+                    }
+                    
+                    for (var i in fittings) {
+                        
+                        if (row.color_id != i) {
+                            continue;
+                        }
+                        
+                        str += '(' + fittings[i]['name'] + ')' + '<br/>';
+
+                        for (var j in fittings[i]['items']) {
+                            str += fittings[i]['items'][j].name + ' * ' + fittings[i]['items'][j].amount + '<br/>';
+                        }
+
+                        str += '----------<br/>';
+                    }
+                } else {
+                    for (var i in fittings) {
+                        str += '(' + fittings[i]['name'] + ')' + '<br/>';
+
+                        for (var j in fittings[i]['items']) {
+                            str += fittings[i]['items'][j].name + ' * ' + fittings[i]['items'][j].amount + '<br/>';
+                        }
+
+                        str += '----------<br/>';
+                    }
+                }
+            }
+
+            return str;
+        }
+        
+        //废料显示
+        function wasteFormatter(value, row, index)
+        {
+            if (!value) {
+                return '';
+            }
+            
+            var wastes = $.parseJSON(row.waste);
+            var str = '';
+
+            for (var i in wastes) {
+                str += wastes[i].name + ' * ' + wastes[i].amount + '<br/>';
+            }
+
+            return str;
+        }
+        function formatOrderPayType(val, row) {
+            if(val == 2) {  
+                return '<span>预付<span>';  
+            } else {  
+                return '<span>修付<span>';  
+            }
+        }
+    </script>
+</head>
+<body class="easyui-layout">
+        <table id="dg" title="订单列表（财务）" class="easyui-datagrid" style="width:100%; max-height:800px;" url="/admin/order/rows" toolbar="#toolbar" pagination="true" pageSize="30" pagePosition="top" rownumbers="true" fitColumns="true" singleSelect="true" nowrap="false">
+        <thead>
+            <tr>
+                <th field="number" width="20">订单编号</th>
+                <th field="customer" width="10">客户</th>
+                <th field="cellphone" width="15">手机</th>
+                <th field="phone_name" width="15">手机型号</th>
+                <th field="address_city" width="10">城市</th>
+                <th field="clearing_time" width="10" formatter="formatDate">入库时间</th>
+                <th field="create_time" width="20" formatter="formatDate">下单时间</th>
+                <th field="status" width="10" formatter="formatOrderStatus">状态</th>
+                <th field="engineer_name" width="15">工程师</th>
+                <th field="pay_type" width="10" formatter="formatOrderPayType">付款类型</th>
+                <th field="reference_price" width="15">预计价格</th>
+                <th field="actual_price" width="15">实际价格</th>
+                <th field="paid_amount" width="15">已付金额</th>
+                <th field="payment_method" width="15" formatter="formatOrderPaymentMethod">付款方式</th>
+                <th field="is_clearing" width="10" formatter="formatOrderIsClearing">结算</th>
+                <th field="third_party_number" width="20">第三方订单号</th>
+                <th field="buyer_email" width="15">买家账号</th>
+                <th field='action' width="25" formatter="formatRowActionButton">操作</th>
+            </tr>
+        </thead>
+    </table>
+    <div id="toolbar">
+        <span>结单日期:</span>
+        <input type="text" class="easyui-datebox" id='search-clearing-time-start' panelHeight="auto">至<input type="text" class="easyui-datebox" id='search-clearing-time-end' panelHeight="auto">
+        <span>取消日期:</span>
+        <input type="text" class="easyui-datebox" id='search-close-time-start' panelHeight="auto">至<input type="text" class="easyui-datebox" id='search-close-time-end' panelHeight="auto">
+        <span>地区:</span>
+        <select class="easyui-combobox" id='search-city'>
+            <option value="all">全部</option>
+            <?php foreach(session('addresses') as $k => $v) { ?>
+            <option value="<?php echo $v['city'];?>"><?php echo $v['cityname'];?></option>
+            <?php }?>
+            <option value="other">其他</option>
+        </select>
+        &nbsp;&nbsp;
+        <span>机型:</span>
+        <select id='search-phone-id' class="easyui-combobox" limitToList="true" url="/admin/order/phones" valueField="id" textField="alias" style="width:150px;">
+        </select>
+        &nbsp;&nbsp;
+        <span>故障:</span>
+        <select id='search-phone-fun' class="easyui-combobox" limitToList="true" url="/admin/order/getPhomal" valueField="id" textField="name" style="width:150px;">
+        </select>
+        &nbsp;&nbsp;
+        <span>订单状态:</span>
+        <select class="easyui-combobox" id='search-status'>
+            <option value="all">全部</option>
+            <?php foreach(C('ORDER_STATUS') as $k => $v) { ?>
+            <option value="<?php echo $k;?>"><?php echo $v;?></option>
+            <?php }?>
+        </select>
+        &nbsp;&nbsp;
+        <span>付款方式:</span>
+        <select class="easyui-combobox" id='search-payment-method' panelHeight="auto">
+            <option value="all">全部</option>
+            <?php foreach(C('ORDER_PAYMENT') as $k => $v) { ?>
+            <option value="<?php echo $k;?>"><?php echo $v;?></option>
+            <?php }?>
+        </select>
+        &nbsp;&nbsp;
+        <span>订单类型:</span>
+        <select class="easyui-combobox" id='search-type' panelHeight="auto">
+            <option value="all">全部</option>
+            <?php foreach(C('ORDER_TYPE') as $k => $v) {?>
+            <option value="<?php echo $k;?>"><?php echo $v;?></option>
+            <?php }?>
+        </select>
+        &nbsp;&nbsp;
+        <span>付款类型:</span>
+        <select class="easyui-combobox" id='search-paytype' panelHeight="auto">
+            <option value="all">全部</option>
+            <option value="1">修付</option>
+            <option value="2">预付</option>
+        </select>
+        &nbsp;&nbsp;
+        <span>关键字(订单编号/客户电话/客户姓名/客户地址/第三方订单号):</span>
+        <input type="text" class="easyui-textbox" id='search-keyword' panelHeight="auto" style="width:300px;">
+        <a href="javascript:void(0)" class="easyui-linkbutton" plain="true" iconCls="icon-search" onclick="searchItem()">搜索</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['导出'])) { echo 'hide';} ?>" iconCls="icon-export" plain="true" onclick="exportItem()">导出</a>
+    </div>
+    <div id="rowmenu" class="hide">
+       <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['详情'])) { echo 'hide';} ?>" plain="true" onclick="selectedRow($(this));detailItem();">详情</a>
+       <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['修改价格'])) { echo 'hide';} ?>" plain="true" onclick="selectedRow($(this));setPriceItem();">改价</a>
+       <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['修改已付'])) { echo 'hide';} ?>" plain="true" onclick="selectedRow($(this));setPaidItem();">修改已付</a>
+       <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['退款'])) { echo 'hide';} ?>" plain="true" onclick="selectedRow($(this));refundItem();">退款</a>
+       <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['备注'])) { echo 'hide';} ?>" plain="true" onclick="selectedRow($(this));remarkItem();">备注</a>
+    </div>
+    <div id="dlg-detail" class="easyui-dialog" style="width:900px;height:550px;padding:10px 20px" closed="true" buttons="#dlg-buttons">
+        <form id="fm-detail" method="post" enctype="multipart/form-data">
+            <div class="ftitle">订单日志</div>
+            <div class="fitem">
+                <table id="order_log" class="easyui-datagrid" style="width:800px; max-height: 300px;">
+                    <thead>
+                        <tr>
+                            <th field="id" width="50">ID</th>
+                            <th field="time" width="150" formatter="formatDate">时间</th>
+                            <th field="action" width="550">操作</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+            <div class="ftitle">客户信息</div>
+            <div class="fitem">
+                <label>姓名:</label>
+                <input name="customer" class="easyui-textbox" disabled="true">
+            </div>
+            <div class="fitem">
+                <label>手机号码:</label>
+                <input name="cellphone" class="easyui-textbox" disabled="true">
+            </div>
+            <div class="fitem">
+                <label>邮箱:</label>
+                <input name="email" class="easyui-textbox" disabled="true">
+            </div>
+            <div class="fitem">
+                <label>地址:</label>
+                <input name="caddress" class="easyui-textbox" style="width:400px;" disabled="true">
+            </div>
+            <div class="fitem">
+                <label>微信:</label>
+                <input name="weixin" class="easyui-textbox" disabled="true">
+            </div>
+            <div class="ftitle">机型故障</div>
+            <div class="fitem">
+                <label>机型:</label>
+                <select class="easyui-combobox" disabled="true" limitToList="true" name='phone_id' url="/admin/order/phones" valueField="id" textField="alias" style="width:150px;">
+                </select>
+            </div>
+            <div class="fitem">
+                <label>颜色:</label>
+                <select class="easyui-combobox" disabled="true" limitToList="true" name='color_id' url="/admin/order/colors" valueField="id" textField="name" style="width:150px;">
+                </select>
+            </div>
+            <div class="fitem">
+                <label>IMEI:</label>
+                <input name="phone_imei" class="easyui-textbox" style="width:200px;" disabled="true">
+            </div>
+            <div class="fitem">
+                <label>故障:</label>
+                <table id="order_phomal" class="easyui-datagrid" style="width:600px; max-height:300px;">
+                    <thead>
+                        <tr>
+                            <th field="malfunction" width="100">故障</th>
+                            <th field="fitting" width="200" formatter="fittingFormatter">所需配件</th>
+                            <th field="waste" width="200" formatter="wasteFormatter">废料</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+            <div class="fitem">
+                <label>故障描述:</label>
+                <input name="malfunction_description" class="easyui-textbox" multiline="true" style="width:300px;" disabled="true">
+            </div>
+            
+            <div class="ftitle">订单信息</div>
+            <div class="fitem">
+                <label>订单ID:</label>
+                <input name="id" class="easyui-textbox"  disabled="true">
+            </div>
+            <div class="fitem">
+                <label>订单编号:</label>
+                <input name="number" class="easyui-textbox" disabled="true">
+            </div>
+            <div class="fitem">
+                <label>订单类型:</label>
+                <?php foreach(C('ORDER_TYPE') as $k => $v) {?>
+                    <input class="easyui-validatebox" name="type" type="radio" disabled="true" value="<?php echo $k;?>">
+                    <span><?php echo $v;?></span>
+	            <?php }?>
+            </div>
+            <div class="fitem">
+                <label>维修方式:</label>
+                <input class="easyui-validatebox" name="category" type="radio" value="1">
+                <span>上门维修</span>
+                <input class="easyui-validatebox" name="category" type="radio" value="2" validType="requireRadio['input[name=\'category\']']">
+                <span>邮寄维修</span>
+                <input class="easyui-validatebox" name="category" type="radio" value="3" disabled="true">
+                <span>到店维修</span>
+            </div>
+            <div class="fitem">
+                <label>订单地址:</label>
+                <input name="address" class="easyui-textbox" style="width:400px;" disabled="true">
+            </div>
+            <div class="fitem logistics hide">
+                <label>邮寄单号:</label>
+                <input id="logistics" name="logistics" class="easyui-textbox" prompt="邮寄单号"  style="width:200px;">
+            </div>
+            <div class="fitem logistics hide">
+                <label>寄回单号:</label>
+                <input id="postback" name="postback" class="easyui-textbox" prompt="寄回单号" style="width:200px;">
+            </div>
+            <div class="fitem">
+                <label>状态:</label>
+                <span id="order_status"></span>
+            </div>
+            <div class="fitem">
+                <label>付款类型:</label> 
+                <input class="easyui-validatebox" name="pay_type" type="radio" value="1">
+                <span>维修后付款</span>
+                <input class="easyui-validatebox" name="pay_type" type="radio" value="2">
+                <span>预付款</span>
+            </div>
+            <div class="fitem">
+                <label>预计价格:</label>
+                <input name="reference_price" class="easyui-textbox" disabled="true">
+            </div>
+            <div class="fitem">
+                <label>实际价格:</label>
+                <input name="actual_price" class="easyui-textbox" prompt="实际价格" required="true">
+            </div>
+            <div class="fitem">
+                <label>已付金额:</label>
+                <input name="paid_amount" class="easyui-textbox" disabled="true">
+            </div>
+            <div class="fitem">
+                <label>用户备注:</label>
+                <input name="user_remark" class="easyui-textbox" style="width:400px;" disabled="true">
+            </div>
+            <!-- 
+            <div class="fitem">
+                <label>是否优惠:</label>
+                <input name="old_order_number" class="easyui-textbox" prompt="原订单编号" style="width:200px;">
+            </div>
+             -->
+            <div class="fitem">
+                <label>是否开具发票:</label>
+                <input class="easyui-validatebox" name="is_invoice" type="radio" disabled="true" value="1">
+                <span>是</span>
+                <input class="easyui-validatebox" name="is_invoice" type="radio" disabled="true" value="0">
+                <span>否</span>
+            </div>
+            <div class="fitem invoice">
+                <label>发票抬头:</label>
+                <input name="invoice" class="easyui-textbox" style="width:200px;" disabled="true">
+            </div>
+            <div class="fitem invoice">
+                <label>税号:</label>
+                <input name="tax_number" class="easyui-textbox" style="width:200px;" disabled="true">
+            </div>
+            <div class="fitem">
+                <label>是否结算:</label>
+                <input class="easyui-validatebox" name="is_clearing" type="radio" disabled="true" value="1">
+                <span>是</span>
+                <input class="easyui-validatebox" name="is_clearing" type="radio" disabled="true" value="0">
+                <span>否</span>
+            </div>
+            <div class="fitem">
+                <label>支付方式:</label>
+                <span id="order_payment_method"></span>
+            </div>
+            <div class="fitem">
+                <label>下单时间:</label>
+                <input id="order_create_time" class="easyui-textbox" disabled="true" style="width:200px;">
+            </div>
+            <div class="fitem">
+                <label>开始维修时间:</label>
+                <input id="order_maintain_start_time" class="easyui-textbox" disabled="true" style="width:200px;">
+                <a class="easyui-linkbutton" onclick="showImgItem(1);">开始维修图片</a>
+            </div>
+            <div class="fitem">
+                <label>结束维修时间:</label>
+                <input id="orde_maintain_end_time" class="easyui-textbox" disabled="true" style="width:200px;">
+                <a class="easyui-linkbutton" onclick="showImgItem(2);">结束维修图片</a> <a class="easyui-linkbutton" onclick="showImgItem(3);">维修单图片</a>
+            </div>
+            <div class="fitem">
+                <label>结单时间:</label>
+                <input id="order_end_time" class="easyui-textbox" disabled="true" style="width:200px;">
+            </div>
+            <div class="fitem">
+                <label>付款时间:</label>
+                <input id="order_paid_time" class="easyui-textbox" disabled="true" style="width:200px;">
+            </div>
+            <div class="fitem">
+                <label>入库时间:</label>
+                <input id="order_clearing_time" class="easyui-textbox" disabled="true" style="width:200px;">
+            </div>
+            <div class="fitem">
+                <label>取消原因:</label>
+                <input name="close_reason" class="easyui-textbox" disabled="true" style="width:300px;">
+            </div>
+            
+            <div class="ftitle">工程师信息</div>
+            <div class="fitem">
+                <label>工程师:</label>
+                <input name="engineer_name" class="easyui-textbox" disabled="true">
+            </div>
+        </form>
+    </div>
+    <div id="dlg-buttons">
+        <a href="javascript:void(0)" class="easyui-linkbutton c6" iconCls="icon-ok" onclick="saveItem('#fm-detail')" style="width:90px">保存</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg-detail').dialog('close')" style="width:90px">关闭</a>
+    </div>
+    <div id="load" class="easyui-dialog" title="消息" closed="true" style="width:200px;height:100px;padding:10px">
+        <span>处理中...</span>
+    </div>
+    <div id="dlg-remark" class="easyui-dialog" style="width:600px;height:350px;padding:10px 20px" closed="true" buttons="#dlg-buttons">
+        <form id="fm-remark" method="post">
+            <div class="ftitle">客服备注</div>
+            <div class="fitem">
+                <label>客服备注:</label>
+                <input name="remark" class="easyui-textbox" style="width:300px;height: 70px" multiline="true" disabled="true">
+            </div>
+            <div class="fitem">
+                <label>工程师备注:</label>
+                <input name="engineer_remark" class="easyui-textbox" style="width:300px;height: 70px" multiline="true" disabled="true">
+            </div>
+            <div class="fitem">
+                <label>客户备注:</label>
+                <input name="user_remark" class="easyui-textbox" style="width:400px;height: 70px" multiline="true" disabled="true">
+            </div>
+        </form>
+    </div>
+    <div id="dlg-buttons">
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg-remark').dialog('close')" style="width:90px">关闭</a>
+    </div>
+    <div id="dlg-export" class="easyui-dialog" style="width:700px;min-height:260px;padding:10px 20px" closed="true" buttons="#dlg-buttons">
+        <form id="fm-export" method="post">
+        <div class="ftitle">数据导出</div>
+            <div class="fitem">
+                <label>付款类型:</label>
+                <select class="easyui-combobox" name="pay_type">
+                    <option value="0">全部</option>
+                    <option value="1">修付</option>
+                    <option value="2">预付</option>
+                </select>
+            </div>
+            <div class="fitem">
+                <label>付款方式:</label>
+                <select class="easyui-combobox" name="payment_method">
+                    <option value="0">全部</option>
+                    <option value="1">支付宝</option>
+                    <option value="2">微信</option>
+                    <option value="3">现金</option>
+                    <option value="4">网银</option>
+                    <option value="5">第三方</option>
+                </select>
+            </div>
+            <div class="fitem">
+                <label>订单类型:</label>
+                <select class="easyui-combobox" name="type">
+                    <option value="0">全部</option>
+                    <option value="1">新单</option>
+                    <option value="2">返修</option>
+                    <option value="3">活动</option>
+                    <option value="4">第三方</option>
+                    <option value="5">保险</option>
+                </select>
+            </div>
+            <div class="fitem">
+                <label>订单状态:</label>
+                <select class="easyui-combobox" name="status">
+                    <option value="-1">取消</option>
+                    <option value="0">全部</option>
+                    <option value="1">新单</option>
+                    <option value="5">结单</option>
+                    <option value="6">入库</option>
+                </select>
+            </div>
+            <div class="fitem">
+                <label>下单时间:</label>
+                <input class="easyui-datebox" name="create_time_start"> 至 <input class="easyui-datebox" name="create_time_end">
+            </div>
+            <div class="fitem">
+                <label>付款时间:</label>
+                <input class="easyui-datebox" name="paid_time_start"> 至 <input class="easyui-datebox" name="paid_time_end">
+            </div>
+            <div class="fitem">
+                <label>结算日期:</label>
+                <input class="easyui-datebox" name="clearing_time_start"> 至 <input class="easyui-datebox" name="clearing_time_end">
+            </div>
+            <div class="fitem">
+                <label>取消日期:</label>
+                <input  class="easyui-datebox" name="close_time_start"> 至 <input  class="easyui-datebox" name='close_time_end'>
+            </div>
+            <div class="fitem">
+                <label>地址:</label>
+                <select class="easyui-combobox" name="city">
+                    <?php foreach(session('addresses') as $k => $v) { ?>
+                    <option value="<?php echo $v['city'];?>"><?php echo $v['cityname'];?></option>
+                    <?php }?>
+                </select>
+            </div>
+            <div class="fitem">
+                <label>关键字(订单编号/客户电话/客户姓名/客户地址/第三方订单号):</label>
+                <input type="text" class="easyui-textbox"  panelHeight="auto" name="keyword" style="width:300px;">
+            </div>
+        </form>
+    </div>
+    <div id="dlg-buttons">
+        <a href="javascript:void(0)" class="easyui-linkbutton c6" iconCls="icon-ok" onclick="saveExportItem('#fm-export')" style="width:90px">导出</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg-export').dialog('close')" style="width:90px">取消</a>
+    </div>
+    <div id="dlg-order-img" class="easyui-dialog" style="width:900px;max-height:500px;max-width:1200px;padding:10px 20px" closed="true" buttons="#dlg-order-img-buttons">
+        <div class="fitem">
+            <img id="order_img" width="820">
+        </div>
+    </div>
+    <div id="dlg-order-img-buttons">
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg-order-img').dialog('close')" style="width:90px">关闭</a>
+    </div>
+    <div id="dlg-price" class="easyui-dialog" style="width:600px;height:350px;padding:10px 20px" closed="true" buttons="#dlg-buttons">
+        <form id="fm-price" method="post">
+            <div class="ftitle">修改订单价格</div>
+            <div class="fitem">
+                <label>付款方式:</label>
+                <?php foreach(C('ORDER_PAYMENT') as $k => $v) { ?>
+                    <input class="easyui-validatebox" name="payment_method" type="radio" value="<?php echo $k ?>" required="true">
+                    <span><?php echo $v ?></span>
+                <?php }?>
+            </div>
+            <div class="fitem">
+                <label>预计价格:</label>
+                <input name="reference_price" class="easyui-textbox" disabled="true">
+            </div>
+            <div class="fitem">
+                <label>实际价格:</label>
+                <input name="actual_price" class="easyui-textbox" disabled="true">
+            </div>
+            <div class="fitem">
+                <label>修改价格:</label>
+                <input name="price" class="easyui-textbox" required="true">
+            </div>
+        </form>
+    </div>
+    <div id="dlg-buttons">
+        <a href="javascript:void(0)" class="easyui-linkbutton c6" iconCls="icon-ok" onclick="savePriceItem('#fm-price')" style="width:90px">保存</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg-price').dialog('close')" style="width:90px">取消</a>
+    </div>
+    <div id="dlg-paid" class="easyui-dialog" style="width:600px;height:350px;padding:10px 20px" closed="true" buttons="#dlg-buttons">
+        <form id="fm-paid" method="post">
+            <div class="ftitle">修改已付金额</div>
+            <div class="fitem">
+                <label>预计价格:</label>
+                <input name="reference_price" class="easyui-textbox" disabled="true">
+            </div>
+            <div class="fitem">
+                <label>实际价格:</label>
+                <input name="actual_price" class="easyui-textbox" disabled="true">
+            </div>
+            <div class="fitem">
+                <label>已付金额:</label>
+                <input name="paid_amount" class="easyui-textbox" required="true">
+            </div>
+        </form>
+    </div>
+    <div id="dlg-buttons">
+        <a href="javascript:void(0)" class="easyui-linkbutton c6" iconCls="icon-ok" onclick="savePaidItem('#fm-paid')" style="width:90px">保存</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg-paid').dialog('close')" style="width:90px">取消</a>
+    </div>
+    <div id="dlg-refund" class="easyui-dialog" style="width:850px;height:350px;padding:10px 20px" closed="true" buttons="#dlg-buttons">
+        <form id="fm-refund" method="post">
+            <div class="ftitle">退款日志</div>
+            <div class="fitem">
+                <table id="refund_log" class="easyui-datagrid" nowrap="false"  style="width:750px; max-height: 300px;">
+                    <thead>
+                        <tr>
+                            <th field="id" width="5%">ID</th>
+                            <th field="time" width="10%" formatter="formatDate">时间</th>
+                            <th field="action" width="10%">退款方式</th>
+                            <th field="action" width="10%">退款金额</th>
+                            <th field="action" width="5%">订单ID</th>
+                            <th field="action" width="15%">订单编号</th>
+                            <th field="action" width="25%">第三方交易号</th>
+                            <th field="action" width="10%">操作人</th>
+                            <th field="action" width="10%">操作</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+            <div class="fitem">
+                <label>收款方式:</label>
+                <input class="easyui-validatebox" name="pay_type" type="radio" value="1" required="true">
+                <span>维修后付款</span>
+                <input class="easyui-validatebox" name="pay_type" type="radio" value="2" required="true">
+                <span>预付</span>
+            </div>
+            <div class="fitem">
+                <label>付款方式:</label>
+                <?php foreach(C('ORDER_PAYMENT') as $k => $v) { ?>
+                    <input class="easyui-validatebox" name="payment_method" type="radio" value="<?php echo $k ?>" required="true">
+                    <span><?php echo $v ?></span>
+                <?php }?>
+            </div>
+            <div class="fitem">
+                <label>预计价格:</label>
+                <input name="reference_price" class="easyui-textbox" disabled="true">
+            </div>
+            <div class="fitem">
+                <label>实际价格:</label>
+                <input name="actual_price" class="easyui-textbox" disabled="true">
+            </div>
+            <div class="fitem">
+                <label>已付金额:</label>
+                <input name="paid_amount" class="easyui-textbox" disabled="true">
+            </div>
+            <div class="fitem">
+                <label>付款记录:</label>
+                <select class="easyui-combobox" limitToList="true" id="third_party_number" name='third_party_number' valueField="number" textField="number" style="width:250px;">
+                </select>
+                &nbsp;&nbsp;&nbsp;&nbsp;
+                <span>退款金额：</span>
+                <input name="refund_amount" class="easyui-textbox" required="true">
+            </div>            
+        </form>
+    </div>
+    <div id="dlg-buttons">
+        <a href="javascript:void(0)" class="easyui-linkbutton c6" iconCls="icon-ok" onclick="saveRefundItem('#fm-refund')" style="width:90px">保存</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg-refund').dialog('close')" style="width:90px">取消</a>
+    </div>
+</body>
+</html>

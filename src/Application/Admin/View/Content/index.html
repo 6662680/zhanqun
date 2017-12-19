@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>index</title>
+
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/default/easyui.css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/icon.css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/css/user.css">
+
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/js/user.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/UEditor/ueditor.config.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/UEditor/ueditor.all.min.js"></script>
+    <script type="text/javascript" charset="utf-8" src="__PUBLIC__/vendor/UEditor/lang/zh-cn/zh-cn.js"></script>
+    <script type="text/javascript" charset="utf-8" src="__PUBLIC__/vendor/UEditor/ueditor.parse.js"></script>
+    <style type="text/css">
+        .edui-popup-content.edui-default{ height: auto !important; }
+    </style>
+    <script type="text/javascript">
+
+        //实例化编辑器
+        //建议使用工厂方法getEditor创建和引用编辑器实例，如果在某个闭包下引用该编辑器，直接调用UE.getEditor('editor')就能拿到相关的实例
+        var ue = UE.getEditor('editor');
+
+        ue.imageUrl="/admin/Content/imageContent";
+
+
+        function isFocus(e){
+            alert(UE.getEditor('editor').isFocus());
+            UE.dom.domUtils.preventDefault(e)
+        }
+        function setblur(e){
+            UE.getEditor('editor').blur();
+            UE.dom.domUtils.preventDefault(e)
+        }
+        function insertHtml() {
+            var value = prompt('插入html代码', '');
+            UE.getEditor('editor').execCommand('insertHtml', value)
+        }
+        function createEditor() {
+            enableBtn();
+            UE.getEditor('editor');
+        }
+        function getAllHtml() {
+            alert(UE.getEditor('editor').getAllHtml())
+        }
+
+        function getPlainTxt() {
+            var arr = [];
+            arr.push("使用editor.getPlainTxt()方法可以获得编辑器的带格式的纯文本内容");
+            arr.push("内容为：");
+            arr.push(UE.getEditor('editor').getPlainTxt());
+            alert(arr.join('\n'))
+        }
+        function setContent(isAppendTo,centent) {
+            var arr = [];
+            //arr.push("使用editor.setContent('欢迎使用ueditor')方法可以设置编辑器的内容");
+            UE.getEditor('editor').setContent(centent, isAppendTo);
+            //alert(arr.join("\n"));
+        }
+        function setDisabled() {
+            UE.getEditor('editor').setDisabled('fullscreen');
+            disableBtn("enable");
+        }
+
+        function setEnabled() {
+            UE.getEditor('editor').setEnabled();
+            enableBtn();
+        }
+
+        function getText() {
+            //当你点击按钮时编辑区域已经失去了焦点，如果直接用getText将不会得到内容，所以要在选回来，然后取得内容
+            var range = UE.getEditor('editor').selection.getRange();
+            range.select();
+            var txt = UE.getEditor('editor').selection.getText();
+            alert(txt)
+        }
+
+        function getContentTxt() {
+            var arr = [];
+            arr.push("使用editor.getContentTxt()方法可以获得编辑器的纯文本内容");
+            arr.push("编辑器的纯文本内容为：");
+            arr.push(UE.getEditor('editor').getContentTxt());
+            alert(arr.join("\n"));
+        }
+        function hasContent() {
+            var arr = [];
+            arr.push("使用editor.hasContents()方法判断编辑器里是否有内容");
+            arr.push("判断结果为：");
+            arr.push(UE.getEditor('editor').hasContents());
+            alert(arr.join("\n"));
+        }
+        function setFocus() {
+            UE.getEditor('editor').focus();
+        }
+        function deleteEditor() {
+            disableBtn();
+            UE.getEditor('editor').destroy();
+        }
+        function disableBtn(str) {
+            var div = document.getElementById('btns');
+            var btns = UE.dom.domUtils.getElementsByTagName(div, "button");
+            for (var i = 0, btn; btn = btns[i++];) {
+                if (btn.id == str) {
+                    UE.dom.domUtils.removeAttributes(btn, ["disabled"]);
+                } else {
+                    btn.setAttribute("disabled", "true");
+                }
+            }
+        }
+        function enableBtn() {
+            var div = document.getElementById('btns');
+            var btns = UE.dom.domUtils.getElementsByTagName(div, "button");
+            for (var i = 0, btn; btn = btns[i++];) {
+                UE.dom.domUtils.removeAttributes(btn, ["disabled"]);
+            }
+        }
+
+        function getLocalData () {
+            alert(UE.getEditor('editor').execCommand( "getlocaldata" ));
+        }
+
+        function clearLocalData () {
+            UE.getEditor('editor').execCommand( "clearlocaldata" );
+            alert("已清空草稿箱")
+        }
+    </script>
+</head>
+
+<script type="text/javascript">
+
+    function addTab(title, url){
+        if ($('#tt').tabs('exists', title)){
+            $('#tt').tabs('select', title);
+        } else {
+
+            var content = '<iframe scrolling="auto" frameborder="0"  src="' + url + '" style="width:100%;height:1000px;"></iframe>';
+            $('#tt').tabs('add',{
+                title:title,
+                content:content,
+                closable:true
+            });
+        }
+    }
+
+//    function formatImg(value, url){
+//       alert(value);
+//       if (typeof(value) == "undefined" || typeof(value) == "") {
+//           return '<span class="label label-bg3">未上传</span>';
+//       } else {
+//           return '<span class="label label-bg2">已上传</span>';
+//       }
+//    }
+
+    function formType(value, url){
+
+        if (value == 1) {
+            return '闪修侠动态';
+        } else {
+            return '媒体报道';
+        }
+    }
+
+    $(function() {
+        // 隐藏显示
+        $('#type').combobox({
+            onChange: function (newValue, oldValue) {
+
+                if (newValue == 0) {
+                    $('.type0').css('display', 'block');
+                    $('.type1').css('display', 'none');
+                    $('.type0').attr('required', true);
+                } else {
+                    $('.type0').hide();
+                    $('.type1').show();
+                    $('.type1').attr('required', true);
+                }
+
+            }
+        });
+    })
+
+
+</script>
+<body class="easyui-layout">
+
+
+<table id="dg" title="文章" class="easyui-datagrid" style="width:100%;"
+           url="/admin/content/rows"
+           toolbar="#toolbar"
+           rownumbers="true" fitColumns="true" singleSelect="true" pagination="true" pagesize="20">
+        <thead>
+        <tr>
+            <th field="id" width="5%">id</th>
+            <!--<th field="menu_title" width="10%">栏目</th>-->
+            <th field="type" formatter="formType" width="5%">类型</th>
+            <th field="title" width="10%">标题</th>
+            <th field="introduction" width="10%">简介</th>
+            <th field="source" width="10%">来源</th>
+            <th field="url" width="10%">跳转页面</th>
+            <th field="create_time" formatter="formatDate" width="10%">创建时间</th>
+            <!--<th field="update_time" formatter="formatDate" width="10%">更新时间</th>-->
+            <th field="status" formatter="formatStatus" width="5%">状态</th>
+            <th field="cover_img"  width="5%">封面图片</th>
+            <th field="media_img"  width="5%">媒体图片</th>
+            <th field="action" formatter="formatAllotButton"  width="20%">操作</th>
+        </tr>
+        </thead>
+    </table>
+
+    <div id="toolbar">
+        <span>搜索选项:</span>
+        <select class="easyui-combobox" id='search-status' panelHeight="auto">
+            <option value="0">全部</option>
+            <option value="1">启用</option>
+            <option value="2">禁用</option>
+        </select>
+        <select class="easyui-combobox" id='search-type' panelHeight="auto">
+            <option value="title">标题</option>
+            <option value="content">内容</option>
+        </select>
+        &nbsp;&nbsp;
+        标题和内容:
+        <input type="text" class="easyui-textbox" id='search-keyword' panelHeight="auto">
+        <a href="javascript:void(0)" class="easyui-linkbutton" plain="true" iconCls="icon-search" onclick="searchItem()">搜索</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-add" plain="true" onclick="add()">新增文章</a>
+    </div>
+    <div id="dlg" class="easyui-dialog" style="width:800px;height:900px;padding:10px 20px"
+         closed="true" buttons="#dlg-buttons"  >
+        <div class="ftitle">栏目管理</div>
+        <form id="fm" method="post" enctype="multipart/form-data">
+            <div class="fitem">
+                <div class="fitem">
+                    <label>公告类型:</label>
+                    <select class="easyui-combobox " id='type' name="type" panelHeight="auto" required="true">
+                        <option value="0">媒体报道</option>
+                        <option value="1">闪修侠动态</option>
+                    </select>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    <!--<label>栏目:</label>-->
+                    <!--<input name="menu_title" class="easyui-text box" prompt="栏目" required="true" >-->
+                </div>
+                <div class="fitem">
+                    <label>标题:</label>
+                    <input name="title" class="easyui-textbox" prompt="标题" required="true" >
+                    &nbsp;&nbsp;&nbsp;
+                    <label>简介:</label>
+                    <input name="introduction" id="introduction" class="easyui-textbox"  prompt="简介" required="true" >
+                </div>
+
+                <div class="fitem type0">
+                    <label>来源:</label>
+                    <input name="source" class="easyui-textbox" style="display:block;" prompt="来源" >
+                    &nbsp;&nbsp;&nbsp;
+                    <label>跳转链接:</label>
+                    <input name="url" class="easyui-textbox" style="display:block;" prompt="请输入完整的链接"  >
+                </div>
+                <div class="fitem">
+
+                    <label>封面图片:</label>
+                    <input class="easyui-filebox " style="display:block;" name="cover_img" id="cover_img">
+
+                    &nbsp;&nbsp;&nbsp;
+                    <label>品牌图片:</label>
+                    <input class="easyui-filebox " style="display:block;" name="media_img" id="media_img">
+
+                </div>
+                <div class="fitem">
+                    <label>排序:</label>
+                    <input name="sorting" class="easyui-textbox" prompt="排序" required="true">
+                    <!--<label>创建时间:</label>-->
+
+                    <!--<input name="create_time" id="box" class="easyui-datetimebox"  prompt="创建时间" >-->
+                    &nbsp;&nbsp;&nbsp;
+                    <label>状态:</label>
+                    启用:
+                    <input class="easyui-validatebox" name="status" type="radio" required="true" value="1" validType="requireRadio['input[name=\'status\']']">
+                    禁用:
+                    <input class="easyui-validatebox" name="status" type="radio" required="true" value="0">
+                </div>
+                <div class ="fitem type1">
+                    <label></label>
+                    <script id="editor" name="content" class="type1" type="text/plain" style="display:none; width:700px;height:500px;"></script>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div id="win" class="easyui-window" title="My Window" closed="true" style="min-width:300px;min-height:100px;padding:5px;">
+    </div>
+    <div id="dlg-buttons">
+        <a href="#" class="easyui-linkbutton" iconCls="icon-ok" onclick="saveUser()">保持</a>
+        <a href="#" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg').dialog('close')">取消</a>
+    </div>
+<div id="mm" style="width:120px;">
+    <div iconCls="icon-add" onclick="add()"><span>添加</span></div>
+    <div iconCls="icon-edit" onclick="edit()"><span>编辑</span></div>
+    <div iconCls="icon-remove" onclick="destroy()"><span>删除</span></div>
+    <div iconCls="icon-member" onclick="getContent()"><span>查看内容</span></div>
+</div>
+
+<div id="rowmenu" class="hide">
+    <a href="javascript:void(0)" class="easyui-linkbutton btn-pass" iconCls="icon-content" plain="true" onclick="selectedRow($(this));getContent();">查看内容</a>
+    <a href="javascript:void(0)" class="easyui-linkbutton btn-edit" iconCls="icon-edit" plain="true" onclick="selectedRow($(this));edit()">编辑</a>
+    <a href="javascript:void(0)" class="easyui-linkbutton btn-remove" iconCls="icon-remove" plain="true" onclick="selectedRow($(this));destroy()">删除</a>
+</div>
+</body>
+<script type="text/javascript">
+
+
+        function searchItem(){
+            $('#dg').datagrid({
+                queryParams: {
+                    type: $('#search-type').combobox('getValue'),
+                    status: $('#search-status').combobox('getValue'),
+                    keyword: $('#search-keyword').val(),
+                }
+            });
+        }
+
+        function add(){
+            setContent('','');
+            $('#dlg').dialog('open').dialog('center').dialog('setTitle', '添加');
+            $('#fm').form('clear');
+            url = '/admin/Content/add';
+
+        }
+        function edit(){
+            var row = $('#dg').datagrid('getSelected');
+            if (row){
+                $('#dlg').dialog('open').dialog('center').dialog('setTitle', '编辑');
+                $('#fm').form('load', row);
+
+               setContent('', row.content);
+                $('#box').datetimebox('setValue',formatCustomDate(row.create_time));
+                url = '/admin/Content/edit/id/'+ row.id;
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+        function getContent(){
+            var row = $('#dg').datagrid('getSelected');
+            if (row){
+
+                if (row.type == 0) {
+                    window.open('http://'+row.url);
+                }
+
+                if (row.type == 1) {
+
+                }
+//                $.post('/admin/content/getContent',{id:row.id},function(result){
+//                    $("#win").empty();
+//                    $("#win").append(result.content);
+//                    var text = $("#win").text();
+//                    $("#win").empty();
+//                    $("#win").append(text);
+//                    $('#win').window('open');
+//                },'json');
+//                $('#fm').form('clear');
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+        function destroy(){
+            var row = $('#dg').datagrid('getSelected');
+            if (row){
+                $.messager.confirm('Confirm', '确认删除此记录?',function(r){
+                    if (r){
+                        $.post('/admin/Content/destroy',{id:row.id},function(result){
+                            if (result.success){
+                                $('#dg').datagrid('reload');
+                            } else {
+                                $.messager.show({
+                                    title: '错误',
+                                    msg: result.errorMsg,
+                                    showType:'fade',
+                                    style:{
+                                        right:'',
+                                        bottom:''
+                                    }
+                                });
+                            }
+                        },'json');
+                    }
+                });
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+        //行操作按钮
+        function formatAllotButton(value, row, index)
+        {
+            return  $('#rowmenu .btn-pass').prop("outerHTML") + $('#rowmenu .btn-edit').prop("outerHTML") + $('#rowmenu .btn-remove').prop("outerHTML");
+        }
+
+        function saveUser(){
+            $('#fm').form('submit',{
+                url: url,
+                onSubmit: function(){
+                    return $(this).form('validate');
+                },
+                success: function(result){
+                    var result = eval('('+result+')');
+                    if (result.errorMsg){
+                        $.messager.show({
+                            title: 'Error',
+                            msg: result.errorMsg
+                        });
+                    } else {
+                        $('#dlg').dialog('close');		// close the dialog
+                        $('#dg').datagrid('reload');	// reload the user data
+                    }
+                }
+            });
+        }
+        $(function(){
+            $('#mm').menu();
+            $(document).bind('contextmenu',function(e){
+                e.preventDefault();
+                $('#mm').menu('show', {
+                    left: e.pageX,
+                    top: e.pageY
+                });
+            });
+        });
+</script>
+</html>

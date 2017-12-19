@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>user</title>
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/default/easyui.css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/icon.css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/css/user.css">
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/js/user.js"></script>
+    <script type="text/javascript">
+        var url;
+
+        function newItem(){
+            $('#dlg').dialog('open').dialog('center').dialog('setTitle', '添加');
+            $('#fm').form('clear');
+            url = '/admin/phone/phomalAdd';
+        }
+
+        function editItem(){
+            var row = $('#dg').datagrid('getSelected');
+            
+            if (row){
+
+                $('#fm').form('clear');
+                $('#dlg').dialog('open').dialog('center').dialog('setTitle','编辑');
+                url = '/admin/phone/phomalSave/id/' + row.id;
+                $('#fm').form('load', row);
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+        function saveItem() {
+            $('#fm').form('submit',{
+                url: url,
+                onSubmit: function(){
+
+                    if ($(this).form('validate')) {
+                        $('#load').dialog('open');
+                        $('#phone').val($('#phone_id').combobox('getText'));
+                        $('#malfunction').val($('#malfunction_id').combobox('getText'));
+                        return true;
+                    } else {
+                        $('#load').dialog('close');
+                        return false;
+                    }
+                },
+                success: function(result){
+                    $('#load').dialog('close');
+                    var result = eval('('+result+')');
+
+                    if (result.success){
+                        $('#dlg').dialog('close');
+                        $('#dg').datagrid('reload');
+                    } else {
+                        $.messager.show({
+                            title: '错误',
+                            msg: result.errorMsg,
+                            showType:'fade',
+                            style:{
+                                right:'',
+                                bottom:''
+                            }
+                        });
+                    }
+                }
+            });
+        }
+
+        function deleteItem(){
+            var row = $('#dg').datagrid('getSelected');
+            if (row){
+                $.messager.confirm('Confirm', '确认删除此记录?',function(r){
+                    if (r){
+                        $.post('/admin/phone/phomalDelete',{id:row.id},function(result){
+                            if (result.success){
+                                $('#dg').datagrid('reload');
+                            } else {
+                                $.messager.show({
+                                    title: '错误',
+                                    msg: result.errorMsg,
+                                    showType:'fade',
+                                    style:{
+                                        right:'',
+                                        bottom:''
+                                    }
+                                });
+                            }
+                        },'json');
+                    }
+                });
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+        function searchItem(){
+            $('#dg').datagrid({
+                queryParams: {
+                    phone_id: $('#search-phone').textbox('getValue'),
+                    malfunction_id: $('#search-malfunction').textbox('getValue'),
+                    keyword: $('#search-keyword').textbox('getValue')
+                }
+            });
+        }
+
+        function addFitting() {
+            var colorId = $('#fittings').data('id');
+
+            if (colorId == undefined) {
+                var container = $('#addFittings').next('ul');
+            } else {
+                var container = $('#color_' + colorId).children('ul');
+            }
+
+            console.log(container);
+
+            container.html('');
+            $('#fittings input:checked').each(function(){
+                $(this).parent('li').appendTo(container);
+            });
+            $('#ft').dialog('close');
+        }
+
+        function addWaste() {
+            var container = $('#addWastes').next('ul');
+
+            container.html('');
+            $('#wastes input:checked').each(function(){
+                $(this).parent('li').appendTo(container);
+            });
+            $('#wt').dialog('close');
+        }
+
+        function fittingFormatter(value, row, index){
+        	
+        	if (!value) {
+        		return '';
+        	}
+        	
+            var fittings = $.parseJSON(row.fitting);
+            var str = '';
+
+            if (row.is_color < 1) {
+                for (var i in fittings) {
+                    str += fittings[i].name + ' * ' + fittings[i].amount + '<br/>';
+                }
+            } else {
+                for (var i in fittings) {
+                    str += '(' + fittings[i]['name'] + ')' + '<br/>';
+
+                    for (var j in fittings[i]['items']) {
+                        str += fittings[i]['items'][j].name + ' * ' + fittings[i]['items'][j].amount + '<br/>';
+                    }
+
+                    str+= '----------<br/>';
+                }
+            }
+
+            return str;
+        }
+
+        function fittingWaste(value, row, index){
+        	
+        	if (!value) {
+        		return '';
+        	}
+        	
+            var wastes = $.parseJSON(row.waste);
+            var str = '';
+
+            for (var i in wastes) {
+                str += wastes[i].name + ' * ' + wastes[i].amount + '<br/>';
+            }
+
+            return str;
+        }
+
+        function is_easy(value){
+            if (value == 1){
+                return '热门';
+            } else {
+                return '冷门';
+            }
+        }
+
+        $(function(){
+            // 右键菜单
+            $('#mm').menu();
+            $(document).bind('contextmenu',function(e){
+                e.preventDefault();
+                $('#mm').menu('show', {
+                    left: e.pageX,
+                    top: e.pageY
+                });
+            });
+
+            // 颜色数据
+            $('#phone_id').combobox({
+                onChange: function(newValue, oldValue){
+                    $('#fitting-color-container').html('');
+                    $('#fittings').html('');
+                    $('#waste-container').html('');
+                    $('#wastes').html('');
+                    $('#colors').html('');
+
+                    $.get('/admin/phone/colors', {id: newValue}, function(data) {
+
+                        if (data.length > 0) {
+                            
+                            for (var i = 0; i < data.length; i++) {
+                                var str = '<span>' + data[i].name + '</span>'
+
+                                if ($('#color_' + data[i].id + '_' + data[i].name).length >= 1) {
+                                    str += '<input type="checkbox" class="color_fitting" id="co_' + data[i].id + '" value="' + data[i].id + '_' + data[i].name + '" checked="checked">&nbsp;';
+                                } else {
+                                    str += '<input type="checkbox" class="color_fitting" id="co_' + data[i].id + '" value="' + data[i].id + '_' + data[i].name + '">&nbsp;';
+                                }
+
+                                $('#colors').append(str);
+                            };
+                        };
+                    });
+                }
+            });
+
+            // 初始化
+            $('#fitting-color').hide();
+            $('#fitting').show();
+
+            // 是否区分颜色
+            $('input[name="is_color"]').change(function(){
+
+                if ($(this).val() == 1) {
+                    $('#fitting-color').show();
+                    $('#fitting').hide();
+                } else {
+                    $('#fitting-color').hide();
+                    $('#fitting').show();
+                }
+            });
+
+            // 不同颜色消耗不同配件
+            $('#fitting-color').delegate('.color_fitting', 'change', function(){
+                var color_id = $(this).val();
+
+                if ($(this).prop('checked') == true) {
+
+                    if ($('#color_' + color_id).length >= 1) {
+                        return;
+                    } else {
+                        var color = $(this).prev('span').text();
+
+                        var tmp = '<li id="color_' + color_id + '" style="border: 1px solid #000;padding: 5px;margin-top: 5px;">';
+                        tmp += '<span data-id="' + color_id + '">' + color + '</span>&nbsp;';
+                        tmp += '<a href="javascript:void(0)" class="fitting_add">配件管理</a>';
+                        tmp += '<ul style="list-style: none; padding: 10px;border-top: 1px dashed #000; margin-top: 5px;"></ul>';
+                        tmp += '</li>';
+
+                        $('#fitting-color-container').append(tmp);
+                    }
+                    
+                } else {
+                    $('#color_' + color_id).remove();
+                }
+            });
+
+            // 不同颜色添加配件
+            $('#fitting-color').delegate('.fitting_add', 'click', function() {
+                var phoneId = $('#phone_id').combobox('getValue');
+                var colorId = $(this).prev().data('id');
+                var addBtn = $(this);
+
+                $.get('/admin/phone/fittings', {phone_id: phoneId}, function(data) {
+
+                    if (data.length > 0) {
+                        $('#fittings').html('');
+                        $('#fittings').data('id', colorId);
+
+                        for (var i = 0; i < data.length; i++) {
+                            var str = '<li>';
+                            var color_fitting = addBtn.next('ul').find('li input[data-id="' + data[i].id + '"]');
+
+                            if (color_fitting.prop('checked')) {
+                                str += '<input type="checkbox" data-id="' + data[i].id + '" name="color[' + colorId + '][]" value="' + data[i].id + '_' + data[i].title + '(' + data[i].number + ')" checked="checked">';
+                                str += '<span>' + data[i].title + '(' + data[i].number + ')</span>';
+                                str += '&nbsp;*&nbsp;<span>数量：</span><input type="text" name="amount[' + colorId + '][]" value="' + color_fitting.nextAll('input').val() + '">';
+                            } else {
+                                str += '<input type="checkbox" data-id="' + data[i].id + '" name="color[' + colorId + '][]" value="' + data[i].id + '_' + data[i].title + '(' + data[i].number + ')">';
+                                str += '<span>' + data[i].title + '(' + data[i].number + ')</span>';
+                                str += '&nbsp;*&nbsp;<span>数量：</span><input type="text" name="amount[' + colorId + '][]" value="">';
+                            }
+
+                            str += '</li>';
+                            $('#fittings').append(str);
+                        };
+                    };
+                    
+                });
+
+                $('#ft').dialog('open').dialog('center').dialog('setTitle', '配件');
+            })
+
+            // 添加配件
+            $("#addFittings").click(function(){
+                var phoneId = $('#phone_id').combobox('getValue');
+                var addBtn = $(this);
+
+                $.get('/admin/phone/fittings', {phone_id: phoneId}, function(data) {
+
+                    if (data.length > 0) {
+                        $('#fittings').html('');
+
+                        for (var i = 0; i < data.length; i++) {
+                            var str = '<li>';
+                            var fitting = addBtn.next('ul').find('li input[data-id="' + data[i].id + '"]');
+
+                            if (fitting.prop('checked')) {
+                                str += '<input type="checkbox" data-id="' + data[i].id + '" name="fittings[]" value="' + data[i].id + '_' + data[i].title + '(' + data[i].number + ')" checked="checked">';
+                                str += '<span>' + data[i].title + '(' + data[i].number + ')</span>';
+                                str += '&nbsp;*&nbsp;<span>数量：</span><input type="text" name="fittings_amount[]" value="' + fitting.nextAll('input').val() + '">';
+                            } else {
+                                str += '<input type="checkbox" data-id="' + data[i].id + '" name="fittings[]" value="' + data[i].id + '_' + data[i].title + '(' + data[i].number + ')">';
+                                str += '<span>' + data[i].title + '(' + data[i].number + ')</span>';
+                                str += '&nbsp;*&nbsp;<span>数量：</span><input type="text" name="fittings_amount[]" value="">';
+                            }
+
+                            str += '</li>';
+                            $('#fittings').append(str);
+                        };
+                    };
+                    
+                });
+
+                $('#ft').dialog('open').dialog('center').dialog('setTitle', '配件');
+            })
+
+            // 添加废件
+            $("#addWastes").click(function(){
+                var phoneId = $('#phone_id').combobox('getValue');
+                var addBtn = $(this);
+
+                $.get('/admin/phone/wastes', {phone_id: phoneId}, function(data) {
+
+                    if (data.length > 0) {
+                        $('#wastes').html('');
+
+                        for (var i = 0; i < data.length; i++) {
+                            var str = '<li>';
+                            var waste = addBtn.next('ul').find('li input[data-id="' + data[i].id + '"]');
+
+                            if (waste.prop('checked')) {
+                                str += '<input type="checkbox" data-id="' + data[i].id + '" name="wastes[]" value="' + data[i].id + '_' + data[i].title + '(' + data[i].number + ')" checked="checked">';
+                                str += '<span>' + data[i].title + '(' + data[i].number + ')</span>';
+                                str += '&nbsp;*&nbsp;<span>数量：</span><input type="text" name="wastes_amount[]" value="' + waste.nextAll('input').val() + '">';
+                            } else {
+                                str += '<input type="checkbox" data-id="' + data[i].id + '" name="wastes[]" value="' + data[i].id + '_' + data[i].title + '(' + data[i].number + ')">';
+                                str += '<span>' + data[i].title + '(' + data[i].number + ')</span>';
+                                str += '&nbsp;*&nbsp;<span>数量：</span><input type="text" name="wastes_amount[]" value="">';  
+                            }
+
+                            str += '</li>';
+                            $('#wastes').append(str);
+                        };
+                    };
+                    
+                });
+
+                $('#wt').dialog('open').dialog('center').dialog('setTitle', '废件');
+            });
+
+            // 编辑
+            $('#fm').form({
+                onLoadSuccess: function(row) {
+                    // 配件
+                    var fittings = $.parseJSON(row.fitting);
+
+                    if (row.is_color == 1) {
+                        $('#fitting-color').show();
+                        $('#fitting').hide();
+                        $('#fitting-color-container').html('');
+
+                        var str = '';
+
+                        for (var i in fittings) {
+                            str += '<li id="color_' + i + '_' + fittings[i]['name'] + '" style="border: 1px solid #000;padding: 5px;margin-top: 5px;">';
+                            str += '<span data-id="' + i + '">' + fittings[i]['name'] + '</span>&nbsp;'; 
+                            str += '<a href="javascript:void(0)" class="fitting_add">配件管理</a>';
+                            str += '<ul style="list-style: none; padding: 10px;border-top: 1px dashed #000; margin-top: 5px;">';
+
+                            for (var j in fittings[i]['items']) {
+                                str += '<li>';
+                                str += '<input type="checkbox" data-id="' + fittings[i]['items'][j].id + '" name="color[' + i + '_' + fittings[i]['name'] + '][]" value="' + fittings[i]['items'][j].id + '_' + fittings[i]['items'][j].name + '" checked="checked">';
+                                str += '<span>' + fittings[i]['items'][j].name + '</span>';
+                                str += '&nbsp;*&nbsp;<span>数量：</span><input type="text" name="amount[' + i + '_' + fittings[i]['name'] + '][]" value="' + fittings[i]['items'][j].amount + '">';
+                                str += '</li>';
+                            };
+
+                            str += '</ul>';
+                            str += '</li>';
+                        }
+
+                        $('#fitting-color-container').append(str);
+                    } else {
+                        $('#fitting-color').hide();
+                        $('#fitting').show();
+                        $('#fitting ul').html('');
+
+                        var str = '';
+                        
+                        for (var i in fittings) {
+                            str += '<li>';
+                            str += '<input type="checkbox" data-id="' + fittings[i].id + '" name="fittings[]" value="' + fittings[i].id + '_' + fittings[i].name + '" checked="checked">';
+                            str += '<span>' + fittings[i].name + '</span>';
+                            str += '&nbsp;*&nbsp;<span>数量：</span><input type="text" name="fittings_amount[]" value="' + fittings[i].amount + '">';
+                            str += '</li>';
+                        };
+
+                        $('#fitting ul').append(str);
+                    }
+
+                    // 废件
+                    var wastes = $.parseJSON(row.waste);
+                    var str = '';
+                    $('#waste-container').html('');
+
+                    for (var i in wastes) {
+                        str += '<li>'; 
+                        str += '<input type="checkbox" data-id="' + wastes[i].id + '" name="wastes[]" value="' + wastes[i].id + '_' + wastes[i].name + '" checked="checked">';
+                        str += '<span>' + wastes[i].name + '</span>';
+                        str += '&nbsp;*&nbsp;<span>数量：</span><input type="text" name="wastes_amount[]" value="' + wastes[i].amount + '">';
+                        str += '</li>'; 
+                    }
+                    
+                    $('#waste-container').append(str);
+                }
+            });
+        });
+    </script>
+</head>
+<body class="easyui-layout">
+    <table id="dg" title="故障列表" class="easyui-datagrid" style="width:100%;max-height:800px;" url="/admin/phone/phomalRows" toolbar="#toolbar" pagination="true" pageSize="30" pagePosition="top" rownumbers="true" fitColumns="true" singleSelect="true" rownumbers="true" pagination="true">
+        <thead>
+            <tr>
+                <th field="id" width="5">ID</th>
+                <th field="phone" width="10">机型</th>
+                <th field="malfunction" width="10">故障</th>
+                <th field="price_market" width="10">市场价格</th>
+                <th field="price_reference" width="10">预计价格</th>
+                <th field="divide_local" width="10">分成(本部)</th>
+                <th field="divide_platform" width="10">分成(平台)</th>
+                <th field="fitting" width="40" formatter="fittingFormatter">配件</th>
+                <th field="waste" width="35" formatter="fittingWaste">废料</th>
+                <th field="remark" width="20">备注</th>
+                <th field="easy_function" formatter="is_easy" width="5">是否热门</th>
+                <th field='action' width="20" formatter="formatRowActionButton">操作</th>
+            </tr>
+        </thead>
+    </table>
+    <div id="toolbar">
+        <span>机型:</span>
+        <select class="easyui-combobox" limitToList="true" id='search-phone' url="/admin/phone/phones" valueField="id" textField="alias" style="width:150px;">
+        </select>
+        &nbsp;&nbsp;
+        <span>故障:</span>
+        <select class="easyui-combobox" limitToList="true" id='search-malfunction' url="/admin/phone/malfunctions" valueField="id" textField="name" style="width:150px;">
+        </select>
+        &nbsp;&nbsp;
+        <span>关键字:</span>
+        <input type="text" class="easyui-textbox" id='search-keyword' panelHeight="auto">
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-search" plain="true" onclick="searchItem()">搜索</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['添加'])) { echo 'hide';} ?>" iconCls="icon-add" plain="true" onclick="newItem()">添加</a>
+    </div>
+    <div id="mm" style="width:120px;">
+        <div iconCls="icon-add" class="<?php if(!isset($buttons['添加'])) { echo 'hide';} ?>" onclick="newItem()"><span>添加</span></div>
+        <div iconCls="icon-edit" class="<?php if(!isset($buttons['编辑'])) { echo 'hide';} ?>" onclick="editItem()"><span>编辑</span></div>
+        <div iconCls="icon-remove" class="<?php if(!isset($buttons['删除'])) { echo 'hide';} ?>" onclick="deleteItem()"><span>删除</span></div>
+    </div>
+    <div id="rowmenu" class="hide">
+       <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['编辑'])) { echo 'hide';} ?>" iconCls="icon-edit" plain="true" onclick="selectedRow($(this));editItem();">编辑</a>
+       <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['删除'])) { echo 'hide';} ?>" iconCls="icon-remove" plain="true" onclick="selectedRow($(this));deleteItem();">删除</a>
+    </div>
+    <div id="dlg" class="easyui-dialog" style="width:600px;max-height:400px;padding:10px 20px" closed="true" buttons="#dlg-buttons">
+        <form id="fm" method="post">
+            <div class="fitem">
+                <label>机型:</label>
+                <select class="easyui-combobox" limitToList="true" name="phone_id" id="phone_id" url="/admin/phone/phones" valueField="id" textField="alias" prompt="机型" required="true" style="width:150px;">
+                </select>
+                <input type="hidden" name="phone" id="phone" value="">
+            </div>
+            <div class="fitem">
+                <label>故障:</label>
+                <select class="easyui-combobox" limitToList="true" name="malfunction_id" id="malfunction_id" url="/admin/phone/malfunctions" valueField="id" textField="name" prompt="故障" required="true" style="width:150px;">
+                </select>
+                <input type="hidden" name="malfunction" id="malfunction" value="">
+            </div>
+            <div class="fitem">
+                <label>市场价格:</label>
+                <input name="price_market" id="price_market" class="easyui-textbox" prompt="市场价格"  data-options="required:true">
+            </div>
+            <div class="fitem">
+                <label>预计价格:</label>
+                <input name="price_reference" id="price_reference" class="easyui-textbox" prompt="预计价格"  data-options="required:true">
+            </div>
+            <div class="fitem">
+                <label>分成(本部):</label>
+                <input name="divide_local" id="divide_local" class="easyui-textbox" prompt="分成"  data-options="required:true">
+            </div>
+            <div class="fitem">
+                <label>分成(平台):</label>
+                <input name="divide_platform" id="divide_platform" class="easyui-textbox" prompt="分成"  data-options="required:true">
+            </div>
+            <div class="fitem">
+                <label>是否区分颜色:</label>
+                <span>是</span>
+                <input type="radio" name="is_color" id="is_color" value="1" data-options="required:true">
+                &nbsp;&nbsp;
+                <span>否</span>
+                <input type="radio" name="is_color" id="no_color" value="0">
+            </div>
+            <div class="fitem">
+                <p>配件：</p>
+                <div id="fitting-color" class="easyui-panel" style="padding:10px;">
+                    <div id="colors"></div>
+                    <hr/>
+                    <ul id="fitting-color-container" style="list-style: none;padding: 0;"></ul>
+                </div>
+                <div id="fitting" class="easyui-panel" style="padding:10px;">
+                    <a href="javascript:void(0);" class="easyui-linkbutton" id="addFittings">添加配件</a>
+                    <ul></ul>
+                </div>
+            </div>
+            <div class="fitem">
+                <p>废件：</p>
+                <div id="waste" class="easyui-panel" style="padding:10px;">
+                    <a href="javascript:void(0);" class="easyui-linkbutton" id="addWastes">添加废料</a>
+                    <ul id="waste-container"></ul>
+                </div>
+            </div>
+            <div class="fitem">
+                <label>是热门故障:</label>
+                <span>是</span>
+                <input type="radio" name="easy_function" id="is_easy" value="1" data-options="required:true">
+                &nbsp;&nbsp;
+                <span>否</span>
+                <input type="radio" name="easy_function" id="no_easy" value="0">
+            </div>
+            <div class="fitem">
+                <label>备注:</label>
+                <input name="remark" class="easyui-textbox" prompt="备注" multiline="true">
+            </div>
+        </form>
+    </div>
+    <div id="dlg-buttons">
+        <a href="javascript:void(0)" class="easyui-linkbutton c6" iconCls="icon-ok" onclick="saveItem()" style="width:90px">保存</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg').dialog('close')" style="width:90px">取消</a>
+    </div>
+
+    <div id="ft" class="easyui-dialog" style="width:500px;height:300px;padding:10px 20px" closed="true" buttons="#ft-buttons">
+        <ul id="fittings"></ul>
+    </div>
+    <div id="ft-buttons">
+        <a href="javascript:void(0)" class="easyui-linkbutton c6" iconCls="icon-ok" onclick="addFitting()" style="width:90px">确定</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#ft').dialog('close')" style="width:90px">取消</a>
+    </div>
+
+    <div id="wt" class="easyui-dialog" style="width:500px;height:300px;padding:10px 20px" closed="true" buttons="#wt-buttons">
+        <ul id="wastes"></ul>
+    </div>
+    <div id="wt-buttons">
+        <a href="javascript:void(0)" class="easyui-linkbutton c6" iconCls="icon-ok" onclick="addWaste()" style="width:90px">确定</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#wt').dialog('close')" style="width:90px">取消</a>
+    </div>
+
+    <div id="load" class="easyui-dialog" title="消息" closed="true" style="width:200px;height:100px;padding:10px">
+        <span>处理中...</span>
+    </div>
+</body>
+</html>

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>user</title>
+	<link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/default/easyui.css">
+	<link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/icon.css">
+	<link rel="stylesheet" type="text/css" href="__PUBLIC__/css/user.css">
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/js/user.js"></script>
+    <script type="text/javascript">
+        var url;
+
+        function newItem(){
+            $('#dlg').dialog('open').dialog('center').dialog('setTitle', '添加');
+            $('#fm').form('clear');
+            url = '/admin/goods/brandAdd';
+        }
+
+        function editItem(){
+            var row = $('#dg').datagrid('getSelected');
+            if (row){
+                $('#dlg').dialog('open').dialog('center').dialog('setTitle','编辑');
+                $('#fm').form('load', row);
+                url = '/admin/goods/brandSave/id/' + row.id;
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+        function saveItem(form) {
+            $('#fm').form('submit',{
+                url: url,
+                onSubmit: function(){
+                    if ($(this).form('validate')) {
+                        $('#load').dialog('open');
+                    };
+                    return $(this).form('validate');
+                },
+                success: function(result){
+                    $('#load').dialog('close');
+                    var result = eval('('+result+')');
+                    $.messager.show({
+                        title: '提醒',
+                        msg: result.errorMsg,
+                        showType:'fade',
+                        style:{
+                            right:'',
+                            bottom:''
+                        }
+                    });
+                }
+            });
+        }
+
+        function deleteItem(){
+            var row = $('#dg').datagrid('getSelected');
+            if (row){
+                $.messager.confirm('Confirm', '确认删除此记录?',function(r){
+                    if (r){
+                        $.post('/admin/goods/brandDelete',{id:row.id},function(result){
+                            if (result.success){
+                                $('#dg').datagrid('reload');
+                            } else {
+                                $.messager.show({
+                                    title: '错误',
+                                    msg: result.errorMsg,
+                                    showType:'fade',
+                                    style:{
+                                        right:'',
+                                        bottom:''
+                                    }
+                                });
+                            }
+                        },'json');
+                    }
+                });
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+        function searchItem(){
+            $('#dg').datagrid({
+                queryParams: {
+                    status: $('#search-status').combobox('getValue'),
+                }
+            });
+        }
+
+        $(function(){
+            $('#mm').menu();
+            $(document).bind('contextmenu',function(e){
+                e.preventDefault();
+                $('#mm').menu('show', {
+                    left: e.pageX,
+                    top: e.pageY
+                });
+            });
+        });
+    </script>
+</head>
+<body class="easyui-layout">
+    <div id="p" class="easyui-panel" title="个人中心" style="width:100%;height:400px;padding:10px;" buttons="#dlg-buttons">
+        <form id="fm" method="post">
+            <div class="fitem">
+                <label>账号:</label>
+                <?php echo $_SESSION['userInfo']['username']?>
+            </div>
+            &nbsp;
+            <div class="fitem">
+                <label>角色:</label>
+                <?php echo $_SESSION['isRoot'] == true ? '超级管理员' : $_SESSION['userInfo']['role'] ?>
+            </div>
+            &nbsp;
+            <div class="fitem">
+                <label>名称:</label>
+                <input name="realname" class="easyui-textbox" <?php echo $_SESSION['isRoot'] == 1 ?  'disabled= disabled' : '' ?> value="<?php echo $_SESSION['userInfo']['realname']?>" data-options="required:true">
+            </div>
+            &nbsp;
+            <div class="fitem">
+                <label>手机号码:</label>
+                <input name="telphone" class="easyui-textbox" value="<?php echo $_SESSION['userInfo']['telphone']?>" data-options="required:true">
+            </div>
+            &nbsp;
+            <div class="fitem">
+                <label>最后登录IP:</label>
+               <?php echo $_SESSION['userInfo']['last_login_ip']?>
+            </div>
+            &nbsp;
+            <div class="fitem">
+                <label>最后登录时间:</label>
+                <?php echo date('Y-m-d H:i:s', $_SESSION['userInfo']['last_login_time']); ?>
+            </div>
+        </form>
+
+        <div id="dlg-buttons" style="margin-left: 110px;" >
+            <a href="javascript:void(0)" class="easyui-linkbutton c6" iconCls="icon-ok" onclick="saveItem()" style="width:90px">保存</a>
+            <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg').dialog('close')" style="width:90px">取消</a>
+        </div>
+    </div>
+
+    <!--<div id="load" class="easyui-dialog" title="消息" closed="true" style="width:200px;height:100px;padding:10px">
+        <span>处理中...</span>
+    </div>-->
+</body>
+</html>

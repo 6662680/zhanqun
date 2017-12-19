@@ -1,0 +1,323 @@
+<!DOCTYPE HTML>
+<html>
+<include file="common/header" />
+<body>
+<div class="demo-content">
+    <div class="row">
+        <div class="offset1 doc-content">
+            <form id="search_form" class="form-panel" method="get" action="<?php echo U(MODULE_NAME . '/' . CONTROLLER_NAME .'/search'); ?>">
+                <div class="panel-title">
+                    <span>
+                        <label for="search_start_time">查询：</label>
+                        <input type="text" class="calendar" name="start_time" id="search_start_time" value="<?php echo $_GET['start_time']?>">
+                        <label for="search_end_time">至</label>
+                        <input type="text" class="calendar" name="end_time" id="search_end_time" value="<?php echo $_GET['end_time']?>">
+                    </span>
+                </div>
+
+                <ul class="panel-content">
+                    <li>
+                        来路地区：
+                        <input type="text" id="area" name="area"  value="<?php echo $_GET['area'] ?>"/>
+                        &nbsp;&nbsp;
+                        <label for="J_partner">搜索引擎：</label>
+                        <select name="partner" id="J_partner" value="<?php if(!empty($get['phone_id'])){ echo $get['phone_id'];}?>" style="width:200px">
+                            <option value="0" <?php if($_GET['partner']=="0" || $_GET['type']==''){ echo 'selected="selected"';}?>>所有</option>
+                            <option value="1" <?php if($_GET['partner']=="1"){ echo 'selected="selected"';}?>>所有搜索引擎来路</option>
+                            <option value="2" <?php if($_GET['partner']=="2"){ echo 'selected="selected"';}?>>百度PC&手机</option>
+                            <option value="百度PC" <?php if($_GET['partner']=="百度PC"){ echo 'selected="selected"';}?>>百度PC</option>
+                            <option value="手机百度" <?php if($_GET['partner']=="手机百度"){ echo 'selected="selected"';}?>>手机百度</option>
+                            <option value="百度贴吧" <?php if($_GET['partner']=="百度贴吧"){ echo 'selected="selected"';}?>>百度贴吧</option>
+                            <option value="谷歌" <?php if($_GET['partner']=="谷歌"){ echo 'selected="selected"';}?>>谷歌</option>
+                            <option value="360" <?php if($_GET['partner']=="360"){ echo 'selected="selected"';}?>>360</option>
+                            <option value="搜狗" <?php if($_GET['partner']=="搜狗"){ echo 'selected="selected"';}?>>搜狗</option>
+                            <option value="神马搜索" <?php if($_GET['partner']=="神马搜索"){ echo 'selected="selected"';}?>>神马搜索</option>
+                            <option value="微信" <?php if($_GET['partner']=="微信"){ echo 'selected="selected"';}?>>微信</option>
+
+                        </select>
+                    </li>
+                    <li>
+                       订单查询：
+                        <input type="text" id="order_number" name="order_number" value="<?php echo ($_GET['order_number']); ?>"/>
+
+                        &nbsp;&nbsp;
+                        <label for="search_payment_method">下单类型：</label>
+                        <select name="type" id="search_payment_method" value="<?php if(!empty($get['payment_method'])){ echo $get['payment_method'];}?>">
+                            <option value="-1" <?php if($_GET['type']==-1 || $_GET['type']==''){ echo 'selected="selected"';}?>>全部</option>
+                            <option value="-2" <?php if($_GET['type']==-2){ echo 'selected="selected"';}?>>已下单</option>
+                            <option value="-3" <?php if($_GET['type']==-3){ echo 'selected="selected"';}?>>未下单</option>
+                            <option value="1" <?php if($_GET['type']==1){ echo 'selected="selected"';}?>>维修</option>
+                            <option value="2" <?php if($_GET['type']==2){ echo 'selected="selected"';}?>>回收</option>
+                            <option value="3" <?php if($_GET['type']==3){ echo 'selected="selected"';}?>>新机购买</option>
+                            <option value="4" <?php if($_GET['type']==4){ echo 'selected="selected"';}?>>换新</option>
+
+                        </select>
+                        &nbsp;&nbsp;
+                        着陆页面模糊查询(模糊)：
+                        <input type="text" id="dedark" name="dedark" value="<?php echo $_GET['dedark'] ?>" />
+
+                    </li>
+                    <li>
+                        <label for="search_keyword">魔法关键字查询（模糊）：</label>
+                        <input type="text" style="width:200px" id="search_keyword" name="magic" value="<?php echo $_GET['magic'];?>">
+                        &nbsp;&nbsp;
+                        <button type="submit" class="button button-primary">查询&gt;&gt;</button>
+                        <button type="button" class="button button-primary" id="search_reset">重置</button>
+                        <a id="J_export" href="javascript:void(0)" class="button button-primary">导出</a>
+
+                        本次查询结果总用户为:<b><?php echo($count) ?></b>,下单的用户有<b><?php echo($orders) ?></b>,转换率为<b><?php echo sprintf("%.2f", $orders/($count-$orders)*100); ?>%</b>.
+                    </li>
+                </ul>
+            </form>
+            <form id="myform" action="#" method="post">
+                <table cellspacing="0" class="table table-bordered">
+                    <thead>
+                    <tr>
+
+
+                    </tr>
+                    <tr>
+                        <th width="60">ID</th>
+                        <th>来路IP</th>
+                        <th width="120">来路关键词</th>
+                        <th>搜索引擎</th>
+                        <th>下单类型</th>
+                        <th width="70">着陆时间</th>
+                        <th width="70">下单时间</th>
+                        <th>魔法关键词</th>
+                        <th>着陆页面地址</th>
+                        <th>来路地址</th>
+                        <th>ip地区</th>
+                        <th>下单单号</th>
+
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <?php if (!empty($list)): ?>
+                    <?php foreach ($list as $key => $value): ?>
+                    <tr>
+                    <td><?php echo $value['id']; ?></td>
+                    <td><?php echo $value['ip']; ?></td>
+                    <td><?php echo $value['keyword']; ?></td>
+                    <td><?php echo $value['partner']; ?></td>
+                    <td><?php echo $value['type']; ?></td>
+                    <td><?php echo date('Y-m-d H:i:s', $value['start_time']); ?></td>
+                    <td><?php echo date('Y-m-d H:i:s', $value['end_time']); ?></td>
+                    <td><?php echo $value['magic'] ?></td>
+                    <td><?php echo $value['dedark']; ?></td>
+                    <td><?php echo $value['origin']; ?></td>
+                    <td><?php echo $value['area']; ?></td>
+                    <td><?php echo $value['order_number']; ?></td>
+                    </tr>
+                    <?php endforeach ?>
+                    <?php else: ?>
+                    <tr>
+                        <td colspan="9">暂无记录！</td>
+                    </tr>
+                    <?php endif ?>
+                    </tbody>
+                </table>
+            </form>
+
+            <?php echo $page; ?>
+
+            <div>
+                <ul class="toolbar pull-left">
+
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<include file="common/footer_js" />
+<script type="text/javascript">
+
+    var _export = "<?php echo U(MODULE_NAME . '/' . CONTROLLER_NAME .'/export') ?>";
+    var startTime = $('#search_start_time').val();
+    var endTime = $('#search_end_time').val();
+    var area = $('#area').val();
+    var partner = $('#J_partner').val();
+    var dedark = $('#dedark').val();
+    var order_number = $('#order_number').val();
+    var type = $('#search_payment_method').val();
+    var magic = $('#search_keyword').val();
+
+    $('#J_export').click(function(){
+        _export = _export + '?startTime=' + startTime + '&endTime=' + endTime + '&area=' + area + '&partner=' + partner + '&dedark=' + dedark + '&order_number=' + order_number + '&type=' + type + '&magic=' + magic;
+        window.location.href= _export;
+    });
+
+
+    BUI.use('common/page');
+
+    BUI.use('bui/overlay',function(Overlay){
+
+        var dialog = new Overlay.Dialog({
+            title:'系统提示',
+            width:300,
+            height:150,
+            url:'',
+            bodyContent:'<p>确认删除？</p>',
+            success:function(){
+                location.href = this.url;
+            }
+        });
+
+        var dialog_free = new Overlay.Dialog({
+            title:'系统提示',
+            width:300,
+            height:150,
+            url:'',
+            bodyContent:'<p>确认解除已指定的工程师？</p>',
+            success:function(){
+                location.href = this.url;
+            }
+        });
+
+        var dialog2 = new Overlay.Dialog({
+            title:'系统提示',
+            width:300,
+            height:150,
+            bodyContent:'<p>确认批量操作？</p>',
+            success:function(){
+                $('#myform').submit();
+            }
+        });
+
+        // 删除确认弹窗
+        $(".delete").click(function(){
+            dialog.url = $(this).data('url');
+            dialog.show();
+        })
+
+        // 解除确认弹窗
+        $(".free").click(function(){
+            dialog_free.url = $(this).data('url');
+            dialog_free.show();
+        })
+
+        // 详情弹窗
+        $(".detail").click(function(){
+            var url = $(this).data('url');
+
+            $.get(url, function(data){
+                var dialog_detail = new Overlay.Dialog({
+                    title:'订单详情',
+                    width:'1000',
+                    height:'550',
+                    bodyContent:data,
+                    buttons:[
+                        {
+                            text:'确定', elCls : 'button button-primary', handler : function(){
+                            $('#detail_Form').submit();
+                            this.hide();
+                        }
+                        },{
+                            text:'关闭', elCls : 'button', handler : function(){
+                                this.hide();
+                            }
+                        }
+                    ],
+                    success:function(){
+                        this.hide();
+                    }
+                });
+
+                dialog_detail.show();
+            });
+        })
+
+        // 手动控制
+        $('.controller').click(function(){
+            var url = $(this).data('url');
+            $.get(url, function(data){
+                var dialog_control = new Overlay.Dialog({
+                    title:'手动控制',
+                    width:'1000',
+                    height:'auto',
+                    bodyContent:data,
+                    buttons:[
+                        {
+                            text:'确定', elCls : 'button button-primary', handler : function(){
+                            $('#manual_Form').submit();
+                            this.hide();
+                        }
+                        },{
+                            text:'关闭', elCls : 'button', handler : function(){
+                                this.hide();
+                            }
+                        }
+                    ],
+                    success:function(){
+                        this.hide();
+                    }
+                });
+
+                dialog_control.show();
+            });
+        });
+
+        // 取消窗口
+        $(".close").click(function(){
+            var url = $(this).data('url');
+            $.get(url, function(data){
+                var dialog_close = new Overlay.Dialog({
+                    title:'取消订单',
+                    width:'800',
+                    height:'auto',
+                    bodyContent:data,
+                    buttons:[
+                        {
+                            text:'确定', elCls : 'button button-primary', handler : function(){
+                            if ($('input[name="close_reason"]:checked').val() !== undefined || $(".close_reason_other").val()!==''){
+                                $('#close_Form').submit();
+                                this.hide();
+                            } else {
+                                alert('请填写取消原因');
+                            }
+
+                        }
+                        },{
+                            text:'关闭', elCls : 'button', handler : function(){
+                                this.hide();
+                            }
+                        }
+                    ],
+                    success:function(){
+                        this.hide();
+                    }
+                });
+
+                dialog_close.show();
+            });
+        })
+
+
+
+        // 全选
+        $('#selectAll').click(function(){
+            $('.items').prop("checked", $(this).prop("checked"));
+        });
+
+        // 批量删除
+        $('.batch').click(function(){
+            $('#batchAction').val($(this).data('action'));
+            dialog2.show();
+        });
+
+        // ------------------------------------------------
+        var Calendar = BUI.Calendar
+        var datepicker = new Calendar.DatePicker({
+            trigger:'.calendar',
+            autoRender : true
+        });
+
+        // ------------------------------------------
+        $('#search_reset').click(function(){
+            window.location=" <?php echo U(MODULE_NAME . '/' . CONTROLLER_NAME .'/conversion'); ?> ";
+        });
+    });
+</script>
+<body>
+</html>

@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>user</title>
+	<link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/default/easyui.css">
+	<link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/icon.css">
+	<link rel="stylesheet" type="text/css" href="__PUBLIC__/css/user.css">
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/datagrid-cellediting.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/js/user.js"></script>
+    <script type="text/javascript">
+        var url;
+        function cancel(){
+            var row = $('#dg').datagrid('getSelected');
+
+            if (row){
+                $('#dlgsf').dialog('open').dialog('center').dialog('setTitle', '拒绝原因');
+                $('#sf').form('load', row);
+                url = '/admin/daowei/cancelOrder/id/'+ row.id;
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+        function appointment(){
+            var row = $('#dg').datagrid('getSelected');
+
+            if (row){
+                $('#dlg').dialog('open').dialog('center').dialog('setTitle', '预约');
+                $('#fm').form('load', row);
+                url = '/admin/daowei/appointmentOrder/id/'+ row.id;
+                //$.post(url);
+
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+        function finish(){
+            var row = $('#dg').datagrid('getSelected');
+            if (row){
+                var url= '/admin/daowei/finishOrder/id/' + row.id;
+                $.post(url,'',function(data) {
+                    $.messager.show({
+                        title: '提示',
+                        msg: data.errorMsg,
+                        showType: 'fade',
+                        style: {
+                            right: '',
+                            bottom: ''
+                        }
+                    });
+                    $('#dlg').dialog('close');		// close the dialog
+                    $('#dg').datagrid('reload');
+                })
+            } else {
+                $.messager.show({
+                    title: '提醒',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+        function deleteItem(){
+            var row = $('#dg').datagrid('getSelected');
+            if (row){
+                $.messager.confirm('Confirm', '确认删除此记录?',function(r){
+                    if (r){
+                        $.post('/admin/daowei/delete',{id:row.id},function(result){
+                            if (result.success){
+                                $('#dg').datagrid('reload');
+                            } else {
+                                $.messager.show({
+                                    title: '错误',
+                                    msg: result.errorMsg,
+                                    showType:'fade',
+                                    style:{
+                                        right:'',
+                                        bottom:''
+                                    }
+                                });
+                            }
+                        },'json');
+                    }
+                });
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+        function searchItem(){
+            $('#dg').datagrid({
+                queryParams: {
+                    create_time_start: $('#origin_create_time').combobox('getValue'),
+                    create_time_end: $('#finish_create_time').combobox('getValue'),
+                    keyword: $('#search-keyword').val(),
+                    status: $('#status').combobox('getValue'),
+                    address: $('#search-organization').combobox('getValue'),
+                }
+            });
+        }
+
+        function saveUser(){
+
+            $('#fm').form('submit',{
+                url: url,
+                onSubmit: function(){
+                    return $(this).form('validate');
+                },
+                success: function(result){
+                    var result = eval('('+result+')');
+                    if (result.success == false){
+                        $.messager.show({
+                            title: '错误',
+                            msg: result.errorMsg,
+                            showType:'fade',
+                            style:{
+                                right:'',
+                                bottom:''
+                            }
+                        });
+                    } else {
+
+                    }
+                    $('#dlgsf').dialog('close');		// close the dialog
+                    $('#dg').datagrid('reload');	// reload the user data
+                }
+            });
+        }
+
+
+        $(function(){
+
+            $('#mm').menu();
+            $(document).bind('contextmenu',function(e){
+                e.preventDefault();
+                $('#mm').menu('show', {
+                    left: e.pageX,
+                    top: e.pageY
+                });
+            });
+        });
+        function formatStatus(val){
+            var arr = new Array();
+            arr[1] = '<span class="label label-bg5">下单</span>';
+            arr[3] = '<span class="label label-bg2">预约</span>';
+            arr[5] = '<span class="label label-bg7">已完成</span>';
+            arr[10] = '<span class="label label-bg3">不满足服务规则</span>';
+            arr[108] = '<span class="label label-bg3">预约超时"</span>';
+            arr[103] = '<span class="label label-bg3">履行超时</span>';
+            arr[12] = '<span class="label label-bg3">买家撤销</span>';
+            arr[11] = '<span class="label label-bg3">出险失败</span>';
+            return arr[val];
+        }
+        
+        function formatPrice(val, row)
+        {
+        	if (val > 0) {
+        		return val / 100;
+        	}
+        }
+
+        function add(){
+            $('#dlg').dialog('open').dialog('center').dialog('setTitle', '添加');
+            url = '/admin/Share/add';
+        }
+
+        function detailItem() {
+            var row = $('#dg').datagrid('getSelected');
+            console.log(row);
+
+            if (row){
+                $('#dlg-detail').dialog('open').dialog('center').dialog('setTitle','订单详情');
+                $('#fm-detail').form('load', row);
+
+            } else {
+            $.messager.show({
+                title: '错误',
+                msg: '请选择一条记录！',
+                showType:'fade',
+                style:{
+                    right:'',
+                    bottom:''
+                }
+            });
+        }
+        }
+
+        //导出
+        function exportItem()
+        {
+        	$('#search').form('submit', {
+                url: '/admin/daowei/export',
+                queryParams: {
+                	create_time_start: $('#origin_create_time').combobox('getValue'),
+                    create_time_end: $('#finish_create_time').combobox('getValue'),
+                    keyword: $('#search-keyword').val(),
+                    status: $('#status').combobox('getValue'),
+                    address: $('#search-organization').combobox('getValue'),
+                }
+            });
+        }
+
+        //行操作按钮
+        function formatAllotButton(value, row, index)
+        {
+            var buttons = $('#rowmenu .btn-detail').prop("outerHTML");
+
+            // 状态：1 下单, 3 预约，4 上门，5已完成，10 不满足服务规则
+
+            if (row.status == 1) {
+            	buttons += $('#rowmenu .btn-receive').prop("outerHTML");
+                buttons += $('#rowmenu .btn-refuse').prop("outerHTML");
+                buttons += $('#rowmenu .btn-refund').prop("outerHTML");
+            } else if (row.status == 3) {
+                buttons += $('#rowmenu .btn-convention').prop("outerHTML");
+                buttons += $('#rowmenu .btn-send').prop("outerHTML");
+                buttons += $('#rowmenu .btn-no').prop("outerHTML");
+            }
+            
+            return buttons;
+        }
+    </script>
+</head>
+<body class="easyui-layout">
+    <div id="box" class="easyui-dialog" style="width: 900px;min-height: 400px;" closed="true">
+        <div data-options="region:'east'" style="width:880px;">
+            <table id="joinex" class="easyui-datagrid" singleSelect="true"  pageSize="20">
+                <thead>
+                    <tr>
+                        <th field="id" width="33%">ID</th>
+                        <th field="name" width="33%">名称</th>
+                        <th field="amount" width="33%">数量</th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+    </div>
+    <table id="dg" title="保险列表" class="easyui-datagrid" style="width:100%;" url="/admin/daowei/rows" toolbar="#toolbar" pagination="true" pageSize="30" pagePosition="top" rownumbers="true" fitColumns="true" singleSelect="true" rownumbers="true" pagination="true" nowrap="false">
+        <thead>
+            <tr>
+                <th field="id" id="id" width="3%">ID</th>
+                <th field="order_no" width="7%">订单编号(到位)</th>
+                <th field="contact_name" width="7%">联系人</th>
+                <th field="mobile" width="7%">手机号码</th>
+                <th field="service_order_no" width="7%">服务名称</th>
+                <th field="order_status"  width="7%" formatter="formatStatus">订单状态</th>
+                <th field="total_amount"  width="5%">订单金额</th>
+                <th field="real_amount" width="5%" formatter="formatPrice">实际金额</th>
+                <th field="gmt_create" formatter="formatDate" width="5%">创建时间</th>
+                <th field="payment_time" formatter="formatDate" width="5%">付款时间</th>
+                <th field="payment_amount" width="5%">付款金额</th>
+                <th field="memo" width="5%">备注</th>
+                <th field="number" width="7%">(闪修侠)订单编号</th>
+                <th field="receive_time" formatter="formatDate" width="5%">(闪修侠)受理时间</th>
+                <th field="ssx_end_time" formatter="formatDate" width="5%">(闪修侠)结单时间</th>
+                <th field="action" formatter="formatAllotButton" width="10%">操作</th>                                                                      
+            </tr>
+        </thead>
+    </table>
+
+    <div id="toolbar">
+    	<form id="search" method="post">
+        <span>下单时间:</span>
+        <input class="easyui-datetimebox" id="origin_create_time" name="origin_create_time" style="width:200px">
+        <span>到</span>
+        <input class="easyui-datetimebox" id="finish_create_time" name="finish_create_time" style="width:200px">
+        <span>状态:</span>
+        <select class="easyui-combobox" limitToList="true" id='status'  valueField="id" textField="name" style="width:150px;">
+            <option value="all">全部</option>
+            <option value="1">下单</option>
+            <option value="3">预约</option>
+            <option value="5">已完成</option>
+            <option value="10">不满足服务规则</option>
+            <option value="108">预约超时</option>
+            <option value="103">履行预约</option>
+            <option value="12">买家撤销</option>
+            <option value="11">出险失败</option>
+        </select>
+        <span>地区:</span>
+        <select class="easyui-combobox" limitToList="true" id='search-organization'>
+        	<option value="all">全部</option>
+            <?php foreach(session('addresses') as $k => $v) { ?>
+            <option value="<?php echo $v['city'];?>"><?php echo $v['cityname'];?></option>
+            <?php }?>
+        </select>
+        <span>关键字:</span>
+        <input type="text" class="easyui-textbox" id='search-keyword' panelHeight="auto">
+		<a href="javascript:void(0)" class="easyui-linkbutton" plain="true" iconCls="icon-search" onclick="searchItem()">搜索</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['导出'])) { echo 'hide';} ?>" iconCls="icon-export" plain="true" onclick="exportItem()">导出</a>
+    	</form>
+    </div>
+    
+    <div id="rowmenu" class="hide">
+        <a href="javascript:void(0)" class="easyui-linkbutton btn-detail <?php if(!isset($buttons['详情'])) { echo '';} ?>" iconCls="icon-detail" plain="true" onclick="selectedRow($(this));detailItem()">详情</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton btn-receive <?php if(!isset($buttons['预约'])) { echo '';} ?>" iconCls="icon-receive" plain="true" onclick="selectedRow($(this));appointment()">接单</a>
+        <!-- 自动生成闪修侠订单 -->
+        <a href="javascript:void(0)" class="easyui-linkbutton btn-refuse <?php if(!isset($buttons['预约'])) { echo '';} ?>" iconCls="icon-no" plain="true" onclick="selectedRow($(this));appointment()">拒绝</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton btn-refund <?php if(!isset($buttons['预约'])) { echo '';} ?>" iconCls="icon-undo" plain="true" onclick="selectedRow($(this));appointment()">退款</a>
+
+        <!-- 1. 同步服务（故障） -->
+        <a href="javascript:void(0)" class="easyui-linkbutton btn-convention <?php if(!isset($buttons['预约'])) { echo '';} ?>" iconCls="icon-malfunction" plain="true" onclick="selectedRow($(this));appointment()">故障</a>
+        <!-- 2. 同步服务者（工程师） -->
+        <a href="javascript:void(0)" class="easyui-linkbutton btn-send <?php if(!isset($buttons['预约'])) { echo '';} ?>" iconCls="icon-member" plain="true" onclick="selectedRow($(this));appointment()">工程师</a>
+        <!-- 3. 同步服务地区 （先获取支付宝地区Code，后根据开通地区返回code）-->
+        <a href="javascript:void(0)" class="easyui-linkbutton btn-no <?php if(!isset($buttons['预约'])) { echo '';} ?>" iconCls="icon-earth" plain="true" onclick="selectedRow($(this));appointment()">地区</a>
+    </div>
+    
+    <div id="dlg-detail" class="easyui-dialog" style="width:900px;height:550px;padding:10px 20px" closed="true" ></div>
+</body>
+</html>

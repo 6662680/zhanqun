@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>conversion</title>
+	<link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/default/easyui.css">
+	<link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/icon.css">
+	<link rel="stylesheet" type="text/css" href="__PUBLIC__/css/user.css">
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/js/user.js"></script>
+    <script type="text/javascript">
+
+        /**
+         * 搜索
+         */
+        function searchItem(){
+            $('#dg').datagrid({
+                queryParams: {
+                    start_time: $('#start_time').datebox('getValue'),
+                    end_time: $('#end_time').datebox('getValue'),
+                    area: $('#search-area').val(),
+                    order_number: $('#search-order_number').val(),
+                    engine: $('#search-engine').combobox('getValue'),
+                    type: $('#search-type').combobox('getValue'),
+                    dedark: $('#search-dedark').val(),
+                    magic: $('#search-magic').val(),
+                    keyword: $('#search-keyword').val()
+                }
+            });
+        }
+
+        /**
+         * 数据导出
+         */
+        function exportItem() {
+            $('#search').form('submit', {
+                url: url,
+                queryParams: {
+                    start_time: $('#start_time').datebox('getValue'),
+                    end_time: $('#end_time').datebox('getValue'),
+                    area: $('#search-area').val(),
+                    order_number: $('#search-order_number').val(),
+                    engine: $('#search-engine').combobox('getValue'),
+                    type: $('#search-type').combobox('getValue'),
+                    dedark: $('#search-dedark').val(),
+                    magic: $('#search-magic').val(),
+                    keyword: $('#search-keyword').val()
+                },
+                onSubmit: searchItem()
+            });
+        }
+
+        /**
+         * 下单日期格式
+         */
+        function dateFormatter(date) {
+            var y = date.getFullYear();
+            var m = date.getMonth()+1;
+            var d = date.getDate();
+            return y+'-'+(m<10?('0'+m):m)+'-'+(d<10?('0'+d):d);
+        }
+
+        function dateParser(s){
+            if (!s) return new Date();
+            var ss = (s.split('-'));
+            var y = parseInt(ss[0],10);
+            var m = parseInt(ss[1],10);
+            var d = parseInt(ss[2],10);
+            if (!isNaN(y) && !isNaN(m) && !isNaN(d)){
+                return new Date(y,m-1,d);
+            } else {
+                return new Date();
+            }
+        }
+    </script>
+</head>
+<body class="easyui-layout">
+    <div id="box" class="easyui-dialog" style="width: 900px;min-height: 400px;" closed="true">
+        <div data-options="region:'east'" style="width:880px;">
+
+            <table id="joinex" class="easyui-datagrid" singleSelect="true" pagination="true" pageSize="20">
+                <thead>
+                <tr>
+                    <th field="id" width="33%">ID</th>
+                    <th field="name" width="33%">名称</th>
+                    <th field="amount" width="33%">数量</th>
+                </tr>
+                </thead>
+            </table>
+        </div>
+    </div>
+    <table id="dg" title="流量统计" class="easyui-datagrid" style="width:100%;" url="/admin/conversion/rows" toolbar="#toolbar" pagination="true" pageSize="30" pagePosition="top" rownumbers="true" fitColumns="true" singleSelect="true" rownumbers="true" pagination="true">
+        <thead>
+        <tr>
+            <th field="id" id="id" width="4%">ID</th>
+            <th field="ip" id="ip" width="5%">IP</th>
+            <th field="partner" id="keyword" width="9%">合作伙伴</th>
+            <th field="type" width="5%">下单类型</th>
+            <th field="start_time" formatter="formatDate" width="9%">着陆时间</th>
+            <th field="end_time" formatter="formatDate" width="9%">下单时间</th>
+            <th field="keyword" width="4%">关键词</th>
+            <th field="magic" width="5%">魔法关键词</th>
+            <th field="dedark" width="15%">着陆第一张页面</th>
+            <th field="origin" width="15%">来路页面地址（空值为直接输入网址）</th>
+            <th field="area" width="9%">来路IP的中文地区</th>
+            <th field="order_number" width="9%">订单编号</th>
+        </tr>
+        </thead>
+    </table>
+
+    <div id="toolbar">
+        <form id="search" method="post">
+
+            <span>着陆时间:</span>
+            <input class="easyui-datebox" id="start_time" name="start_time" data-options="formatter:dateFormatter,parser:dateParser" style="width:200px">
+            <span>到</span>
+            <input class="easyui-datebox" id="end_time" name="end_time" data-options="formatter:dateFormatter,parser:dateParser" style="width:200px">
+            <div style="margin:20px 0;"></div>
+            <span>合作伙伴:</span>
+            <select class="easyui-combobox" id='search-engine' panelHeight="auto">
+                <option value="0">所有</option>
+                <option value="1">所有搜索引擎来路</option>
+                <option value="2">百度PC&手机</option>
+                <option value="百度PC">百度PC</option>
+                <option value="手机百度">手机百度</option>
+                <option value="百度贴吧">百度贴吧</option>
+                <option value="谷歌">谷歌</option>
+                <option value="360">360</option>
+                <option value="搜狗">搜狗</option>
+                <option value="神马搜索">神马搜索</option>
+                <option value="微信">微信</option>
+            </select>
+            <span>下单类型:</span>
+            <select class="easyui-combobox" id='search-type' panelHeight="auto">
+                <option value="-1">全部</option>
+                <option value="0">未下单</option>
+                <option value="1">维修</option>
+            </select>
+            <span>订单号:</span>
+            <input type="text" class="easyui-textbox" id='search-order_number' panelHeight="auto">
+            <span>来路地区:</span>
+            <input type="text" class="easyui-textbox" id='search-area' panelHeight="auto">
+            <span>着陆页面模糊查询(模糊)：:</span>
+            <input type="text" class="easyui-textbox" id='search-dedark' panelHeight="auto">
+            <span>关键字查询（模糊）:</span>
+            <input type="text" class="easyui-textbox" id='search-keyword' panelHeight="auto">
+            <span>魔法关键字查询（模糊）:</span>
+            <input type="text" class="easyui-textbox" id='search-magic' panelHeight="auto">
+            <a href="javascript:void(0)" class="easyui-linkbutton" plain="true" iconCls="icon-search" onclick="searchItem()">搜索</a>
+            <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['导出'])) { echo 'hide';} ?>" plain="true" iconCls="icon-export" onclick="url= '/admin/Conversion/export';exportItem()">导出</a>
+        </form>
+    </div>
+</body>
+</html>

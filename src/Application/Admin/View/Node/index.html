@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>user</title>
+	<link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/default/easyui.css">
+	<link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/icon.css">
+	<link rel="stylesheet" type="text/css" href="__PUBLIC__/css/user.css">
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/js/user.js"></script>
+    <script type="text/javascript">
+        var url;
+
+        function newItem(){
+            $('#dlg').dialog('open').dialog('center').dialog('setTitle', '添加');
+            $('#nodeFm').form('clear');
+            url = '/admin/node/add';
+        }
+
+        function editItem(){
+            var row = $('#dg').datagrid('getSelected');
+            if (row){
+                $('#dlg').dialog('open').dialog('center').dialog('setTitle','编辑');
+                $('#nodeFm').form('load', row);
+                url = '/admin/node/save/id/' + row.id;
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+        function saveItem(form) {
+            $(form).form('submit',{
+                url: url,
+                onSubmit: function() {
+                    $('#btn-save').hide();
+
+                    if ($(this).form('validate')) {
+                        $('#load').dialog('open');
+                    };
+
+                    if ($(this).form('validate')) {
+                        return true;
+                    } else {
+                        $('#btn-save').show();
+                        $('#load').dialog('close');
+                        return false;
+                    }
+                },
+                success: function(result){
+                    $('#btn-save').show();
+                    $('#load').dialog('close');
+                    var result = eval('('+result+')');
+
+                    if (result.success){
+                        $('#dlg').dialog('close');
+                        $('#dg').treegrid('reload');
+                    } else {
+                        $.messager.show({
+                            title: '错误',
+                            msg: result.errorMsg,
+                            showType:'fade',
+                            style:{
+                                right:'',
+                                bottom:''
+                            }
+                        });
+                    }
+                }
+            });
+        }
+
+        function deleteItem(){
+            var row = $('#dg').treegrid('getSelected');
+            if (row){
+                $.messager.confirm('Confirm', '确认删除此记录?',function(r){
+                    if (r){
+                        $.post('/admin/node/delete',{id:row.id},function(result){
+                            if (result.success){
+                                $('#dg').treegrid('reload');
+                            } else {
+                                $.messager.show({
+                                    title: '错误',
+                                    msg: result.errorMsg,
+                                    showType:'fade',
+                                    style:{
+                                        right:'',
+                                        bottom:''
+                                    }
+                                });
+                            }
+                        },'json');
+                    }
+                });
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+        function scanItem(){
+            alert('敬请期待！');
+        }
+
+        function childItem(){
+            alert('敬请期待！');
+        }
+
+        function collapseOrExpandAll(obj){
+            let isExpand = $('#dg').data('expand') ? $('#dg').data('expand') : false;
+            if(!isExpand) {
+                $('#dg').treegrid('collapseAll');
+            } else {
+                $('#dg').treegrid('expandAll');
+            }
+
+            $('#dg').data('expand', !isExpand);
+            $(obj).text(!isExpand ? "展开所有" : "折叠所有");
+
+        }
+
+        $(function(){
+            $('#mm').menu();
+            $(document).bind('contextmenu',function(e){
+                e.preventDefault();
+                $('#mm').menu('show', {
+                    left: e.pageX,
+                    top: e.pageY
+                });
+            });
+        });
+    </script>
+</head>
+<body class="easyui-layout">
+    <table id="dg" title="节点列表" class="easyui-treegrid" style="width:100%; height:800px;" data-options="url: '/admin/node/rows',toolbar:'#toolbar',rownumbers: true,idField: 'id',treeField: 'name',fitColumns:'true',singleSelect:'true', lines:'true'">
+        <thead>
+            <tr>
+                <th field="id" width="5">ID</th>
+                <th field="name" width="20">名称</th>
+                <th field="alias" width="10">别名</th>
+                <th field="category" width="10">类型</th>
+                <th field="action" width="10">操作</th>
+                <th field="param" width="10">参数</th>
+                <th field="sort" width="10">排序</th>
+                <th field="status" width="10" formatter="formatStatus">状态</th>
+                <th field="remark" width="20">备注</th>
+                <th field='_action' width="10" formatter="formatRowActionButton">操作</th>
+            </tr>
+        </thead>
+    </table>
+    <div id="toolbar">
+        <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['扫描'])) { echo 'hide';} ?>" iconCls="icon-scan" plain="true" onclick="scanItem()">扫描</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['添加'])) { echo 'hide';} ?>" iconCls="icon-add" plain="true" onclick="newItem()">添加</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['添加子节点'])) { echo 'hide';} ?>" iconCls="icon-child" plain="true" onclick="childItem()">添加子节点</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['编辑'])) { echo 'hide';} ?>" iconCls="icon-edit" plain="true" onclick="editItem()">编辑</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['删除'])) { echo 'hide';} ?>" iconCls="icon-remove" plain="true" onclick="deleteItem()">删除</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" plain="true" onclick="collapseOrExpandAll(this)">折叠所有</a>
+    </div>
+    <div id="mm" style="width:120px;">
+        <div iconCls="icon-scan" class="<?php if(!isset($buttons['扫描'])) { echo 'hide';} ?>" onclick="scanItem()"><span>扫描</span></div>
+        <div iconCls="icon-add" class="<?php if(!isset($buttons['添加'])) { echo 'hide';} ?>" onclick="newItem()"><span>添加</span></div>
+        <div iconCls="icon-child" class="<?php if(!isset($buttons['添加子节点'])) { echo 'hide';} ?>" onclick="childItem()"><span>添加子节点</span></div>
+        <div iconCls="icon-edit" class="<?php if(!isset($buttons['编辑'])) { echo 'hide';} ?>" onclick="editItem()"><span>编辑</span></div>
+        <div iconCls="icon-remove" class="<?php if(!isset($buttons['删除'])) { echo 'hide';} ?>" onclick="deleteItem()"><span>删除</span></div>
+    </div>
+    <div id="rowmenu" class="hide">
+       <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['编辑'])) { echo 'hide';} ?>" iconCls="icon-edit" plain="true" onclick="selectedRow($(this));editItem();">编辑</a>
+       <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['删除'])) { echo 'hide';} ?>" iconCls="icon-remove" plain="true" onclick="selectedRow($(this));deleteItem();">删除</a>
+    </div>
+    <div id="dlg" class="easyui-dialog" style="width:550px;min-height:400px;" closed="true" buttons="#dlg-buttons">
+        <form id="nodeFm" method="post" style="margin: 0;">
+            <div class="easyui-tabs" style="width:100%;min-height:350px">
+                <div title="节点信息" style="padding:10px">
+                    <div class="fitem">
+                        <label>上级节点:</label>
+                        <input name="pid" class="easyui-combotree" data-options="url:'/admin/node/tree',required:true,limitToList:true" style="width:172px;">
+                    </div>
+                    <div class="fitem">
+                        <label>类型:</label>
+                        <select name="category" class="easyui-combobox" panelHeight="auto" data-options="required:true" limitToList="true">
+                            <option value="1">操作</option>
+                            <option value="2">按钮</option>
+                            <option value="3">二级栏目</option>
+                            <option value="4">一级栏目</option>
+                            <option value="9">通用操作</option>
+                        </select>
+                    </div>
+                    <div class="fitem">
+                        <label>名称:</label>
+                        <input name="name" class="easyui-textbox" prompt="名称"  data-options="required:true">
+                    </div>
+                    <div class="fitem">
+                        <label>别名:</label>
+                        <input name="alias" class="easyui-textbox" prompt="别名"  data-options="required:true">
+                    </div>
+                    <div class="fitem">
+                        <label>操作:</label>
+                        <input name="action" class="easyui-textbox" prompt="操作">
+                    </div>
+                    <div class="fitem">
+                        <label>参数:</label>
+                        <input name="param" class="easyui-textbox" prompt="参数">
+                    </div>
+                    <div class="fitem">
+                        <label>排序:</label>
+                        <input name="sort" class="easyui-textbox" prompt="排序">
+                    </div>
+                    <div class="fitem">
+                        <label>分组:</label>
+                        <input name="group" class="easyui-textbox" prompt="分组">
+                    </div>
+                    <div class="fitem">
+                        <label>状态:</label>
+                        启用:
+                        <input class="easyui-validatebox" name="status" type="radio" required="true" value="1" validType="requireRadio['input[name=\'status\']']">
+                        禁用:
+                        <input class="easyui-validatebox" name="status" type="radio" required="true" value="0">
+                    </div>
+                    <div class="fitem">
+                        <label>备注(50个字):</label>
+                        <input class="easyui-textbox" name="remark" style="width:160px;height:60px" data-options="multiline:true">
+                    </div>
+                </div>
+                <div title="节点样式" style="padding:10px">
+                    <div class="fitem">
+                        <label>节点ID:</label>
+                        <input name="dom_id" class="easyui-textbox" prompt="节点ID">
+                    </div>
+                    <div class="fitem">
+                        <label>节点图标:</label>
+                        <input name="dom_icon" class="easyui-textbox" prompt="节点图标">
+                    </div>
+                    <div class="fitem">
+                        <label>节点样式:</label>
+                        <input name="dom_custom" class="easyui-textbox" prompt="节点样式">
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div id="dlg-buttons">
+        <a href="javascript:void(0)" id="btn-save" class="easyui-linkbutton c6" iconCls="icon-ok" onclick="saveItem('#nodeFm')" style="width:90px">保存</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg').dialog('close')" style="width:90px">取消</a>
+    </div>
+    <div id="load" class="easyui-dialog" title="消息" closed="true" style="width:200px;height:100px;padding:10px">
+        <span>处理中...</span>
+    </div>
+</body>
+</html>

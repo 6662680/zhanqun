@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>user</title>
+	<link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/default/easyui.css">
+	<link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/icon.css">
+	<link rel="stylesheet" type="text/css" href="__PUBLIC__/css/user.css">
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/datagrid-cellediting.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/locale/easyui-lang-zh_CN.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/js/user.js"></script>
+    <script type="text/javascript">
+        var url;
+        
+        function newItem()
+        {
+            $('#dlg').dialog('open').dialog('center').dialog('setTitle', '添加');
+            $('#fm').form('clear');
+            url = '/admin/phomalinsurance/add';
+        }
+        
+        function editItem()
+        {
+            var row = $('#dg').datagrid('getSelected');
+            
+            if (row) {
+                $('#dlg').dialog('open').dialog('center').dialog('setTitle','编辑');
+                $('#fm').form('clear');
+                $('#fm').form('load', row);
+                
+                if (row.phomal_ids) {
+                    $('#phomal_id').combobox('setValues', row.phomal_ids.split(','));
+                 }
+                
+                url = '/admin/phomalinsurance/edit/id/' + row.id;
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+        
+        function saveItem(form) 
+        {
+            $(form).form('submit',{
+                url: url,
+                onSubmit: function(){
+                    if ($(this).form('validate')) {
+                        $('#load').dialog('open');
+                    };
+                    
+                    $('#phomal_ids').val($('#phomal_id').combobox('getValues').join(','));
+                    
+                    return $(this).form('validate');
+                },
+                success: function(result){
+                    $('#load').dialog('close');
+                    var result = eval('('+result+')');
+                    if (result.success){
+                        $('#dlg').dialog('close');
+                        $('#dg').datagrid('reload');
+                    } else {
+                        $.messager.show({
+                            title: '错误',
+                            msg: result.errorMsg,
+                            showType:'fade',
+                            style:{
+                                right:'',
+                                bottom:''
+                            }
+                        });
+                    }
+                }
+            });
+        }
+
+        function deleteItem()
+        {
+            var row = $('#dg').datagrid('getSelected');
+            
+            if (row) {
+                $.messager.confirm('Confirm', '确认删除此记录?',function(r) {
+                    if (r){
+                        $.post('/admin/phomalinsurance/delete', {id:row.id}, function(result) {
+                        	
+                            if (result.success) {
+                                $('#dg').datagrid('reload');
+                            } else {
+                                $.messager.show({
+                                    title: '错误',
+                                    msg: result.errorMsg,
+                                    showType:'fade',
+                                    style:{
+                                        right:'',
+                                        bottom:''
+                                    }
+                                });
+                            }
+                        },'json');
+                    }
+                });
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+        function searchItem()
+        {
+            $('#dg').datagrid({
+                queryParams: {
+                    phone_id: $('#search-phone').combobox('getValue'),
+                    status: $('#search-status').combobox('getValue'),
+                    keyword: $('#search-keyword').val()
+                }
+            });
+        }
+        
+        function formatStatus(val) 
+        {
+        	if(val == 1) {  
+                return '<span class="label label-bg2">启用<span>';  
+            } else if (val == -1) {  
+                return '<span class="label label-bg3">删除<span>';  
+            } else {
+            	return '<span class="label label-bg3">禁用<span>';  
+            }
+        }
+
+        $(function(){
+            $('#mm').menu();
+            $(document).bind('contextmenu',function(e){
+                e.preventDefault();
+                $('#mm').menu('show', {
+                    left: e.pageX,
+                    top: e.pageY
+                });
+            });
+            
+          //下单 机型故障联动
+            var phomal = $('#phomal_id');
+            $('#phone_id').combobox({
+                onChange: function(newValue, oldValue) {
+
+                    if (newValue != "") {
+
+                        phomal.combobox({  
+                            disabled:false,  
+                            url:'/admin/phomalinsurance/phomals/phone_id/' + newValue, 
+                            valueField:'id',  
+                            textField:'name',  
+                            onLoadSuccess:function(data){
+                            }
+                        }); 
+                    } 
+                }  
+            });
+        });
+    </script>
+</head>
+<body class="easyui-layout">
+        <table id="dg" title="保险管理" class="easyui-datagrid" style="width:100%;" url="/admin/phomalinsurance/rows" toolbar="#toolbar" pagination="true" pageSize="30" pagePosition="top" rownumbers="true" fitColumns="true" singleSelect="true" rownumbers="true" pagination="true">
+            <thead>
+            <tr>
+                <th field="id" id="id" width="3%">ID</th>
+                <th field="title" id="number" width="10%">保险名称</th>
+                <th field="price" width="7%">保险价格</th>
+                <th field="divide" width="5%">工程师分成</th>
+                <th field="phone" width="10%">机型</th>
+                <th field="malfunction" width="10%">故障</th>
+                <th field="duration" width="7%">保险年限</th>
+                <th field="status" width="5%" formatter="formatStatus">状态</th>
+                <th field="username" width="7%">操作人</th>
+                <th field="remark" width="15%">备注</th>
+                <th field="create_time" width="10%" formatter="formatDate">创建时间</th>
+                <th field="action" width="10%" formatter="formatRowActionButton">操作</th>
+            </tr>
+            </thead>
+    </table>
+    <div id="toolbar">
+        <span>机型:</span>
+        <select class="easyui-combobox" limitToList="true" id='search-phone' url="/admin/phomalinsurance/phones" valueField="id" textField="alias" style="width:150px;">
+        </select>
+        &nbsp;
+        <span>状态:</span>
+        <select class="easyui-combobox" id='search-status' panelHeight="auto">
+            <option value="all">全部</option>
+            <option value="1">启用</option>
+            <option value="0">禁用</option>
+            <option value="-1">删除</option>
+        </select>
+        &nbsp;
+        <span>关键字:</span>
+        <input type="text" class="easyui-textbox" id='search-keyword' panelHeight="auto">
+		<a href="javascript:void(0)" class="easyui-linkbutton" plain="true" iconCls="icon-search" onclick="searchItem()">搜索</a>
+		<a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['添加'])) { echo 'hide';} ?>" plain="true" iconCls="icon-add" onclick="newItem()">添加</a>
+    </div>
+    <div id="load" class="easyui-dialog" title="消息" closed="true" style="width:200px;height:100px;padding:10px">
+        <span>处理中...</span>
+    </div>
+    <div id="mm" style="width:120px;">
+        <div iconCls="icon-add" class="<?php if(!isset($buttons['添加'])) { echo 'hide';} ?>" onclick="newItem()"><span>添加</span></div>
+        <div iconCls="icon-edit" class="<?php if(!isset($buttons['编辑'])) { echo 'hide';} ?>" onclick="editItem()"><span>编辑</span></div>
+        <div iconCls="icon-remove" class="<?php if(!isset($buttons['删除'])) { echo 'hide';} ?>" onclick="deleteItem()"><span>删除</span></div>
+    </div>
+    <div id="rowmenu" class="hide">
+       <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['编辑'])) { echo 'hide';} ?>" iconCls="icon-edit" plain="true" onclick="selectedRow($(this));editItem();">编辑</a>
+       <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['删除'])) { echo 'hide';} ?>" iconCls="icon-remove" plain="true" onclick="selectedRow($(this));deleteItem();">删除</a>
+    </div>
+    <div id="dlg" class="easyui-dialog" style="width:600px;height:400px;padding:10px 20px" closed="true" buttons="#dlg-buttons">
+        <form id="fm" method="post">
+           <div class="fitem">
+               <label>保险名称:</label>
+               <input name="title" class="easyui-textbox" required="true">
+           </div>
+           <div class="fitem">
+               <label>保险年限:</label>
+               <input name="duration" class="easyui-textbox" required="true" style="width:50px;"> 年
+           </div>
+           <div class="fitem">
+               <label>保险价格:</label>
+               <input name="price" class="easyui-textbox" required="true">
+           </div>
+           <div class="fitem">
+               <label>工程师分成:</label>
+               <input name="divide" class="easyui-textbox" required="true">
+           </div>
+           <div class="fitem">
+               <label>机型:</label>
+               <select class="easyui-combobox" limitToList="true" required="true" id="phone_id" name="phone_id" url="/admin/phomalinsurance/phones" valueField="id" textField="alias" style="width:150px;">
+           		</select>
+           </div>
+           <div class="fitem">
+               <label>故障:</label>
+               <select class="easyui-combobox" limitToList="true" required="true" id="phomal_id" name="phomal_id" valueField="id" textField="name" style="width:300px;">
+           		</select>
+           		<input type="hidden" id="phomal_ids" name="phomal_ids">
+           </div>
+           <div class="fitem">
+                <label>状态:</label>
+                启用:
+                <input class="easyui-validatebox" name="status" type="radio" required="true" value="1">
+                禁用:
+                <input class="easyui-validatebox" name="status" type="radio" required="true" value="0">
+                删除:
+                <input class="easyui-validatebox" name="status" type="radio" required="true" value="-1" validType="requireRadio['input[name=\'status\']']">
+            </div>
+            <div class="fitem">
+                <label>备注:</label>
+                <input name="remark" class="easyui-textbox" style="width:300px;height: 70px" multiline="true">
+            </div>
+        </form>
+    </div>
+    <div id="dlg-buttons">
+        <a href="#" class="easyui-linkbutton" iconCls="icon-ok" onclick="saveItem('#fm')">保存</a>
+        <a href="#" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg').dialog('close')">取消</a>
+    </div>
+</body>
+</html>

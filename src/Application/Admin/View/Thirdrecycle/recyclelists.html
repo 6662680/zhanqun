@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/default/easyui.css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/icon.css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/css/user.css">
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/datagrid-cellediting.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/locale/easyui-lang-zh_CN.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/js/user.js"></script>
+    <style>
+        .no-br { border: none;}
+        .no-bg { background: transparent;}
+        .tac {text-align: center}
+        .tal {text-align: left}
+        .tar {text-align: right}
+        .no-pd { padding: 0}
+        .no-mg { margin : 0}
+    </style>
+</head>
+<body class="easyui-layout">
+<table id="RecycleDataGrid" title="回收订单" class="easyui-datagrid" style="width: 100%;min-height: 400px;"
+       url="{:U('admin/thirdrecycle/getRecycleLists')}"
+       toolbar="#toolbar"
+       rownumbers="true" fitColumns="true" singleSelect="true"
+       pagination="true" pageSize="30" pagePosition="top">
+    <thead>
+    <tr>
+        <th field="id" width="10">id</th>
+        <th field="order_num" width="30">订单编号</th>
+        <th field="recycle_from" width="10">来源</th>
+        <th field="third_user_name" width="10">客户</th>
+        <th field="third_user_phone" width="20">手机</th>
+        <th field="brand_cn" width="15">手机品牌</th>
+        <th field="brand_model_cn" width="15">手机型号</th>
+        <th field="color_cn" width="10">颜色</th>
+        <th field="payment_way" width="10">付款类型</th>
+        <th field="reference_price" width="15">回收预计价格</th>
+        <th field="actual_price" width="15">回收实际价格</th>
+        <th field="create_time" width="25">下单时间</th>
+        <th field="engineer_name" width="15">指派工程师</th>
+        <th field="engineer_dig" width="15" formatter="formatDig">工程师挖单</th>
+        <th field="status" width="10">状态</th>
+        <th field="payed" width="15">结算</th>
+        <th field="remark" width="50">备注</th>
+        <th field='action' width="40" formatter="formatOperate">操作</th>
+    </tr>
+    </thead>
+</table>
+
+<!--  数据表格的工具条部分 -->
+<div id="toolbar">
+    <span>订单号:</span>
+    <input type="text" class="easyui-textbox" id='order_num' panelHeight="auto">
+    <span>来源:</span>
+    <input class="easyui-combobox" style="width:100px" url="{:U('admin/thirdrecycle/getEngineers')}"
+           id="engineer_id" valueField="id" textField="name">
+    <a href="javascript:void(0)" class="easyui-linkbutton" plain="true" iconCls="icon-search" onclick="searchWithMap()">搜索</a>
+</div>
+
+<!-- 行内操作 -->
+<div id="rowmenu" class="hide">
+    <a href="javascript:void(0)" class="easyui-linkbutton detail" iconCls="icon-more"
+       plain="true" data-dialog="#detailInfo" onclick="openDetailInfoDialog(this)">详情</a>
+    <a href="javascript:void(0)" class="easyui-linkbutton " iconCls="icon-add" plain="true"
+       data-dialog="#toEngineer" onclick="openToEngineerDialog(this)">派单</a>
+    <a href="javascript:void(0)" class="easyui-linkbutton " iconCls="icon-cancel"
+       data-dialog="#cancelRecycle" plain="true" onclick="openCancelDialog(this)">取消订单</a>
+</div>
+
+
+<div id="load" class="easyui-dialog" title="消息" closed="true" style="width:200px;height:100px;padding:10px">
+    <span>处理中...</span>
+</div>
+
+<!-- 新增或编辑dialog -->
+<div id="editDialog" class="easyui-dialog" style="width:800px;height:480px;padding:10px 20px" data-options="modal: true,closed:true" buttons="#dlg-buttons">
+    <form id="fm" method="post">
+        <div class="fitem">
+            <div class="fitem">
+                <label>订单号:</label>
+                <input name="order_num" class="easyui-textbox" prompt="姓名">
+            </div>
+            <div class="fitem">
+                <label>价格1:</label>
+                <input name="reference_price" class="easyui-textbox" prompt="预计价格" required="true"  >
+            </div>
+            <div class="fitem">
+                <label>价格2:</label>
+                <input name="actual_price" class="easyui-textbox" prompt="实际价格" required="true"  >
+            </div>
+            <div class="fitem">
+                <label>工程师:</label>
+                <input name="engineer_id" class="easyui-textbox"  required="true"  >
+            </div>
+            <div class="fitem">
+                <label>状态:</label>
+                <select class="easyui-combobox" id='search-type' name="type" panelHeight="auto">
+                    <option value="1">aa</option>
+                    <option value="2">bb</option>
+                </select>
+            </div>
+            <div class="fitem">
+                <label>备注:</label>
+                <input name="remark" class="easyui-textbox" data-options="multiline:true"  prompt="备注" >
+            </div>
+        </div>
+    </form>
+</div>
+
+
+<!-- 详情对话框 -->
+<div id="detailInfo" class="easyui-dialog" style="width:60%;height:80%;"
+     data-options="resizable:true,modal: true, closed:true, collapsible:true,maximizable:true">
+
+    <div id="detail-accordion" class="easyui-accordion">
+        <div title="基本信息" style="overflow:auto;padding:10px;">
+            <form id="base-datagrid" method="post">
+                <div class="fitem">
+                    <label>回收ID:</label>
+                    <input name="id" data-bind="id" class="easyui-textbox field-bind" disabled="true">
+                </div>
+                <div class="fitem">
+                    <label>订单编号:</label>
+                    <input name="order_num" data-bind="order_num" class="easyui-textbox field-bind" disabled="true">
+                </div>
+
+                <div class="fitem">
+                    <label>状态:</label>
+                    <span id="status" data-bind="order_num"></span>
+                </div>
+                <div class="fitem">
+                    <label>付款类型:</label>
+                    <input class="easyui-validatebox" name="payment_way" type="radio" value="0">
+                    <span>无</span>
+                    <input class="easyui-validatebox" name="payment_way" type="radio" value="1">
+                    <span>支付宝</span>
+                    <input class="easyui-validatebox" name="payment_way" type="radio" value="2">
+                    <span>微信</span>
+                    <input class="easyui-validatebox" name="payment_way" type="radio" value="3">
+                    <span>银联</span>
+                </div>
+                <div class="fitem">
+                    <label>预计价格:</label>
+                    <input name="reference_price" class="easyui-textbox field-bind" disabled="true">
+                </div>
+                <div class="fitem">
+                    <label>实际价格:</label>
+                    <input name="actual_price" class="easyui-textbox field-bind" prompt="实际价格" required="true">
+                </div>
+                <div class="fitem">
+                    <label>用户备注:</label>
+                    <input name="remark" class="easyui-textbox field-bind" style="width:400px;" disabled="true">
+                </div>
+                <div class="dialog-button no-br no-bg tal no-pd">
+                    <a href="#" class="easyui-linkbutton btn-save" data-options="iconCls:'icon-save'">保 存</a>
+                </div>
+            </form>
+        </div>
+        <div title="检测信息" style="overflow:auto;padding:10px;">
+            <form id="fm-detail" method="post" enctype="multipart/form-data">
+                <div class="fitem">
+                    <label>品牌:</label>
+                    <input name="customer" class="easyui-textbox" disabled="true">
+                </div>
+                <div class="fitem">
+                    <label>机型:</label>
+                    <input name="cellphone" class="easyui-textbox" disabled="true">
+                </div>
+                <div class="fitem">
+                    <label>类型:</label>
+                    <input name="email" class="easyui-textbox" disabled="true">
+                </div>
+
+                <div class="ftitle">检测项目</div>
+                <div class="fitem">
+                    <label>颜色:</label>
+                    <select class="easyui-combobox color"  disabled="true" limitToList="true" name='color_id'  valueField="id" textField="name" style="width:150px;">
+                    </select>
+                </div>
+                <div class="fitem">
+                    <label>IMEI:</label>
+                    <input name="phone_imei" class="easyui-textbox" style="width:200px;" disabled="true">
+                </div>
+                <div class="fitem">
+                    <label>故障描述:</label>
+                    <input name="malfunction_description" class="easyui-textbox" multiline="true" style="width:300px;" disabled="true">
+                </div>
+
+                <!--
+                <div class="fitem">
+                    <label>是否优惠:</label>
+                    <input name="old_order_number" class="easyui-textbox" prompt="原订单编号" style="width:200px;">
+                </div>
+                 -->
+                <div class="fitem">
+                    <label>是否开具发票:</label>
+                    <input class="easyui-validatebox" name="is_invoice" type="radio" disabled="true" value="1">
+                    <span>是</span>
+                    <input class="easyui-validatebox" name="is_invoice" type="radio" disabled="true" value="0">
+                    <span>否</span>
+                </div>
+                <div class="fitem">
+                    <label>个人或企业:</label>
+                    <input class="easyui-validatebox" name="is_personal" type="radio" value="2" required="true">
+                    <span>企业</span>
+                    <input class="easyui-validatebox" name="is_personal" type="radio" value="1" required="true" validType="requireRadio['input[name=\'is_invoice\']']">
+                    <span>个人</span>
+                </div>
+                <div class="fitem invoice">
+                    <label>发票抬头:</label>
+                    <input name="invoice" class="easyui-textbox" style="width:200px;" disabled="true">
+                </div>
+                <div class="fitem">
+                    <label>税号:</label>
+                    <input name="tax_number" class="easyui-textbox" style="width:200px;" disabled="true">
+                </div>
+                <div class="fitem">
+                    <label>是否结算:</label>
+                    <input class="easyui-validatebox" name="is_clearing" type="radio" disabled="true" value="1">
+                    <span>是</span>
+                    <input class="easyui-validatebox" name="is_clearing" type="radio" disabled="true" value="0">
+                    <span>否</span>
+                </div>
+                <div class="fitem">
+                    <label>支付方式:</label>
+                    <span id="order_payment_method"></span>
+                </div>
+                <div class="fitem">
+                    <label>下单时间:</label>
+                    <input id="order_create_time" class="easyui-textbox" disabled="true" style="width:200px;">
+                </div>
+                <div class="fitem">
+                    <label>开始维修时间:</label>
+                    <input id="order_maintain_start_time" class="easyui-textbox" disabled="true" style="width:200px;">
+                    <a class="easyui-linkbutton" onclick="showImgItem(1);">开始维修图片</a>
+                </div>
+                <div class="fitem">
+                    <label>结束维修时间:</label>
+                    <input id="orde_maintain_end_time" class="easyui-textbox" disabled="true" style="width:200px;">
+                    <a class="easyui-linkbutton" onclick="showImgItem(2);">结束维修图片</a> <a class="easyui-linkbutton" onclick="showImgItem(3);">维修单图片</a>
+                </div>
+                <div class="fitem">
+                    <label>结单时间:</label>
+                    <input id="order_end_time" class="easyui-textbox" disabled="true" style="width:200px;">
+                </div>
+                <div class="fitem">
+                    <label>付款时间:</label>
+                    <input id="order_paid_time" class="easyui-textbox" disabled="true" style="width:200px;">
+                </div>
+                <div class="fitem">
+                    <label>入库时间:</label>
+                    <input id="order_clearing_time" class="easyui-textbox" disabled="true" style="width:200px;">
+                </div>
+                <div class="fitem">
+                    <label>取消原因:</label>
+                    <input name="close_reason" class="easyui-textbox" disabled="true" style="width:300px;">
+                </div>
+
+                <div class="ftitle">工程师信息</div>
+                <div class="fitem">
+                    <label>工程师:</label>
+                    <input name="engineer_name" class="easyui-textbox" disabled="true">
+                </div>
+
+            </form>
+        </div>
+        <div title="用户信息" data-options="" style="padding:10px;">
+            <h3 style="color:#0099FF;">用户信息</h3>
+        </div>
+        <div title="工程师相关" data-options="" style="padding:10px;">
+            <form id="engineerInfo" method="post" enctype="multipart/form-data">
+                <div class="fitem">
+                    <label>品牌:</label>
+                    <input name="customer" class="easyui-textbox" disabled="true">
+                </div>
+                <div class="fitem">
+                    <label>机型:</label>
+                    <input name="cellphone" class="easyui-textbox" disabled="true">
+                </div>
+                <div class="fitem">
+                    <label>类型:</label>
+                    <input name="email" class="easyui-textbox" disabled="true">
+                </div>
+
+                <div class="ftitle">检测项目</div>
+                <div class="fitem">
+                    <label>颜色:</label>
+                    <select class="easyui-combobox color"  disabled="true" limitToList="true" name='color_id'  valueField="id" textField="name" style="width:150px;">
+                    </select>
+                </div>
+                <div class="fitem">
+                    <label>IMEI:</label>
+                    <input name="phone_imei" class="easyui-textbox" style="width:200px;" disabled="true">
+                </div>
+                <div class="fitem">
+                    <label>故障描述:</label>
+                    <input name="malfunction_description" class="easyui-textbox" multiline="true" style="width:300px;" disabled="true">
+                </div>
+
+                <div class="ftitle">订单信息</div>
+                <div class="fitem">
+                    <label>订单ID:</label>
+                    <input name="id" class="easyui-textbox"  disabled="true">
+                </div>
+                <div class="fitem">
+                    <label>订单编号:</label>
+                    <input name="number" class="easyui-textbox" disabled="true">
+                </div>
+                <div class="fitem">
+                    <div class="fitem">
+                        <label>订单类型:</label>
+                        <input class="easyui-validatebox"  name="type" type="radio" onclick="other()" value="1">
+                        <span>新单</span>
+                        <input class="easyui-validatebox" name="type" type="radio" required="true" value="2" validType="requireRadio['input[name=\'type\']']" onclick="repairItem();">
+                        <span>返修</span>
+                        <input class="easyui-validatebox"  name="type" type="radio" onclick="other()" value="3" >
+                        <span>活动</span>
+                        <input class="easyui-validatebox"  onclick="partner()" name="type" type="radio" value="4" >
+                        <span>第三方</span>
+                        <input class="easyui-validatebox"  onclick="insurance()" name="type" type="radio" value="5" >
+                        <span>保险</span>
+
+                    </div>
+                </div>
+                <div class="fitem">
+                    <label>第三方合作商:</label>
+                    <input name="partner"  class="easyui-textbox partner-class"  style="width:200px;" disabled="true">
+                </div>
+                <div class="fitem">
+                    <label>维修方式:</label>
+                    <input class="easyui-validatebox" name="category" type="radio" value="1">
+                    <span>上门维修</span>
+                    <input class="easyui-validatebox" name="category" type="radio" value="2" validType="requireRadio['input[name=\'category\']']">
+                    <span>邮寄维修</span>
+                    <input class="easyui-validatebox" name="category" type="radio" value="3" disabled="true">
+                    <span>到店维修</span>
+                </div>
+                <div class="fitem">
+                    <label>订单地址:</label>
+                    <input name="address" class="easyui-textbox" style="width:400px;" disabled="true">
+                </div>
+                <div class="fitem logistics hide">
+                    <label>邮寄单号:</label>
+                    <input id="logistics" name="logistics" class="easyui-textbox" prompt="邮寄单号"  style="width:200px;">
+                </div>
+                <div class="fitem logistics hide">
+                    <label>寄回单号:</label>
+                    <input id="postback" name="postback" class="easyui-textbox" prompt="寄回单号" style="width:200px;">
+                </div>
+                <div class="fitem">
+                    <label>状态:</label>
+                    <span id="order_status"></span>
+                </div>
+                <div class="fitem">
+                    <label>付款类型:</label>
+                    <input class="easyui-validatebox" name="pay_type" type="radio" value="1">
+                    <span>维修后付款</span>
+                    <input class="easyui-validatebox" name="pay_type" type="radio" value="2">
+                    <span>预付款</span>
+                </div>
+                <div class="fitem">
+                    <label>预计价格:</label>
+                    <input name="reference_price" class="easyui-textbox" disabled="true">
+                </div>
+                <div class="fitem">
+                    <label>实际价格:</label>
+                    <input name="actual_price" class="easyui-textbox" prompt="实际价格" required="true">
+                </div>
+                <div class="fitem">
+                    <label>已付金额:</label>
+                    <input name="paid_amount" class="easyui-textbox" disabled="true">
+                </div>
+                <div class="fitem">
+                    <label>用户备注:</label>
+                    <input name="user_remark" class="easyui-textbox" style="width:400px;" disabled="true">
+                </div>
+                <!--
+                <div class="fitem">
+                    <label>是否优惠:</label>
+                    <input name="old_order_number" class="easyui-textbox" prompt="原订单编号" style="width:200px;">
+                </div>
+                 -->
+                <div class="fitem">
+                    <label>是否开具发票:</label>
+                    <input class="easyui-validatebox" name="is_invoice" type="radio" disabled="true" value="1">
+                    <span>是</span>
+                    <input class="easyui-validatebox" name="is_invoice" type="radio" disabled="true" value="0">
+                    <span>否</span>
+                </div>
+                <div class="fitem">
+                    <label>个人或企业:</label>
+                    <input class="easyui-validatebox" name="is_personal" type="radio" value="2" required="true">
+                    <span>企业</span>
+                    <input class="easyui-validatebox" name="is_personal" type="radio" value="1" required="true" validType="requireRadio['input[name=\'is_invoice\']']">
+                    <span>个人</span>
+                </div>
+                <div class="fitem invoice">
+                    <label>发票抬头:</label>
+                    <input name="invoice" class="easyui-textbox" style="width:200px;" disabled="true">
+                </div>
+                <div class="fitem">
+                    <label>税号:</label>
+                    <input name="tax_number" class="easyui-textbox" style="width:200px;" disabled="true">
+                </div>
+                <div class="fitem">
+                    <label>是否结算:</label>
+                    <input class="easyui-validatebox" name="is_clearing" type="radio" disabled="true" value="1">
+                    <span>是</span>
+                    <input class="easyui-validatebox" name="is_clearing" type="radio" disabled="true" value="0">
+                    <span>否</span>
+                </div>
+                <div class="fitem">
+                    <label>支付方式:</label>
+                    <span id="order_payment_method"></span>
+                </div>
+                <div class="fitem">
+                    <label>下单时间:</label>
+                    <input id="order_create_time" class="easyui-textbox" disabled="true" style="width:200px;">
+                </div>
+                <div class="fitem">
+                    <label>开始维修时间:</label>
+                    <input id="order_maintain_start_time" class="easyui-textbox" disabled="true" style="width:200px;">
+                    <a class="easyui-linkbutton" onclick="showImgItem(1);">开始维修图片</a>
+                </div>
+                <div class="fitem">
+                    <label>结束维修时间:</label>
+                    <input id="orde_maintain_end_time" class="easyui-textbox" disabled="true" style="width:200px;">
+                    <a class="easyui-linkbutton" onclick="showImgItem(2);">结束维修图片</a> <a class="easyui-linkbutton" onclick="showImgItem(3);">维修单图片</a>
+                </div>
+                <div class="fitem">
+                    <label>结单时间:</label>
+                    <input id="order_end_time" class="easyui-textbox" disabled="true" style="width:200px;">
+                </div>
+                <div class="fitem">
+                    <label>付款时间:</label>
+                    <input id="order_paid_time" class="easyui-textbox" disabled="true" style="width:200px;">
+                </div>
+                <div class="fitem">
+                    <label>入库时间:</label>
+                    <input id="order_clearing_time" class="easyui-textbox" disabled="true" style="width:200px;">
+                </div>
+                <div class="fitem">
+                    <label>取消原因:</label>
+                    <input name="close_reason" class="easyui-textbox" disabled="true" style="width:300px;">
+                </div>
+
+                <div class="ftitle">工程师信息</div>
+                <div class="fitem">
+                    <label>工程师:</label>
+                    <input name="engineer_name" class="easyui-textbox" disabled="true">
+                </div>
+            </form>
+        </div>
+        <div title="操作日志" data-options="selected:true"  data-options="" style="padding:10px;">
+            <h3 style="color:#0099FF;">操作日志</h3>
+            <div class="fitem">
+                <table id="order_log" class="easyui-datagrid" nowrap="false"  style="width:800px; max-height: 300px;">
+                    <thead>
+                    <tr>
+                        <th field="id" width="50">ID</th>
+                        <th field="time" width="150">时间</th>
+                        <th field="action" width="550">操作</th>
+                    </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 指派对话框 -->
+<div id="toEngineer" class="easyui-dialog" style="width:600px;height:300px;padding:10px 20px"
+     data-options="modal: true,closed:true"  buttons="#engineerButtons">
+    <form method="post">
+        <div class="ftitle">订单信息</div>
+        <div class="fitem">
+            <label>订单ID:</label>
+            <input name="id" class="easyui-textbox" disabled="true">
+        </div>
+        <div class="fitem">
+            <label>订单编号:</label>
+            <input name="order_num" class="easyui-textbox" style="width:200px;" disabled="true">
+        </div>
+        <div class="ftitle">指派工程师</div>
+        <div class="fitem">
+            <label>工程师:</label>
+            <select class="easyui-combobox" required="true" name="engineer_id" valueField="id" textField="name"
+                    url="{:U('admin/order/engineers')}" style="width:122px;"></select>
+        </div>
+    </form>
+</div>
+<div id="engineerButtons">
+    <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-ok" onclick="saveToEngineer(this)"
+       data-dialog-name="指派工程师" style="width:90px">确 定</a>
+    <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel"
+       onclick="javascript:$('#toEngineer').dialog('close')" style="width:90px">取 消</a>
+</div>
+
+<!-- 取消回收订单对话框 -->
+<div id="cancelRecycle" class="easyui-dialog" style="width:600px;height:500px;padding:10px 20px"
+     data-options="modal: true,closed:true"  buttons="#cancelButtons">
+    <form method="post">
+        <div class="ftitle">取消原因</div>
+        <div class="fitem">
+            <!--<label style="width:160px;">选择原因（可多选）:</label>-->
+            <!--<select class="easyui-combobox" required="true" name="engineer_id" valueField="id" textField="name"-->
+                    <!--data-options="multiple:true" url="{:U('admin/order/engineers')}" style="width:122px;"></select>-->
+            <table id="cancelReason" title="选择原因" class="easyui-datagrid" style="width:100%;height:300px"
+                   url="{:U('admin/thirdrecycle/getRecycleCancelReason')}" data-options="singleSelect:true,pagination:true">
+                <thead>
+                <tr>
+                    <th field="ck" checkbox="true"></th>
+                    <th field="name" width="80%">全选</th>
+                </tr>
+                </thead>
+            </table>
+            <input type="hidden" id="cancel_id" name="cancel_id" value="0">
+        </div>
+    </form>
+</div>
+<div id="cancelButtons">
+    <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-ok" onclick="cancelRecycle(this)"
+       data-dialog-name="取消订单" style="width:90px">确 定</a>
+    <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel"
+       onclick="javascript:$('#cancelRecycle').dialog('close')" style="width:90px">取 消</a>
+</div>
+
+
+<script type="text/javascript">
+
+    var row = {};
+
+    function openDialog($dialog, $dialogElement, callback){
+        $($dialogElement.data('dialog')).dialog({
+            title : $dialogElement.text()
+        }).dialog('open');
+
+//        $dialog.dialog({}); 窗口配置
+
+        if( !!callback ) { //回调
+            setTimeout(function(){
+                callback($dialog);
+            }, 300);
+        }
+
+    }
+
+    function openDetailInfoDialog(obj){
+        openDialog($('#RecycleDataGrid'), $(obj));
+    }
+
+    function openToEngineerDialog(obj){
+        openDialog($('#toEngineer'), $(obj), function($dialog){
+            row = $('#RecycleDataGrid').datagrid('getSelected');
+            $dialog.find('form').form('load', row);
+            if(row.engineer_name != '未指派') {
+                $dialog.find('form').find('.easyui-combobox').combobox('select', row.engineer_name);
+            }
+        });
+    }
+
+    function openCancelDialog(obj){
+        openDialog($('#cancelRecycle'), $(obj), function($dialog){
+            row = $('#RecycleDataGrid').datagrid('getSelected');
+            $dialog.find('form').form('load', row);
+        });
+    }
+
+    //基础保存回收表订单的公用部分
+    function saveBase($form, $triggerSelector, success) {
+        $form.form('submit',{
+            url: "{:U('admin/thirdrecycle/saveBase', array(), false)}",
+            onSubmit: function(param){
+                if ($res = $(this).form('validate')) {
+                    $('#load').dialog('open');
+                };
+
+                param.id = row.id;
+
+                return $res;
+            },
+            success: function(result){
+
+                var result = eval('('+result+')');
+                $('#load').dialog('close');
+                if (result.ret == 0){
+                    $('#toEngineer').dialog('close');
+                    $.messager.show({
+                        title: '操作提示',
+                        msg: $triggerSelector.data('dialog-name') + '，操作成功',
+                        showType:'error',
+                        timeout: 1200,
+                        style:{
+                            right:'',
+                            bottom:'',
+                        }
+                    });
+
+                    $('#RecycleDataGrid').datagrid('reload');
+                } else {
+                    $.messager.alert({
+                        title: '操作提示',
+                        msg: result.errorMsg,
+                        showType:'fade',
+                        style:{
+                            right:'',
+                            bottom:''
+                        }
+                    });
+                }
+            }
+        });
+    }
+
+    function saveToEngineer(obj) {
+        var success = {};
+        saveBase($('#toEngineer').find('form'), $(obj), success);
+    }
+
+    function cancelRecycle(obj) {
+        var success = {};
+        saveBase($('#cancelRecycle').find('form'), $(obj), success);
+    }
+
+    function formatOperate(val, row)
+    {
+        var html = $('#rowmenu').html();
+
+//        //指派
+//        if (row.status != 1 && row.status != 11 && row.status != 12) {
+//            html = html.replace(/manual/, 'hide');
+//        }
+
+        return html;
+    }
+
+    function searchWithMap()
+    {
+        $('#RecycleDataGrid').datagrid('load',{
+            engineer_id: $('#engineer_id').combobox('getValue'),
+            order_num: $('#order_num').val()
+        });
+    }
+
+    function formatStatus(status){
+        let statusCn = '';
+        switch(status) {
+            case '1': statusCn = 'aa';break;
+            case '2': statusCn = 'bb';break;
+            case '3': statusCn = 'cc';break;
+            default : statusCn = 'other';break;
+        }
+
+        return statusCn;
+    }
+
+    //渲染函数部分
+    function formatDig(dig){
+        return !dig ? "第三方" : '挖单';
+    }
+
+    function edit(row){
+
+        if(!row) {
+            row = {
+                actual_price : "",
+                create_time : "",
+                engineer_id : "",
+                order_num : "",
+                order_time : "",
+                payment_method : "",
+                payment_number : "",
+                reference_price : "",
+                remark : "",
+                status : ""
+            };
+        }
+
+        $('#editDialog').form('load', row).dialog({
+            title: '编辑',
+            closed: false,
+            modal: true
+        });
+    }
+
+    function searchWithOrder(){
+        $('#RecycleDataGrid').datagrid({
+            queryParams: {
+                order_num: $('#search-orderno').val()
+            }
+        });
+    }
+
+    //走过一个坑 先留着吧
+//    function ajax(url,data, success){
+//        $.ajax({
+//            url      : url,
+//            dataType :'json',
+//            type     :'POST',
+//            data     : data,
+//            success  : success
+//        });
+//    }
+//
+//    function formFill($form, data){
+//
+//        var fieldsSize, $nowField;
+//
+//        $fields = $form.find('.fitem');
+//        fieldsSize = $fields.size();
+//        if(fieldsSize <= 0) return;
+//
+//        $.each($fields, function(i,v) {
+//            var $nowField = $(v).find('.field-bind');
+//            console.log($nowField);
+//            if($nowField.size()>=1 && $nowField.hasClass('easyui-textbox')) { //text文本
+//                $nowField.val(data[$nowField.data('bind')]);
+//            }
+//        });
+//
+//        $form.form('reset');
+//    }
+
+    $(function(){
+
+        let accordionArr = [
+            { url: "{:U('admin/thirdrecycle/getRecycle')}", saveUrl: "{:U('admin/thirdrecycle/saveBase')}",
+                selector : '#base-datagrid', params: ['id']},
+            { url: "{:U('admin/thirdrecycle/getDetectItems')}",
+                saveUrl: "{:U('admin/thirdrecycle/saveDetector')}", selector : '#detect-datagrid'},
+            { url: "{:U('admin/thirdrecycle/getCustomer')}",
+                saveUrl: "{:U('admin/thirdrecycle/saveCustomer')}", selector : '#customer-datagrid'},
+            { url: "{:U('admin/thirdrecycle/getEngineerInfo')}",
+                saveUrl: "{:U('admin/thirdrecycle/saveEngineerInfo')}", selector : '#engineer-info-datagrid'},
+            { url: "{:U('admin/thirdrecycle/getOperateLog')}",
+                saveUrl: "{:U('admin/thirdrecycle/saveOperateLog')}", selector : '#operate-log-datagrid'},
+        ];
+
+        //绑定窗口关闭时操作
+        $('#detailInfo').dialog({
+            onClose: function(){
+                //关闭时让手风琴重置折叠
+                $('#detail-accordion').accordion({
+                    collapsible: true
+                });
+            }
+        });
+
+
+        //详情页面的操作
+        $('#detail-accordion').accordion({
+
+            onSelect: function(title, index) {
+
+                //获取数据表格选择的数据行
+                row = $('#RecycleDataGrid').datagrid('getSelected');
+
+                if(row.id != $(accordionArr[index].selector).data('cache-id') ) {
+                    $(accordionArr[index].selector).data('cache-id', row.id);
+                    $(accordionArr[index].selector).form('reset');
+                    $(accordionArr[index].selector).form('load', accordionArr[index].url+"?id="+row.id);
+                }
+
+            }
+        });
+
+        //详情页面下各子页面的保存操作
+        $('#detail-accordion').find('.btn-save').on('click',function(){
+
+            var $this = $(this), index;
+            $panel = $this.closest('.panel');
+            index = $('#detail-accordion').find('.panel').index($panel);
+            $(accordionArr[index].selector).form('submit', {
+                    url:accordionArr[index].saveUrl,
+                    onSubmit: function(param){ //param 附加参数 param.p1 = 'value1';
+                        param.id = row.id;
+                    },
+                    success:function(res){
+                        res = eval("(" + res + ")");
+                        $.messager.show({
+                            title:'操作结果',
+                            msg: !res.ret ? '操作成功' : res.errorMsg,
+                            timeout:800,
+                            style:{
+                                right:'',
+                                top:document.body.scrollTop+document.documentElement.scrollTop+ Math.ceil($(window).height() / 2),
+                                bottom:''
+                            }
+                        });
+                    }
+            });
+
+        });
+
+        //取消数据表格的选择事件，为了获取选择数据行
+        $('#cancelReason').datagrid({
+            onSelect: function(index, row) {
+                $('#cancel_id').val(row.id);
+            }
+        })
+
+    });
+</script>
+</body>
+</html>

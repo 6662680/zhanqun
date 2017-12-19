@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/default/easyui.css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/icon.css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/css/user.css">
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/locale/easyui-lang-zh_CN.js"></script>
+    <script>
+
+        var organizationData; // 按组织分组数据（主要用于弹出窗口）
+        var engineerData; // 按工程师分组数据（主要用于弹出窗口）
+        /**
+         * 关键字过滤
+         * @returns {{create_time_start: jQuery, create_time_end: jQuery, clearing_time_start: jQuery, clearing_time_end: jQuery, action_time_start: jQuery, action_time_end: jQuery}}
+         */
+        function params() {
+            return {
+                create_time_start: $('#search-create-time-start').datebox('getValue'), // 下单时间开始
+                create_time_end: $('#search-create-time-end').datebox('getValue'), // 下单时间结始
+                clearing_time_start: $('#search-clearing-time-start').datebox('getValue'), // 结单时间开始
+                clearing_time_end: $('#search-clearing-time-end').datebox('getValue'), // 结单时间结束
+                action_time_start: $('#search-action-time-start').datebox('getValue'), // 操作时间开始
+                action_time_end: $('#search-action-time-end').datebox('getValue'), // 操作时间结束
+            };
+        }
+
+        function searchItem() {
+            $.ajax({
+                type: "post",
+                url: "/admin/anticheating/statistics",
+                data: params(),
+                timeout: 15000,
+                beforeSend: function() {
+                    $.messager.progress({
+                        title: '正在加载',
+                        msg: '正在加载，请稍候...',
+                    });
+                },
+
+                error: function() {
+                    $.messager.progress('close');
+                    $.messager.alert('出错', '加载超时,请缩短查询时间');
+                },
+
+                success: function(result){
+
+                    // 按组织分组
+                    organizationData = result.organization;
+                    var orgData = [];
+
+                    $.each(organizationData, function(key, value){
+                        orgData.push({
+                            organization_name:value.organization_name,
+                            modify:value.modify.length,
+                            inToOut:value.inToOut.length,
+                            manyToLess:value.manyToLess.length,
+                            price:value.price.length
+                        });
+                    });
+
+                    $('#dg-organization').datagrid({
+                        data: orgData,
+                        onClickCell: function (rowIndex, field, value) {
+                            clickCell(rowIndex, field, value, 'organization');
+                        }
+                    });
+
+                    // 按工程师分组
+                    engineerData = result.engineer;
+                    var engData = [];
+
+                    $.each(engineerData, function(key, value){
+                        engData.push({
+                            engineer_name:value.engineer_name,
+                            modify:value.modify.length,
+                            inToOut:value.inToOut.length,
+                            manyToLess:value.manyToLess.length,
+                            price:value.price.length
+                        });
+                    });
+
+                    $('#dg-engineer').datagrid({
+                        data:engData,
+                        onClickCell: function (rowIndex, field, value) {
+                            clickCell(rowIndex, field, value, 'engineer');
+                        },
+                        onSortColumn: function(sort, order) {
+                            sortEngineerBy(sort, order);
+                        }
+                    });
+
+                    $.messager.progress('close');
+                }
+            });
+        }
+
+        /**
+         * 按时字段与排序规则排序
+         */
+        function sortEngineerBy(sortKey, orderName) {
+            if (!engineerData) return;
+            engineerData.sort(function(a, b) {
+                if (orderName == 'asc') {
+                    return a[sortKey].length - b[sortKey].length;
+                } else {
+                    return b[sortKey].length - a[sortKey].length;
+                }
+            });
+
+            var engData = [];
+            $.each(engineerData, function(key, value){
+                engData.push({
+                    engineer_name:value.engineer_name,
+                    modify:value.modify.length,
+                    inToOut:value.inToOut.length,
+                    manyToLess:value.manyToLess.length,
+                    price:value.price.length
+                });
+            });
+
+            $('#dg-engineer').datagrid('loadData', engData);
+        }
+
+        function exportTotalItem() {
+            $('#export_id').form('submit', {
+                url: '/admin/anticheating/statisticsexporttotal',
+                queryParams: params()
+            });
+        }
+
+        function exportDetailItem() {
+            $('#export_id').form('submit', {
+                url: '/admin/anticheating/statisticsexportdetail',
+                queryParams: params()
+            });
+        }
+
+        $(function(){
+            var date = new Date();
+            var year = date.getFullYear();
+            var mouth = (date.getMonth()+1);
+            var day = date.getDate();
+            var value = year+"-"+mouth+"-"+day;
+
+            // 设置默认的 操作日期 起始时间
+            $('#search-action-time-start').datebox('setValue', value);
+            $('#win-show-data').window('close');
+            searchItem();   // 默认搜索
+        });
+
+        /**
+         * 单元格点击
+         * @param 行索引
+         * @param 单元格 field
+         * @param 单元格内容
+         * @param 点击的是组织还是工程师
+         */
+        function clickCell(rowIndex, field, value, type) {
+
+            var data;
+
+            if (type == 'organization') {
+                if (organizationData && !isNaN(value)) {
+                    data = organizationData[rowIndex][field];
+                }
+            } else {
+                if (engineerData && !isNaN(value)) {
+                    data = engineerData[rowIndex][field];
+                }
+            }
+
+            $('#dg-data-list').datagrid({data:data});
+
+            if (data && data.length > 0) {
+                $('#win-show-data').window('open');
+            }
+        }
+
+    </script>
+</head>
+
+<body class="easyui-layout" style="width:100%;height:100%;">
+
+    <div data-options="region:'north',title:'过滤条件',split:true" style="height:80px;">
+
+        <!-- 导出表单开始-->
+        <form id="export_id" method="post">
+        </form>
+        <!-- 导出表单结束-->
+
+        <!-- 过滤条件开始-->
+        <div id="toolbar" class="easyui-panb">
+            &nbsp;&nbsp;
+            <span>下单日期:</span>
+            <input type="text" class="easyui-datebox" id='search-create-time-start' panelHeight="auto">
+            至
+            <input type="text" class="easyui-datebox" id='search-create-time-end' panelHeight="auto">
+            &nbsp;&nbsp;
+            <span>付款日期:</span>
+            <input type="text" class="easyui-datebox" id='search-clearing-time-start' panelHeight="auto">
+            至
+            <input type="text" class="easyui-datebox" id='search-clearing-time-end' panelHeight="auto">
+            &nbsp;&nbsp;
+            <span>操作日期:</span>
+            <input type="text" class="easyui-datebox" id='search-action-time-start' panelHeight="auto">
+            至
+            <input type="text" class="easyui-datebox" id='search-action-time-end' panelHeight="auto">
+            &nbsp;&nbsp;
+            <a href="javascript:void(0)" class="easyui-linkbutton" plain="true" iconCls="icon-search" onclick="searchItem()">搜索</a>
+            <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['统计导出'])) { echo 'hide';} ?>" plain="true" iconCls="icon-export" onclick="exportTotalItem()">统计导出</a>
+            <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['明细导出'])) { echo 'hide';} ?>" plain="true" iconCls="icon-export" onclick="exportDetailItem()">明细导出</a>
+        </div>
+    </div>
+
+    <div data-options="region:'center',title:'组织订单操作记录统计',split:true" style="width:49%;">
+        <!-- 列表开始-->
+        <table id="dg-organization" class="easyui-datagrid" singleSelect="true" style="width:100%; max-height:100%;">
+            <thead>
+            <tr>
+                <th field="organization_name" data-options="width:100,align:'center'">组织</th>
+                <th field="modify" data-options="width:120,align:'center'">订单修改数量</th>
+                <th field="inToOut" data-options="width:120,align:'center'">外屏=>内屏订单数量</th>
+                <th field="manyToLess" data-options="width:160,align:'center'">多故障=>少故障订单数量</th>
+                <th field="price" data-options="width:120,align:'center'">价格修改订单数量</th>
+            </tr>
+            </thead>
+        </table>
+        <!-- 列表结束-->
+    </div>
+
+    <div data-options="region:'east',title:'工程师订单操作记录统计',split:true" style="width:49%;">
+        <!-- 列表开始-->
+        <table id="dg-engineer" class="easyui-datagrid" singleSelect="true" style="width:100%; max-height:100%;">
+            <thead>
+            <tr>
+                <th field="engineer_name" data-options="width:100,align:'center'">工程师</th>
+                <th field="modify" data-options="width:120,align:'center'" sortable="true">订单修改数量</th>
+                <th field="inToOut" data-options="width:130,align:'center'" sortable="true">外屏=>内屏订单数量</th>
+                <th field="manyToLess" data-options="width:160,align:'center'" sortable="true">多故障=>少故障订单数量</th>
+                <th field="price" data-options="width:120,align:'center'" sortable="true">价格修改订单数量</th>
+            </tr>
+            </thead>
+        </table>
+        <!-- 列表结束-->
+    </div>
+
+    <!-- 操作详细列表窗口开始-->
+    <div id="win-show-data" class="easyui-window" title="操作详细列表" style="width: 90%; height: 100%; padding: 5px">
+        <table id="dg-data-list" class="easyui-datagrid">
+            <thead>
+            <tr>
+                <!--<th field="organization_id" data-options="width:100,align:'center'">组织ID</th>-->
+                <th field="organization_name" data-options="width:100,align:'center'">组织</th>
+                <!--<th field="engineer_id" data-options="width:100,align:'center'">工程师ID</th>-->
+                <th field="engineer_name" data-options="width:100,align:'center'">工程师</th>
+                <!--<th field="order_id" data-options="width:100,align:'center'">订单ID</th>-->
+                <th field="number" data-options="width:120,align:'center'">订单编号</th>
+                <th field="create_time" data-options="width:140,align:'center'">下单时间</th>
+                <th field="clearing_time" data-options="width:140,align:'center'">付款时间</th>
+                <th field="action_time" data-options="width:140,align:'center'">操作时间</th>
+                <th field="action" data-options="width:800,align:'left'">操作</th>
+            </tr>
+            </thead>
+        </table>
+    </div>
+    <!-- 操作详细列表窗口结束-->
+
+</body>
+</html>

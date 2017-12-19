@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>user</title>
+	<link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/default/easyui.css">
+	<link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/icon.css">
+	<link rel="stylesheet" type="text/css" href="__PUBLIC__/css/user.css">
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/datagrid-cellediting.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/js/user.js"></script>
+    <script type="text/javascript">
+        var url;
+        function edit(){
+            var row = $('#dg').datagrid('getSelected');
+            if (row){
+                $('#dlg').dialog('open').dialog('center').dialog('setTitle', '编辑');
+                $('#fm').form('load', row);
+                url = '/admin/Share/statisticalEdit/id/'+ row.id;
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+
+        function deleteItem(){
+            var row = $('#dg').datagrid('getSelected');
+            if (row){
+                $.messager.confirm('Confirm', '确认删除此记录?',function(r){
+                    if (r){
+                        $.post('/admin/Share/delete',{id:row.id},function(result){
+                            if (result.success){
+                                $('#dg').datagrid('reload');
+                            } else {
+                                $.messager.show({
+                                    title: '错误',
+                                    msg: result.errorMsg,
+                                    showType:'fade',
+                                    style:{
+                                        right:'',
+                                        bottom:''
+                                    }
+                                });
+                            }
+                        },'json');
+                    }
+                });
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+        function searchItem(){
+            $('#dg').datagrid({
+                queryParams: {
+                    create_time_start: $('#origin_create_time').combobox('getValue'),
+                    create_time_end: $('#finish_create_time').combobox('getValue'),
+                    clearing_time_start: $('#origin_end_time').combobox('getValue'),
+                    clearing_time_end: $('#finish_end_time').combobox('getValue'),
+                    keyword: $('#search-keyword').val(),
+                    status: $('#search-status').combobox('getValue'),
+                }
+            });
+        }
+
+
+        function saveUser(){
+
+            $('#fm').form('submit',{
+                url: url,
+                onSubmit: function(){
+                    return $(this).form('validate');
+                },
+                success: function(result){
+                    var result = eval('('+result+')');
+                    if (result.errorMsg){
+                        $.messager.show({
+                            title: 'Error',
+                            msg: result.errorMsg
+                        });
+                    } else {
+                        $('#dlg').dialog('close');		// close the dialog
+                        $('#dg').datagrid('reload');	// reload the user data
+                    }
+                }
+            });
+        }
+        
+        function exportItem()
+        {
+        	$('#search').form('submit', {
+                url: '/admin/share/export',
+                queryParams: {
+                	create_time_start: $('#origin_create_time').combobox('getValue'),
+                    create_time_end: $('#finish_create_time').combobox('getValue'),
+                    clearing_time_start: $('#origin_end_time').combobox('getValue'),
+                    clearing_time_end: $('#finish_end_time').combobox('getValue'),
+                    keyword: $('#search-keyword').val(),
+                    status: $('#search-status').combobox('getValue')
+                }
+            });
+        }
+
+        $(function(){
+
+            $('#mm').menu();
+            $(document).bind('contextmenu',function(e){
+                e.preventDefault();
+                $('#mm').menu('show', {
+                    left: e.pageX,
+                    top: e.pageY
+                });
+            });
+        });
+        
+        function formStatus(val){
+			if (val == 6){
+			   return '已付款'
+			} else {
+			   return '未付款'
+			}
+        }
+
+        function add(){
+            $('#dlg').dialog('open').dialog('center').dialog('setTitle', '添加');
+            url = '/admin/Share/add';
+        }
+    </script>
+</head>
+<body class="easyui-layout">
+        <div id="box" class="easyui-dialog" style="width: 900px;min-height: 400px;" closed="true">
+            <div data-options="region:'east'" style="width:880px;">
+
+                <table id="joinex" class="easyui-datagrid" singleSelect="true" pagination="true" pageSize="20">
+                    <thead>
+                    <tr>
+                        <th field="id" width="33%">ID</th>
+                        <th field="name" width="33%">名称</th>
+                        <th field="amount" width="33%">数量</th>
+                    </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+        <table id="dg" title="分享统计列表" class="easyui-datagrid" style="width:100%;" url="/admin/Share/statisticalRow" toolbar="#toolbar" pagination="true" pageSize="30" pagePosition="top" rownumbers="true" fitColumns="true" singleSelect="true" rownumbers="true" pagination="true">
+            <thead>
+            <tr>
+                <th field="id" id="id" width="5%">ID</th>
+                <th field="name" id="name" width="9%">名称</th>
+                <th field="number" id="number" width="9%">订单号</th>
+                <th field="user" id="user" width="24%">分享账号</th>
+                <th field="actual_price" width="5%">订单金额</th>
+                <th field="status" formatter="formStatus" width="5%">订单状态</th>
+                <th field="start_time" formatter="formatDate" width="9%">下单时间</th>
+                <th field="clearing_time" formatter="formatDate" width="9%">付款时间</th>
+                <th field="ratio" width="9%">分成比例</th>
+                <th field="deduct" width="9%">提成</th>
+                <th field="remark" width="9%">备注</th>
+            </tr>
+            </thead>
+    	</table>
+
+	    <div id="toolbar">
+	    	<form id="search" method="post" action="<?php echo U('admin/share/export');?>">
+	        <span>下单时间:</span>
+	        <input class="easyui-datetimebox" id="origin_create_time" name="origin_create_time" style="width:200px">
+	        <span>到</span>
+	        <input class="easyui-datetimebox" id="finish_create_time" name="finish_create_time" style="width:200px">
+	        <div style="margin:20px 0;"></div>
+	        <span>结单时间:</span>
+	        <input class="easyui-datetimebox" id="origin_end_time" name="origin_end_time" style="width:200px">
+	        <span>到</span>
+	        <input class="easyui-datetimebox" id="finish_end_time" name="finish_end_time" style="width:200px">
+	        <span>状态:</span>
+	        <select class="easyui-combobox" id='search-status' panelHeight="auto">
+	            <option value="2">全部</option>
+	            <option value="1">未付款</option>
+	            <option value="6">已付款</option>
+	        </select>
+	        <span>关键字:</span>
+	        <input type="text" class="easyui-textbox" id='search-keyword' panelHeight="auto">
+			<a href="javascript:void(0)" class="easyui-linkbutton" plain="true" iconCls="icon-search" onclick="searchItem()">搜索</a>
+			<a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['导出'])) { echo 'hide';} ?>" plain="true" iconCls="icon-export" onclick="exportItem()">导出</a>
+			</form>
+	    </div>
+	    <div id="load" class="easyui-dialog" title="消息" closed="true" style="width:200px;height:100px;padding:10px">
+	        <span>处理中...</span>
+	    </div>
+        <div id="dlg" class="easyui-dialog" style="width:300px;height:200px;padding:10px 20px"
+             closed="true" buttons="#dlg-buttons">
+            <form id="fm" method="post">
+                <div class="fitem">
+                    <div class="fitem">
+                        <label>备注:</label>
+                        <input name="remark" class="easyui-textbox" data-options="multiline:true"  prompt="备注" >
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div id="dlg-buttons">
+            <a href="#" class="easyui-linkbutton" iconCls="icon-ok" onclick="saveUser()">保存</a>
+            <a href="#" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg').dialog('close')">取消</a>
+        </div>
+        <div id="rowmenu" class="hide">
+            <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-edit" plain="true" onclick="edit()">编辑</a>&nbsp;
+        </div>
+        <div id="win" class="easyui-dialog" style="width: 900px;min-height: 400px;" closed="true">
+            <div data-options="region:'east'" style="width:880px;">
+
+            </div>
+        </div>
+        <div id="w" class="easyui-window" closed="true" data-options="title:'错误',inline:true" style="width:50px;height:25px;padding:10px">
+
+        </div>
+</body>
+</html>

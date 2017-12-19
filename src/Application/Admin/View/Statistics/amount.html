@@ -1,0 +1,181 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>user</title>
+        <link href="__PUBLIC__/vendor/bui/assets/css/dpl-min.css" rel="stylesheet" type="text/css" />
+        <link href="__PUBLIC__/vendor/bui/assets/css/bui-min.css" rel="stylesheet" type="text/css" />
+        <link href="__PUBLIC__/vendor/bui/assets/css/page-min.css" rel="stylesheet" type="text/css" />
+        <script type="text/javascript" src="__PUBLIC__/vendor/bui/assets/js/jquery-1.8.1.min.js"></script>
+        <script type="text/javascript" src="__PUBLIC__/vendor/bui/assets/js/bui.js"></script>
+        <script type="text/javascript" src="__PUBLIC__/vendor/bui/assets/js/config.js"></script>
+        <script type="text/javascript" src="__PUBLIC__/vendor/highcharts/js/highcharts.js"></script>
+        <script type="text/javascript" src="__PUBLIC__/vendor/highcharts/js/themes/dark-unica.js"></script>
+        <script type="text/javascript">
+            $(function () {
+                var Calendar = BUI.Calendar
+                var datepicker = new Calendar.DatePicker({
+                    trigger:'.calendar-time',
+                    autoRender : true
+                });
+
+                // ------------------------------------------------------------------------
+                var $dayCreate = <?php echo json_encode(array_keys($dayCreateCount)); ?>;
+                var $dayCreateCount = <?php echo json_encode(array_values($dayCreateCount)); ?>;
+
+                var $dayFinishCount = <?php echo json_encode(array_values($dayFinishCount)); ?>;
+
+                $('#container').highcharts({
+                    chart: {
+                        type: 'line',
+                        margin: [ 50, 50, 100, 80]
+                    },
+                    title: {
+                        text: '闪修侠单量'
+                    },
+                    xAxis: {
+                        categories: $dayCreate,
+                        labels: {
+                            rotation: -45,
+                            align: 'right',
+                            style: {
+                                fontSize: '13px',
+                                fontFamily: 'Verdana, sans-serif'
+                            }
+                        }
+                    },
+                    yAxis: {
+                        min: 0,
+                        title: {
+                            text: '单'
+                        }
+                    },
+                    legend: {
+                        enabled: true
+                    },
+                    tooltip: {
+                        pointFormat: '<b>{point.y} 单</b>',
+                    },
+                    series: [{
+                        name: '下单量',
+                        data: $dayCreateCount,
+                        dataLabels: {
+                            enabled: true,
+                            rotation: -90,
+                            color: '#FFFFFF',
+                            align: 'right',
+                            x: 4,
+                            y: 10,
+                            style: {
+                                fontSize: '13px',
+                                fontFamily: 'Verdana, sans-serif',
+                                textShadow: '0 0 3px black'
+                            }
+                        }
+                    },{
+                        name: '入库量',
+                        data: $dayFinishCount,
+                        dataLabels: {
+                            enabled: true,
+                            rotation: -90,
+                            color: '#FFFFFF',
+                            align: 'right',
+                            x: 4,
+                            y: 10,
+                            style: {
+                                fontSize: '13px',
+                                fontFamily: 'Verdana, sans-serif',
+                                textShadow: '0 0 3px black'
+                            }
+                        }
+                    }]
+                });
+
+                //完成率表格
+
+                var $dayCreate = <?php echo json_encode(array_keys($dayCreateCount)); ?>;
+                var $day_rate = <?php echo json_encode(array_values($day_rate)); ?>;
+
+                $('#container_rate').highcharts({
+                    chart: {
+                        type: 'line',
+                        margin: [ 50, 50, 100, 80]
+                    },
+                    title: {
+                        text: '闪修侠完成率'
+                    },
+                    xAxis: {
+                        categories: $dayCreate,
+                        labels: {
+                            rotation: -45,
+                            align: 'right',
+                            style: {
+                                fontSize: '13px',
+                                fontFamily: 'Verdana, sans-serif'
+                            }
+                        }
+                    },
+                    yAxis: {
+                        min: 0,
+                        title: {
+                            text: '百分比'
+                        }
+                    },
+                    legend: {
+                        enabled: true
+                    },
+                    tooltip: {
+                        pointFormat: '<b>{point.y} %</b>',
+                    },
+                    series: [{
+                        name: '完成率',
+                        data: $day_rate,
+                        dataLabels: {
+                            formatter: function() {
+                                // display only if larger than 1
+                                return this.y > 1 ? '</b> '+ this.y +'%'  : null;
+                            },
+                            enabled: true,
+                            rotation: -90,
+                            color: '#FFFFFF',
+                            align: 'right',
+                            x: 4,
+                            y: 10,
+                            style: {
+                                fontSize: '13px',
+                                fontFamily: 'Verdana, sans-serif',
+                                textShadow: '0 0 3px black'
+                            }
+                        }
+                    }]
+                });
+            });
+        </script>
+    </head>
+    <body>
+        <div class="demo-content">
+            <div class="row">
+                <div class="offset1 doc-content">
+                    <form id="search_form" class="form-panel" method="post" action="<?php echo U('admin/statistics/amount'); ?>">
+                        <ul class="panel-content">
+                            <li>
+                                <span>
+                                    <label for="search_start_time">日期：</label>
+                                    <input type="text" class="calendar calendar-time" style="width:150px;" name="startTime" id="search_start_time" value="<?php echo date('Y-m-d', $startTime)?>">
+                                    <label for="search_end_time">至</label>
+                                    <input type="text" class="calendar calendar-time" style="width:150px;" name="endTime" id="search_end_time" value="<?php echo date('Y-m-d', $endTime)?>">
+                                </span>
+                                &nbsp;&nbsp;
+                                <button type="submit" class="button button-primary">查询&gt;&gt;</button>
+                            </li>
+                        </ul>
+                    </form>
+                    <div id="container" style="min-width:700px;height:600px"></div>
+                    <p/>
+                    <br/>
+                    <div id="container_rate" style="min-width:700px;height:600px"></div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>user</title>
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/default/easyui.css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/icon.css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/css/user.css">
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/datagrid-cellediting.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/locale/easyui-lang-zh_CN.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/js/user.js"></script>
+    <script type="text/javascript">
+        var url;
+
+        function newItem(){
+            $('#dlg').dialog('open').dialog('center').dialog('setTitle', '添加');
+            $('#fm').form('clear');
+            url = '/admin/purchasereceipt/add';
+            $('#dg-fitting').datagrid({url: '', data: []});
+            
+            // 批次
+            if ($('#batch_input').textbox('getValue') == '') {
+                $.get("/admin/purchasereceipt/batch", function(data) {
+                    $('#batch_input').textbox('setValue', data);
+                });
+            };
+        }
+
+        function editItem(){
+            var row = $('#dg').datagrid('getSelected');
+
+            if (row) {
+                url = '/admin/purchasereceipt/edit/id/' + row.id;
+
+                $('#dlg').dialog('open').dialog('center').dialog('setTitle','编辑');
+                $('#fm').form('load', row);
+                
+                
+                $('#dg-fitting').datagrid({
+                    url:'/admin/purchasereceipt/lists/id/' + row.id
+                });
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+        function saveItem() {
+            $('#fm').form('submit',{
+                url: url,
+                onSubmit: function(){
+
+                    if ($(this).form('validate')) {
+                        var dg = $('#dg-fitting').datagrid('getData');
+
+                        if (dg.total > 0) {
+                            $('.fittings').remove();
+                            var rows = dg.rows;
+
+                            for (var i in rows) {
+                                str = '';
+                                str += '<input type="hidden" name="fittings[]" class="fittings" value="' + rows[i].organization_id + '_' + rows[i].fitting_id + '_' + rows[i].purchase_amount + '_' + rows[i].price + '">';
+                                $('#fm').append(str);
+                            }
+                        };
+
+                        $('#load').dialog('open');
+                        return true;
+                    } else {
+                        $('#load').dialog('close');
+                        return false;
+                    }
+                },
+                success: function(result){
+                    $('#load').dialog('close');
+                    var result = eval('('+result+')');
+
+                    if (result.success){
+                        $('#dlg').dialog('close');
+                        $('#dg').datagrid('reload');
+                    } else {
+                        $.messager.show({
+                            title: '错误',
+                            msg: result.errorMsg,
+                            showType:'fade',
+                            style:{
+                                right:'',
+                                bottom:''
+                            }
+                        });
+                    }
+                }
+            });
+        }
+
+        function deleteItem(){
+            var row = $('#dg').datagrid('getSelected');
+
+            if (row) {
+                $.messager.confirm('Confirm', '确认删除此记录?',function(r){
+                    if (r){
+                        $.post('/admin/purchasereceipt/delete',{id:row.id},function(result){
+                            if (result.success){
+                                $('#dg').datagrid('reload');
+                            } else {
+                                $.messager.show({
+                                    title: '错误',
+                                    msg: result.errorMsg,
+                                    showType:'fade',
+                                    style:{
+                                        right:'',
+                                        bottom:''
+                                    }
+                                });
+                            }
+                        },'json');
+                    }
+                });
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+        function searchItem(){
+            $('#dg').datagrid({
+                queryParams: {
+                    starttime: $('#search-starttime').datetimebox('getValue'),
+                    endtime: $('#search-endtime').datetimebox('getValue'),
+                    proposer_org: $('#search-org').combobox('getValue'),
+                    status: $('#search-status').combobox('getValue'),
+                    keyword:$('#search-keyword').val()
+                }
+            });
+        }
+
+        function newFitting() {
+            $('#dlg-fitting').dialog('open').dialog('center').dialog('setTitle', '添加');
+            $('#fm-fitting').form('clear');
+        }
+
+        function saveFitting() {
+            $('#dg-fitting').datagrid('appendRow', {
+                organization_id:$('#organization_id').combobox('getValue'),
+                org_name:$('#organization_id').combobox('getText'),
+                phone: $('#phone_id').combobox('getText'),
+                phone_id: $('#phone_id').combobox('getValue'),
+                fitting: $('#fittings_id').combobox('getText'),
+                fitting_id: $('#fittings_id').combobox('getValue'),
+                purchase_amount: $('#fittings_amount').textbox('getValue'),
+                price: $('#fittings_price').textbox('getValue'),
+            });
+
+            $('#dlg-fitting').dialog('close');
+        }
+        
+        function importFitting() {
+            $('#dlg-import').dialog('open').dialog('center').dialog('setTitle', '导入');
+            $('#fm-import').form('clear');
+        }
+        
+        function saveImportFitting() {
+            $('#fm-import').form('submit',{
+                url: '/admin/purchasereceipt/import',
+                onSubmit: function(){
+                    if ($(this).form('validate')) {
+                        $('#load').dialog('open');
+                    };
+                    return $(this).form('validate');
+                },
+                success: function(result){
+                    $('#load').dialog('close');
+                    $('#dlg-import').dialog('close');
+                    var result = eval('('+result+')');
+                    
+                    if (result.success) {
+                        for (var i in result.data) {
+                            $('#dg-fitting').datagrid('appendRow', result.data[i]);
+                        }
+                    } else {
+                        $.messager.show({
+                            title: '错误',
+                            msg: result.errorMsg,
+                            showType:'fade',
+                            style:{
+                                right:'',
+                                bottom:''
+                            }
+                        });
+                    }
+                }
+            });
+        }
+
+        function deleteFitting() {
+            var rows = $('#dg-fitting').datagrid('getSelections');
+
+            for (var i in rows)
+            {
+                var index = $('#dg-fitting').datagrid('getRowIndex', rows[i]); 
+                $('#dg-fitting').datagrid('deleteRow', index);
+            }
+        }
+
+        // 详情
+        function detailItem() {
+            var row = $('#dg').datagrid('getSelected');
+
+            if (row) {
+                $('#dlg-detail').dialog('open').dialog('center').dialog('setTitle', '详情');
+                $('#fm-detail').form('load', row);
+
+                $('#dg-fitting-detail').datagrid({
+                    url:'/admin/purchasereceipt/lists/id/' + row.id
+                });
+                $('#dg-purchase-receipt-log').datagrid({
+                    url:'/admin/purchasereceipt/logs/id/' + row.id
+                });
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+        
+        // 收货
+        function receiptItem() {
+            var row = $('#dg').datagrid('getSelected');
+
+            if (row) {
+                $('#dlg-receipt').dialog('open').dialog('center').dialog('setTitle', '详情');
+                $('#fm-receipt').form('clear');
+                $('#fm-receipt').form('load', row);
+
+                $('#dg-fitting-receipt').datagrid({
+                    url:'/admin/purchasereceipt/lists/is_organization/1/id/' + row.id
+                });
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+        
+        function saveReceiptItem(_this) {
+            $('#fm-receipt').form('submit',{
+                url: '/admin/purchasereceipt/receipt',
+                onSubmit: function(){
+
+                    if ($(this).form('validate')) {
+                        $(_this).linkbutton('disable');
+                        var dg = $('#dg-fitting-receipt').datagrid('getData');
+
+                        if (dg.total > 0) {
+                            $('.fittings').remove();
+                            var rows = dg.rows;
+
+                            for (var i in rows) {
+                                str = '';
+                                str += '<input type="hidden" name="fittings[]" class="fittings" value="' + rows[i].id + '_' + rows[i].purchase_receipt_id + '_' + rows[i].purchase_amount + '_' + rows[i].amount + '">';
+                                $('#fm-receipt').append(str);
+                            }
+                        };
+                        $('#load').dialog('open');
+                        return true;
+                    } else {
+                        $('#load').dialog('close');
+                        return false;
+                    }
+                },
+                success: function(result){
+                    $(_this).linkbutton('enable');
+                    $('#load').dialog('close');
+                    var result = eval('('+result+')');
+
+                    if (result.success){
+                        $('#dlg-receipt').dialog('close');
+                        $('#dg').datagrid('reload');
+                    } else {
+                        $.messager.show({
+                            title: '错误',
+                            msg: result.errorMsg,
+                            showType:'fade',
+                            style:{
+                                right:'',
+                                bottom:''
+                            }
+                        });
+                    }
+                }
+            });
+        }
+        
+        // 核对
+        function checkItem() {
+            var row = $('#dg').datagrid('getSelected');
+
+            if (row) {
+                url = '/admin/purchasereceipt/check/id/' + row.id;
+                
+                $('#dlg-audit').dialog('open').dialog('center').dialog('setTitle', '详情');
+                $('#fm-audit').form('clear');
+                $('#fm-audit').form('load', row);
+
+                $('#dg-fitting-audit').datagrid({
+                    url:'/admin/purchasereceipt/lists/is_check/1/id/' + row.id
+                });
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+        
+        function saveCheckItem() {
+            $('#fm-audit').form('submit',{
+                url: url,
+                onSubmit: function(){
+
+                    if ($(this).form('validate')) {
+                        var dg = $('#dg-fitting-audit').datagrid('getData');
+
+                        if (dg.total > 0) {
+                            $('.fittings').remove();
+                            var rows = dg.rows;
+
+                            for (var i in rows) {
+                                str = '';
+                                str += '<input type="hidden" name="fittings[]" class="fittings" value="' + rows[i].fitting_id + '_' + rows[i].purchase_amount + '_' + rows[i].price + '">';
+                                $('#fm-audit').append(str);
+                            }
+                        };
+
+                        $('#load').dialog('open');
+                        return true;
+                    } else {
+                        $('#load').dialog('close');
+                        return false;
+                    }
+                },
+                success: function(result){
+                    $('#load').dialog('close');
+                    var result = eval('('+result+')');
+
+                    if (result.success){
+                        $('#dlg-audit').dialog('close');
+                        $('#dg').datagrid('reload');
+                    } else {
+                        $.messager.show({
+                            title: '错误',
+                            msg: result.errorMsg,
+                            showType:'fade',
+                            style:{
+                                right:'',
+                                bottom:''
+                            }
+                        });
+                    }
+                }
+            });
+        }
+        
+        // 付款
+        function payItem() {
+            var row = $('#dg').datagrid('getSelected');
+
+            if (row) {
+                url = '/admin/purchasereceipt/pay/id/' + row.id;
+                $('#dlg-pay').dialog('open').dialog('center').dialog('setTitle', '付款');
+                $('#fm-pay').form('clear');
+                $('#fm-pay').form('load', row);
+
+                $('#dg-fitting-pay').datagrid({
+                    url:'/admin/purchasereceipt/lists/id/' + row.id
+                });
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+        
+        function savePayItem() {
+            $('#fm-pay').form('submit',{
+                url: url,
+                onSubmit: function(){
+
+                    if ($(this).form('validate')) {
+                        $('#load').dialog('open');
+                        return true;
+                    } else {
+                        $('#load').dialog('close');
+                        return false;
+                    }
+                },
+                success: function(result){
+                    $('#load').dialog('close');
+                    var result = eval('('+result+')');
+
+                    if (result.success){
+                        $('#dlg-pay').dialog('close');
+                        $('#dg').datagrid('reload');
+                    } else {
+                        $.messager.show({
+                            title: '错误',
+                            msg: result.errorMsg,
+                            showType:'fade',
+                            style:{
+                                right:'',
+                                bottom:''
+                            }
+                        });
+                    }
+                }
+            });
+        }
+        
+        //导出
+        function exportItem()
+        {
+            $('#export_starttime').val($('#search-starttime').datetimebox('getValue'));
+            $('#export_endtime').val($('#search-endtime').datetimebox('getValue'));
+            $('#export_organization_id').val($('#search-org').combobox('getValue'));
+            $('#export_status').val($('#search-status').combobox('getValue'));
+            $('#export_keyword').val($('#search-keyword').val());
+            
+            $('#fm-export').form('submit',{
+                url: '/admin/purchasereceipt/export',
+                onSubmit: function(){
+                },
+                success: function(result){
+                }
+            });
+        }
+
+        // 格式化状态
+        function formatPurchaseApplyStatus(val, row) {
+            switch (val)
+            {
+                case '-1':
+                    return '<span class="label label-bg3">取消</span>';
+                    break;
+                case '0':
+                    return '<span class="label label-bg5">待收货</span>';
+                    break;
+                case '1':
+                    return '<span class="label label-bg2">部分收货</span>';
+                    break;
+                case '2':
+                    return '<span class="label label-bg2">全部收货</span>';
+                    break;
+                case '3':
+                    return '<span class="label label-bg2">待付款</span>';
+                    break;
+                case '4':
+                    return '<span class="label label-bg2">已付款</span>';
+                    break;
+            }
+        }
+
+        $(function(){
+            // 右键目录
+            $('#mm').menu();
+            $(document).bind('contextmenu',function(e){
+                e.preventDefault();
+                $('#mm').menu('show', {
+                    left: e.pageX,
+                    top: e.pageY
+                });
+            });
+
+            // 配件
+            $('#phone_id').combobox({
+                onChange: function(newValue, oldValue){
+                    $('#fittings_id').combobox('loadData', []);
+                    $('#fittings_id').combobox('setValue', '');
+                    $.get('/admin/purchasereceipt/fittings', {id: newValue}, function(data) {
+
+                        if (data.length > 0) {
+                            $('#fittings_id').combobox('loadData', data);
+                        };
+                    });
+                }
+            });
+            
+            $('#dg-fitting').datagrid('enableCellEditing');
+            $('#dg-fitting-audit').datagrid('enableCellEditing');
+            $('#dg-fitting-receipt').datagrid('enableCellEditing');
+        });
+        
+        //行操作按钮
+        function formatPurchaseRowActionButton(value, row, index)
+        {
+            var buttons = '';
+            buttons += $('#rowmenu .btn-detail').prop("outerHTML");
+
+            // 状态： 0 待审核 1 已审核 -1 取消 
+            switch (row.status) 
+            {
+                case '-1':
+                    break;
+                case '0':
+                    buttons += $('#rowmenu .btn-edit').prop("outerHTML");
+                    buttons += $('#rowmenu .btn-delete').prop("outerHTML");
+                    buttons += $('#rowmenu .btn-receipt').prop("outerHTML");
+                    break;
+                case '1':
+                    buttons += $('#rowmenu .btn-edit').prop("outerHTML");
+                    buttons += $('#rowmenu .btn-receipt').prop("outerHTML");
+                    break;
+                case '2':
+                    buttons += $('#rowmenu .btn-audit').prop("outerHTML");
+                    break;
+                case '3':
+                    buttons += $('#rowmenu .btn-pay').prop("outerHTML");
+                    break;
+                case '4':
+                    break;
+            }
+
+            return buttons;
+        }
+        
+        function setRowBgColor(index, row) {
+            
+            if (parseInt(row.purchase_amount) > parseInt(row.amount)) {
+                return 'color:red;';
+            }
+        }
+    </script>
+</head>
+<body class="easyui-layout">
+    <table id="dg" title="采购入库单列表" class="easyui-datagrid" style="width:100%; max-height:800px;" url="/admin/purchasereceipt/rows" toolbar="#toolbar" pagination="true" pageSize="30" pagePosition="top" rownumbers="true" fitColumns="true" singleSelect="true" rownumbers="true" pagination="true" minimized="false">
+        <thead>
+            <tr>
+                <th field="id" width="5">ID</th>
+                <th field="batch" width="10">批次</th>
+                <th field="status" width="6" formatter="formatPurchaseApplyStatus">状态</th>
+                <th field="remark" width="15">备注</th>
+                <th field="proposer_name" width="10">创建人</th>
+                <th field="create_time" width="10" formatter="formatDate">创建时间</th>
+                <th field="update_time" width="10" formatter="formatDate">更新时间</th>
+                <th field="price" width="10">采购总价</th>
+                <th field="payer" width="10">付款人</th>
+                <th field="pay_time" width="10" formatter="formatDate">付款时间</th>
+                <th field='action' width="30" formatter="formatPurchaseRowActionButton">操作</th>
+            </tr>
+        </thead>
+    </table>
+    <div id="toolbar">
+        <span>开始时间:</span>
+        <input class="easyui-datebox" id="search-starttime">
+        &nbsp;
+        <span>结束时间:</span>
+        <input class="easyui-datebox" id="search-endtime">
+        &nbsp;
+        <span>仓库（地区）:</span>
+        <select class="easyui-combobox nameof" id="search-org" url="/admin/purchasereceipt/organization" valueField="id" textField="alias" style="width: 150px;" prompt="仓库"></select>
+        &nbsp;
+        <span>状态:</span>
+        <select class="easyui-combobox" id='search-status' panelHeight="auto">
+            <option value="all">全部</option>
+            <option value="-1">取消</option>
+            <option value="0">待收货</option>
+            <option value="1">部分收货</option>
+            <option value="2">全部收货</option>
+            <option value="3">待付款</option>
+            <option value="4">已付款</option>
+        </select>
+        &nbsp;
+        <span>关键字(配件编码/配件名称/备注/批次):</span>
+        <input type="text" class="easyui-textbox" id='search-keyword' panelHeight="auto" style="width:300px;">
+        &nbsp;
+        <a href="javascript:void(0)" class="easyui-linkbutton" plain="true" iconCls="icon-search" onclick="searchItem()">搜索</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['添加'])) { echo 'hide';} ?>" iconCls="icon-add" plain="true" onclick="newItem()">添加</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['导出'])) { echo 'hide';} ?>" iconCls="icon-export" plain="true" onclick="exportItem()">导出</a>
+    </div>
+    <div id="mm" style="width:120px;">
+        <div iconCls="icon-add" class="<?php if(!isset($buttons['添加'])) { echo 'hide';} ?>" onclick="newItem()"><span>添加</span></div>
+        <div iconCls="icon-detail" class="<?php if(!isset($buttons['详情'])) { echo 'hide';} ?>" onclick="detailItem()"><span>详情</span></div>
+    </div>
+    <div id="rowmenu" class="hide">
+        <a href="javascript:void(0)" class="easyui-linkbutton btn-detail <?php if(!isset($buttons['详情'])) { echo 'hide';} ?>" iconCls="icon-detail" plain="true" onclick="selectedRow($(this));detailItem();">详情</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton btn-edit <?php if(!isset($buttons['编辑'])) { echo 'hide';} ?>" iconCls="icon-edit" plain="true" onclick="selectedRow($(this));editItem();">编辑</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton btn-delete <?php if(!isset($buttons['删除'])) { echo 'hide';} ?>" iconCls="icon-remove" plain="true" onclick="selectedRow($(this));deleteItem();">取消</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton btn-receipt <?php if(!isset($buttons['收货'])) { echo 'hide';} ?>" iconCls="icon-receive" plain="true" onclick="selectedRow($(this));receiptItem();">收货</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton btn-audit <?php if(!isset($buttons['核对'])) { echo 'hide';} ?>" iconCls="icon-pass" plain="true" onclick="selectedRow($(this));checkItem();">核对</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton btn-pay <?php if(!isset($buttons['付款'])) { echo 'hide';} ?>" iconCls="icon-pass" plain="true" onclick="selectedRow($(this));payItem();">付款</a>
+    </div>
+    
+    <div id="dlg" class="easyui-dialog" style="width:900px;height:600px;padding:10px 20px" closed="true" buttons="#dlg-buttons">
+        <form id="fm" method="post">
+            <div class="ftitle">批次及供应商</div>
+            <div class="fitem">
+                <label>批次:</label>
+                <input name="batch" id="batch_input" class="easyui-textbox" prompt="批次" value="">
+            </div>
+            <div class="fitem">
+                <label>供应商:</label>
+                <select class="easyui-combobox nameof" name="provider_id" url="/admin/purchasereceipt/provider" valueField="id" textField="title" style="width: 150px;" prompt="供应商" required="true"></select>
+            </div>
+            <div class="ftitle">库及配件列表</div>
+            <div class="fitem" style="min-height:100px;">
+                <table id="dg-fitting" title="仓库及配件列表" class="easyui-datagrid" style="width:100%;" checkOnSelect="true" toolbar="#toolbar-fitting" rownumbers="true">
+                    <thead>
+                        <tr>
+                            <th field="ck" checkbox="true" width="5%"></th>
+                            <th field="org_name" width="10%">仓库</th>
+                            <th field="phone" width="15%">机型</th>
+                            <th field="fitting" width="15%">配件</th>
+                            <th field="fitting_number" width="10%">编码</th>
+                            <th field="purchase_amount" width="20%" data-options="field:'purchase_amount',width:80,align:'left',editor:'numberbox'">采购数量(点击可编辑)</th>
+                            <th field="price" width="15%" data-options="field:'price',width:80,align:'left',editor:{type:'numberbox',options:{precision:2}}">单价(点击可编辑)</th>
+                            <th field="amount" width="10%">收货数量</th>
+                        </tr>
+                    </thead>
+                </table>
+                <div id="toolbar-fitting">
+                    <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-add" plain="true" onclick="newFitting()">添加</a>
+                    <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-export" plain="true" onclick="importFitting()">导入</a>
+                    <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-remove" plain="true" onclick="deleteFitting()">删除</a>
+                </div>
+            </div>
+            <div class="fitem">
+                <label>备注(50个字):</label>
+                <input class="easyui-textbox" name="remark" style="width:300px;height:60px" data-options="multiline:true">
+            </div>
+        </form>
+    </div>
+    <div id="dlg-buttons">
+        <a href="javascript:void(0)" class="easyui-linkbutton c6" iconCls="icon-ok" onclick="saveItem()" style="width:90px">保存</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg').dialog('close')" style="width:90px">取消</a>
+    </div>
+    
+    <!-- 过程弹窗 -->
+    <div id="load" class="easyui-dialog" title="消息" closed="true" style="width:200px;height:100px;padding:10px">
+        <span>处理中...</span>
+    </div>
+    
+    <!-- 配件弹窗 -->
+    <div id="dlg-fitting" class="easyui-dialog" style="width:350px;min-height:300px;max-height:400px;padding:10px 20px" closed="true" buttons="#dlg-fitting-buttons">
+        <div class="ftitle">仓库及配件信息</div>
+        <form id="fm-fitting" method="post">
+            <div class="fitem">
+                <label>仓库:</label>
+                <select class="easyui-combobox nameof" id="organization_id" url="/admin/purchasereceipt/organization" valueField="id" textField="alias" style="width: 150px;" prompt="仓库" required="true"></select>
+            </div>
+            <div class="fitem">
+                <label>机型:</label>
+                <select class="easyui-combobox nameof" id="phone_id" url="/admin/purchasereceipt/phones" valueField="id" textField="alias" style="width: 150px;" required="true" prompt="机型"></select>
+            </div>
+            <div class="fitem">
+                <label>配件:</label>
+                <select class="easyui-combobox nameof" id="fittings_id" style="width: 150px;" valueField="id" textField="name" required="true" prompt="配件"></select>
+            </div>
+            <div class="fitem">
+                <label>数量:</label>
+                <input class="easyui-numberbox" id="fittings_amount" prompt="数量" style="width: 150px;" data-options="min:0,required:true">
+            </div>
+            <div class="fitem">
+                <label>单价:</label>
+                <input class="easyui-numberbox" id="fittings_price" prompt="单价" style="width: 150px;" data-options="min:0,precision:2,required:true">
+            </div>
+        </form>
+    </div>
+    <div id="dlg-fitting-buttons">
+        <a href="javascript:void(0)" class="easyui-linkbutton c6" iconCls="icon-ok" onclick="saveFitting()" style="width:90px">保存</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg-fitting').dialog('close')" style="width:90px">取消</a>
+    </div>
+    
+    <!-- 导入配件弹窗 -->
+    <div id="dlg-import" class="easyui-dialog" style="width:350px;height:200px;padding:10px 20px" closed="true" buttons="#dlg-fitting-buttons">
+        <div class="ftitle">导入配件信息</div>
+        <form id="fm-import" method="post" enctype="multipart/form-data">
+            <div class="fitem">
+                <label>配件:</label>
+                <input name="fitting_file" class="easyui-filebox" prompt="配件"  data-options="required:true">
+            </div>
+            <div class="fitem">
+                <label>下载模板:</label>
+                <a href="__PUBLIC__/templates/import_purchase_receipt_fitting_template.xls">点击下载模板</a>
+            </div>
+        </form>
+    </div>
+    <div id="dlg-fitting-buttons">
+        <a href="javascript:void(0)" class="easyui-linkbutton c6" iconCls="icon-ok" onclick="saveImportFitting()" style="width:90px">导入</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg-import').dialog('close')" style="width:90px">取消</a>
+    </div>
+    
+    <!-- 详情弹窗 -->
+    <div id="dlg-detail" class="easyui-dialog" style="width:900px;height:600px;padding:10px 20px" closed="true" buttons="#dlg-detail-buttons">
+        <form id="fm-detail" method="post">
+            <div class="ftitle">操作日志</div>
+            <div class="fitem">
+                <table id="dg-purchase-receipt-log" title="操作日志" class="easyui-datagrid" nowrap="false" style="width:100%;" rownumbers="true">
+                    <thead>
+                        <tr>
+                            <th field="create_time" width="20%" formatter="formatDate">操作时间</th>
+                            <th field="action" width="70%">操作</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+            <div class="ftitle">批次及供应商</div>
+            <div class="fitem">
+                <label>批次:</label>
+                <input name="batch" class="easyui-textbox" readonly="true">
+            </div>
+            <div class="fitem">
+                <label>供应商:</label>
+                <select class="easyui-combobox nameof" name="provider_id" url="/admin/purchasereceipt/provider" valueField="id" textField="title" style="width: 150px;" prompt="供应商" readonly="true"></select>
+            </div>
+            <div class="ftitle">仓库及配件列表</div>
+            <div class="fitem" style="min-height:100px;">
+                <table id="dg-fitting-detail" title="仓库及配件列表" class="easyui-datagrid" style="width:100%;" rownumbers="true" rowStyler="setRowBgColor">
+                    <thead>
+                        <tr>
+                            <th field="org_name" width="10%">仓库</th>
+                            <th field="phone" width="15%">机型</th>
+                            <th field="fitting" width="20%">配件</th>
+                            <th field="fitting_number" width="10%">编码</th>
+                            <th field="purchase_amount" width="10%">采购数量</th>
+                            <th field="price" width="10%">单价</th>
+                            <th field="amount" width="10%">收货数量</th>
+                            <th field="receipt_time" width="15%" formatter="formatDate">最后收货时间</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+            <div class="fitem">
+                <label>采购配件总价:</label>
+                <input class="easyui-textbox" name="price" readonly="true">
+            </div>
+            <div class="fitem">
+                <label>备注(50个字):</label>
+                <input class="easyui-textbox" name="remark" style="width:300px;height:60px" data-options="multiline:true" readonly="true">
+            </div>
+        </form>
+    </div>
+    <div id="dlg-detail-buttons">
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg-detail').dialog('close')" style="width:90px">关闭</a>
+    </div>
+    
+    <!-- 收货弹窗 -->
+    <div id="dlg-receipt" class="easyui-dialog" style="width:900px;height:600px;padding:10px 20px" closed="true" buttons="#dlg-receipt-buttons">
+        <form id="fm-receipt" method="post">
+            <div class="fitem">
+                <label>批次:</label>
+                <input name="batch" class="easyui-textbox" prompt="批次" value="" readonly="true">
+            </div>
+            <div class="fitem" style="min-height:100px;">
+                <table id="dg-fitting-receipt" title="仓库及配件列表" class="easyui-datagrid" style="width:100%;" rownumbers="true" rowStyler="setRowBgColor">
+                    <thead>
+                        <tr>
+                            <th field="org_name" width="10%">仓库</th>
+                            <th field="phone" width="17%">机型</th>
+                            <th field="fitting" width="18%">配件</th>
+                            <th field="fitting_number" width="10%">编码</th>
+                            <th field="purchase_amount" width="10%">采购数量</th>
+                            <th field="amount" width="20%" data-options="field:'amount',width:80,align:'left',editor:{type:'numberbox',options:{min:0}}">收货数量(点击可编辑)</th>
+                            <th field="receipt_time" width="15%" formatter="formatDate">最后收货时间</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+            <div class="fitem">
+                <label>备注(50个字):</label>
+                <input class="easyui-textbox" name="receipt_remark" style="width:300px;height:60px" data-options="multiline:true" required='true'>
+            </div>
+        </form>
+    </div>
+    <div id="dlg-receipt-buttons">
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-ok" onclick="saveReceiptItem(this);" style="width:90px">确认收货</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg-receipt').dialog('close')" style="width:90px">关闭</a>
+    </div>
+    
+    <div id="dlg-audit" class="easyui-dialog" style="width:800px;height:600px;padding:10px 20px" closed="true" buttons="#dlg-audit-buttons">
+        <form id="fm-audit" method="post">
+            <div class="ftitle">批次及供应商</div>
+            <div class="fitem">
+                <label>批次:</label>
+                <input name="batch" class="easyui-textbox" readonly="true">
+            </div>
+            <div class="fitem">
+                <label>供应商:</label>
+                <select class="easyui-combobox nameof" name="provider_id" url="/admin/purchasereceipt/provider" valueField="id" textField="title" style="width: 150px;" prompt="供应商" readonly="true"></select>
+            </div>
+            <div class="ftitle">配件及价格</div>
+            <div class="fitem" style="min-height:100px;">
+                <table id="dg-fitting-audit" title="配件列表" class="easyui-datagrid" style="width:100%;" rownumbers="true">
+                    <thead>
+                        <tr>
+                            <th field="phone" width="25%">机型</th>
+                            <th field="fitting" width="25%">配件</th>
+                            <th field="fitting_number" width="10%">编码</th>
+                            <th field="purchase_amount" width="10%">采购数量</th>
+                            <th field="amount" width="10%">收货数量</th>
+                            <th field="price" width="20%" data-options="field:'price',width:80,align:'left',editor:{type:'numberbox',options:{precision:2}}">单价(点击可编辑)</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+            <div class="fitem">
+                <label>备注(50个字):</label>
+                <input class="easyui-textbox" name="check_remark" style="width:300px;height:60px" data-options="multiline:true" required='true'>
+            </div>
+        </form>
+    </div>
+    <div id="dlg-audit-buttons">
+        <a href="javascript:void(0)" class="easyui-linkbutton c6" iconCls="icon-ok" onclick="saveCheckItem()" style="width:90px">确定</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg-audit').dialog('close')" style="width:90px">取消</a>
+    </div>
+    
+    <div id="dlg-pay" class="easyui-dialog" style="width:800px;height:600px;padding:10px 20px" closed="true" buttons="#dlg-pay-buttons">
+        <form id="fm-pay" method="post">
+            <div class="ftitle">批次及供应商</div>
+            <div class="fitem">
+                <label>批次:</label>
+                <input name="batch" class="easyui-textbox" readonly="true">
+            </div>
+            <div class="fitem">
+                <label>供应商:</label>
+                <select class="easyui-combobox nameof" name="provider_id" url="/admin/purchasereceipt/provider" valueField="id" textField="title" style="width: 150px;" prompt="供应商" readonly="true"></select>
+            </div>
+            <div class="ftitle">配件及价格</div>
+            <div class="fitem" style="min-height:100px;">
+                <table id="dg-fitting-pay" title="配件列表" class="easyui-datagrid" style="width:100%;" rownumbers="true">
+                    <thead>
+                        <tr>
+                            <th field="org_name" width="10%">仓库</th>
+                            <th field="phone" width="20%">机型</th>
+                            <th field="fitting" width="25%">配件</th>
+                            <th field="fitting_number" width="10%">编码</th>
+                            <th field="purchase_amount" width="10%">采购数量</th>
+                            <th field="price" width="15%">单价</th>
+                            <th field="amount" width="10%">收货数量</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+            <div class="fitem">
+                <label>采购总价:</label>
+                <input name="price" class="easyui-textbox" readonly="true">
+            </div>
+            <div class="fitem">
+                <label>付款说明:</label>
+                <input class="easyui-textbox" name="pay_remark" style="width:300px;height:60px" data-options="multiline:true" required='true'>
+            </div>
+        </form>
+    </div>
+    <div id="dlg-pay-buttons">
+        <a href="javascript:void(0)" class="easyui-linkbutton c6" iconCls="icon-ok" onclick="savePayItem()" style="width:90px">确定</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg-pay').dialog('close')" style="width:90px">取消</a>
+    </div>
+    
+    <div id="dlg-export" class="easyui-dialog" style="width:800px;height:455px;padding:10px 20px" closed="true">
+        <form id="fm-export" method="post">
+             <input type="hidden" id="export_starttime" name="starttime">
+             <input type="hidden" id="export_endtime" name="endtime">
+             <input type="hidden" id="export_organization_id" name="organization_id">
+             <input type="hidden" id="export_status" name="status">
+             <input type="hidden" id="export_keyword" name="keyword">
+        </form>
+    </div>
+</body>
+</html>

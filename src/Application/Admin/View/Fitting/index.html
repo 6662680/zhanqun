@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>user</title>
+	<link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/default/easyui.css">
+	<link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/icon.css">
+	<link rel="stylesheet" type="text/css" href="__PUBLIC__/css/user.css">
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/js/user.js"></script>
+    <script type="text/javascript">
+        var url;
+
+        function newItem(){
+            $('#dlg').dialog('open').dialog('center').dialog('setTitle', '添加');
+            $('#fm').form('clear');
+            $('#phone_id').combobox({  
+                disabled:false,  
+                url:'/admin/fitting/phones', 
+                valueField:'id',  
+                textField:'alias',  
+                onLoadSuccess:function(data){
+                }
+            }); 
+            url = '/admin/fitting/add';
+        }
+
+        function editItem(){
+            var row = $('#dg').datagrid('getSelected');
+
+            if (row){
+                $('#dlg').dialog('open').dialog('center').dialog('setTitle','编辑');
+                $('#fm').form('clear');
+                $('#phone_id').combobox({  
+                    disabled:false,  
+                    url:'/admin/fitting/phones', 
+                    valueField:'id',  
+                    textField:'alias',  
+                    onLoadSuccess:function(data){
+                    }
+                }); 
+                $('#fm').form('load', row);
+                url = '/admin/fitting/save/id/' + row.id;
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+        function saveItem(form) {
+            form.form('submit',{
+                url: url,
+                onSubmit: function(){
+                    if ($(this).form('validate')) {
+                        $('#load').dialog('open');
+                    };
+                    
+                    $('#phone_ids').val($('#phone_id').combobox('getValues').join(','));
+                    
+                    return $(this).form('validate');
+                },
+                success: function(result){
+                    $('#load').dialog('close');
+                    var result = eval('('+result+')');
+
+                    if (result.success){
+                    	
+                    	$('#dlg').dialog('close');
+                        $('#dlg-import').dialog('close');
+                        
+                    	if (typeof(result.errorMsg) != "undefined" && result.errorMsg.length > 0) {
+                    		$.messager.show({
+                                title: '提示',
+                                msg: result.errorMsg,
+                                showType:'fade',
+                                style:{
+                                    right:'',
+                                    bottom:'',
+                                }
+                            });
+                    	}
+                    	
+                        $('#dg').datagrid('reload');
+                    } else {
+                        $.messager.show({
+                            title: '错误',
+                            msg: result.errorMsg,
+                            showType:'fade',
+                            style:{
+                                right:'',
+                                bottom:''
+                            }
+                        });
+                    }
+                }
+            });
+        }
+
+        function deleteItem(){
+            var row = $('#dg').datagrid('getSelected');
+            if (row){
+                $.messager.confirm('Confirm', '确认删除此记录?',function(r){
+                    if (r){
+                        $.post('/admin/fitting/delete',{id:row.id},function(result){
+                            if (result.success){
+                                $('#dg').datagrid('reload');
+                            } else {
+                                $.messager.show({
+                                    title: '错误',
+                                    msg: result.errorMsg,
+                                    showType:'fade',
+                                    style:{
+                                        right:'',
+                                        bottom:''
+                                    }
+                                });
+                            }
+                        },'json');
+                    }
+                });
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+        function searchItem(){
+            $('#dg').datagrid({
+                queryParams: {
+                    phone_id: $('#search-phone').combobox('getValue'),
+                    category_id: $('#search-category-id').combobox('getValue'),
+                    keyword: $('#search-keyword').val(),
+                }
+            });
+        }
+
+        //导入       
+        function importItem() 
+        {
+        	$('#dlg-import').dialog('open').dialog('center').dialog('setTitle', '导入');
+            $('#fm-import').form('clear');
+            url = '/admin/fitting/import';
+        }
+        
+        //导出     
+        function exportItem() 
+        {
+        	$('#s_phone_id').val($('#search-phone').combobox('getValue'));
+        	$('#keyword').val($('#search-keyword').val());
+        	
+        	$('#fm-export').form('submit',{
+                url: '/admin/fitting/export',
+                onSubmit: function(){
+                },
+                success: function(result){
+                }
+            });
+        }
+
+        $(function(){
+            $('#mm').menu();
+            $(document).bind('contextmenu',function(e){
+                e.preventDefault();
+                $('#mm').menu('show', {
+                    left: e.pageX,
+                    top: e.pageY
+                });
+            });
+        });
+    </script>
+</head>
+<body class="easyui-layout">
+        <table id="dg" title="配件列表" class="easyui-datagrid" style="width:100%;" url="/admin/fitting/rows" toolbar="#toolbar" pagination="true" pageSize="30" pagePosition="top" rownumbers="true" fitColumns="true" singleSelect="true" rownumbers="true" pagination="true">
+        <thead>
+            <tr>
+                <th field="id" width="5">ID</th>
+                <th field="number" width="10">编号</th>
+                <th field="title" width="10">名称</th>
+                <th field="price" width="5">价格</th>
+                <th field="phone" width="10">机型</th>
+                <th field="category_name" width="5">所属大类</th>
+                <th field="remark" width="20">备注</th>
+                <th field='action' width="10" formatter="formatRowActionButton">操作</th>
+            </tr>
+        </thead>
+    </table>
+    <div id="toolbar">
+        <span>机型:</span>
+		<select class="easyui-combobox" limitToList="true" id='search-phone' url="/admin/fitting/phones" valueField="id" textField="alias" style="width:150px;">
+		</select>
+        &nbsp;&nbsp;
+        <span>所属大类:</span>
+        <select class="easyui-combobox" limitToList="true" id="search-category-id" url="/admin/fitting/fittingCategorys" valueField="id" textField="name" style="width:150px;">
+   		</select>
+        <span>关键字:</span>
+        <input type="text" class="easyui-textbox" id='search-keyword' panelHeight="auto">
+		<a href="javascript:void(0)" class="easyui-linkbutton" plain="true" iconCls="icon-search" onclick="searchItem()">搜索</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['添加'])) { echo 'hide';} ?>" iconCls="icon-add" plain="true" onclick="newItem()">添加</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['导入'])) { echo 'hide';} ?>" iconCls="icon-export" plain="true" onclick="importItem();">导入</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['导出'])) { echo 'hide';} ?>" iconCls="icon-export" plain="true" onclick="exportItem();">导出</a>
+    </div>
+    <div id="mm" style="width:120px;">
+        <div iconCls="icon-add" class="<?php if(!isset($buttons['添加'])) { echo 'hide';} ?>" onclick="newItem()"><span>添加</span></div>
+        <div iconCls="icon-edit" class="<?php if(!isset($buttons['编辑'])) { echo 'hide';} ?>" onclick="editItem()"><span>编辑</span></div>
+        <div iconCls="icon-remove" class="<?php if(!isset($buttons['删除'])) { echo 'hide';} ?>" onclick="deleteItem()"><span>删除</span></div>
+    </div>
+    <div id="rowmenu" class="hide">
+        <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['编辑'])) { echo 'hide';} ?>" iconCls="icon-edit" plain="true" onclick="selectedRow($(this));editItem();">编辑</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['删除'])) { echo 'hide';} ?>" iconCls="icon-remove" plain="true" onclick="selectedRow($(this));deleteItem();">删除</a>
+    </div>
+    <div id="dlg" class="easyui-dialog" style="width:500px;min-height:350px;padding:10px 20px" closed="true" buttons="#dlg-add-buttons">
+        <div class="ftitle">配件信息</div>
+        <form id="fm" method="post">
+            <div class="fitem">
+                <label>编号:</label>
+                <input name="number" class="easyui-textbox" prompt="编号"  data-options="required:true">
+            </div>
+            <div class="fitem">
+                <label>名称:</label>
+                <input name="title" class="easyui-textbox" prompt="名称"  data-options="required:true">
+            </div>
+            <div class="fitem">
+                <label>机型:</label>
+                <select class="easyui-combobox" limitToList="true" multiple="true" id="phone_id" name="phone_id" style="width:250px;">
+           		</select>
+           		<input type="hidden" value='' id="phone_ids" name="phone_ids">
+            </div>
+            <div class="fitem">
+                <label>价格:</label>
+                <input name="price" class="easyui-textbox" prompt="价格"  data-options="required:true">
+            </div>
+            <div class="fitem">
+                <label>所属大类:</label>
+                <select class="easyui-combobox" limitToList="true" id="category_id" name="category_id" url="/admin/fitting/fittingCategorys" valueField="id" textField="name" style="width:150px;">
+           		</select>
+            </div>
+            <div class="fitem">
+                <label>备注(50个字):</label>
+                <input class="easyui-textbox" name="remark" style="width:160px;height:60px" data-options="multiline:true">
+            </div>
+        </form>
+    </div>
+    <div id="dlg-add-buttons">
+        <a href="javascript:void(0)" class="easyui-linkbutton c6" iconCls="icon-ok" onclick="saveItem($('#fm'))" style="width:90px">保存</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg').dialog('close')" style="width:90px">取消</a>
+    </div>
+    
+    <div id="load" class="easyui-dialog" title="消息" closed="true" style="width:200px;height:100px;padding:10px">
+        <span>处理中...</span>
+    </div>
+    <div id="dlg-import" class="easyui-dialog" style="width:500px;min-height:200px;padding:10px 20px" closed="true" buttons="#dlg-import-buttons">
+        <div class="ftitle">导入配件</div>
+        <form id="fm-import" method="post" enctype="multipart/form-data">
+            <div class="fitem">
+                <label>配件:</label>
+                <input name="fitting_file" class="easyui-filebox" prompt="配件"  data-options="required:true">
+            </div>
+            <div class="fitem">
+            	<label>下载模板:</label>
+                <a href="__PUBLIC__/templates/import_fitting_template.xls">点击下载模板</a>
+            </div>
+        </form>
+    </div>
+    <div id="dlg-import-buttons">
+        <a href="javascript:void(0)" class="easyui-linkbutton c6" iconCls="icon-ok" onclick="saveItem($('#fm-import'))" style="width:90px">导入</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg-import').dialog('close')" style="width:90px">取消</a>
+    </div>
+    <div id="dlg-export" class="easyui-dialog" style="width:700px;height:260px;padding:10px 20px" closed="true" buttons="#dlg-buttons">
+        <form id="fm-export" method="post">
+        	<div class="ftitle">数据导出</div>
+            <input type="hidden" name="phone_id" id="s_phone_id">
+            <input type="hidden" name="keyword" id="keyword">
+        </form>
+    </div>
+</body>
+</html>

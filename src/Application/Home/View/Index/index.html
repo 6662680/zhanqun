@@ -1,0 +1,28 @@
+<include file="Public:header"  title="登录" />{/*标题设置*/}
+<link type="text/css" href="__PUBLIC__/Unionstatic/css/login.css" rel="stylesheet" />
+<script>
+    function msg(){
+        alert('暂不开放对外注册功能，如需注册请联系运营部张强');
+    }
+</script>
+<div id="container">
+    <div class="logo">
+        <a href="#"><img src="__PUBLIC__/Unionstatic/assets/logo.png" alt="" /></a>
+    </div>
+    <div id="box">
+
+        <form action="<?php echo U(MODULE_NAME . '/' . CONTROLLER_NAME .'/user_ajax');?>" method="post">
+        <p class="main">
+            <label>用户名: </label>
+            <input name="username" id="J_username" placeholder="请输入手机号码" />
+            <label>密码: </label>
+            <input type="password" id="J_password" name="password" placeholder="请输入密码">
+        </p>
+        <p class="space">
+            <!--<span id="J_registerBtn" onclick="msg()">注册/加入联盟</span>-->
+            <input type="submit" value="登录" class="login" />
+        </p>
+        </form>
+    </div>
+</div>
+<include file="Public:footer"/>

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>user</title>
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/default/easyui.css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/icon.css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/css/user.css">
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/locale/easyui-lang-zh_CN.js"></script>
+    <script type="text/javascript">
+        $(function(){
+            $('#search-start-time').datebox('setValue', '<?php echo date("Y-m-d");?>');
+            $('#search-end-time').datebox('setValue', '<?php echo date("Y-m-d");?>');
+        });
+    </script>
+</head>
+<body>
+<body class="easyui-layout">
+    <table id="dg" title="工程师单量" class="easyui-datagrid" style="width:100%;" toolbar="#toolbar" rownumbers="true" fitColumns="true" singleSelect="true">
+        <thead>
+            <tr>
+                <th field="order1" width="5">工程师</th>
+                <th field="order2" width="15">组织</th>
+                <th field="order3" width="15">单量</th>
+            </tr>
+        </thead>
+    </table>
+    <div id="toolbar">
+        <form id="search" method="post" action="<?php echo U('admin/statistics/engineerOrders');?>">
+        <p>
+            <span>日期:</span>
+            <input type="text" class="easyui-datebox" id='search-start-time' name="start_time" panelHeight="auto"> 至
+            <input type="text" class="easyui-datebox" id='search-end-time' name="end_time" panelHeight="auto">
+            <a href="javascript:void(0)" class="easyui-linkbutton" plain="true" iconCls="icon-search" onclick="$('#search').submit();">导出</a>
+        </p>
+        </form>
+    </div>
+</body>
+</html>

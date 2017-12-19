@@ -1,0 +1,529 @@
+<include file="Public:header"  title="分销中心" />{/*标题设置*/}
+<link type="text/css" href="__PUBLIC__/Unionstatic/css/layout.css" rel="stylesheet" />
+<link type="text/css" href="__PUBLIC__/Unionstatic/css/layout.css" rel="stylesheet" />
+<script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.min.js"></script>
+<script type="text/javascript" src="__PUBLIC__/vendor/highcharts/js/highcharts.js"></script>
+<script type="text/javascript" src="__PUBLIC__/vendor/highcharts/js/themes/dark-unica.js"></script>
+<script type="text/javascript">
+    var _link = 'http://m.weadoc.com?friendshare=<?php echo $_SESSION['share_username'] ?>';
+    var orderNum = new Array();
+    var finishOrderNum = new Array();
+    var money = new Array();
+    var orderdate = new Array();
+
+    <?php
+        for ( $i=29 ; $i >= 0 ; $i--){
+            echo 'orderNum.push(' . $chart[$i]['orderNum'] . ');';
+            echo 'finishOrderNum.push(' . $chart[$i]['finishOrderNum'] . ');';
+            echo 'money.push(' . $chart[$i]['money'] . ');';
+            echo 'orderdate.push(GetDateStr(-' . $i . '));';
+    }
+    ?>
+
+
+    function GetDateStr(AddDayCount) {
+        var dd = new Date();
+        dd.setDate(dd.getDate()+AddDayCount);//获取AddDayCount天后的日期
+        var y = dd.getFullYear();
+        var m = dd.getMonth()+1;//获取当前月份的日期
+        var d = dd.getDate();
+        return d+'号';
+    }
+
+
+        /**
+         * Gray theme for Highcharts JS
+         * @author Torstein Hønsi
+         */
+
+        Highcharts.theme = {
+            colors: ["#DDDF0D", "#7798BF", "#55BF3B", "#DF5353", "#aaeeee", "#ff0066", "#eeaaee",
+                "#55BF3B", "#DF5353", "#7798BF", "#aaeeee"],
+            chart: {
+                backgroundColor: {
+                    linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
+                    stops: [
+                        [0, 'rgb(96, 96, 96)'],
+                        [1, 'rgb(16, 16, 16)']
+                    ]
+                },
+                borderWidth: 0,
+                borderRadius: 15,
+                plotBackgroundColor: null,
+                plotShadow: false,
+                plotBorderWidth: 0
+            },
+            title: {
+                style: {
+                    color: '#FFF',
+                    font: '16px Lucida Grande, Lucida Sans Unicode, Verdana, Arial, Helvetica, sans-serif'
+                }
+            },
+            subtitle: {
+                style: {
+                    color: '#DDD',
+                    font: '12px Lucida Grande, Lucida Sans Unicode, Verdana, Arial, Helvetica, sans-serif'
+                }
+            },
+            xAxis: {
+                gridLineWidth: 0,
+                lineColor: '#999',
+                tickColor: '#999',
+                labels: {
+                    style: {
+                        color: '#999',
+                        fontWeight: 'bold'
+                    }
+                },
+                title: {
+                    style: {
+                        color: '#AAA',
+                        font: 'bold 12px Lucida Grande, Lucida Sans Unicode, Verdana, Arial, Helvetica, sans-serif'
+                    }
+                }
+            },
+            yAxis: {
+                alternateGridColor: null,
+                minorTickInterval: null,
+                gridLineColor: 'rgba(255, 255, 255, .1)',
+                lineWidth: 0,
+                tickWidth: 0,
+                labels: {
+                    style: {
+                        color: '#999',
+                        fontWeight: 'bold'
+                    }
+                },
+                title: {
+                    style: {
+                        color: '#AAA',
+                        font: 'bold 12px Lucida Grande, Lucida Sans Unicode, Verdana, Arial, Helvetica, sans-serif'
+                    }
+                }
+            },
+            legend: {
+                itemStyle: {
+                    color: '#CCC'
+                },
+                itemHoverStyle: {
+                    color: '#FFF'
+                },
+                itemHiddenStyle: {
+                    color: '#333'
+                }
+            },
+            labels: {
+                style: {
+                    color: '#CCC'
+                }
+            },
+            tooltip: {
+                backgroundColor: {
+                    linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
+                    stops: [
+                        [0, 'rgba(96, 96, 96, .8)'],
+                        [1, 'rgba(16, 16, 16, .8)']
+                    ]
+                },
+                borderWidth: 0,
+                style: {
+                    color: '#FFF'
+                }
+            },
+
+
+            plotOptions: {
+                line: {
+                    dataLabels: {
+                        color: '#CCC'
+                    },
+                    marker: {
+                        lineColor: '#333'
+                    }
+                },
+                spline: {
+                    marker: {
+                        lineColor: '#333'
+                    }
+                },
+                scatter: {
+                    marker: {
+                        lineColor: '#333'
+                    }
+                },
+                candlestick: {
+                    lineColor: 'white'
+                }
+            },
+
+            toolbar: {
+                itemStyle: {
+                    color: '#CCC'
+                }
+            },
+
+            navigation: {
+                buttonOptions: {
+                    backgroundColor: {
+                        linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
+                        stops: [
+                            [0.4, '#606060'],
+                            [0.6, '#333333']
+                        ]
+                    },
+                    borderColor: '#000000',
+                    symbolStroke: '#C0C0C0',
+                    hoverSymbolStroke: '#FFFFFF'
+                }
+            },
+
+            exporting: {
+                buttons: {
+                    exportButton: {
+                        symbolFill: '#55BE3B'
+                    },
+                    printButton: {
+                        symbolFill: '#7797BE'
+                    }
+                }
+            },
+
+            // scroll charts
+            rangeSelector: {
+                buttonTheme: {
+                    fill: {
+                        linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
+                        stops: [
+                            [0.4, '#888'],
+                            [0.6, '#555']
+                        ]
+                    },
+                    stroke: '#000000',
+                    style: {
+                        color: '#CCC',
+                        fontWeight: 'bold'
+                    },
+                    states: {
+                        hover: {
+                            fill: {
+                                linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
+                                stops: [
+                                    [0.4, '#BBB'],
+                                    [0.6, '#888']
+                                ]
+                            },
+                            stroke: '#000000',
+                            style: {
+                                color: 'white'
+                            }
+                        },
+                        select: {
+                            fill: {
+                                linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
+                                stops: [
+                                    [0.1, '#000'],
+                                    [0.3, '#333']
+                                ]
+                            },
+                            stroke: '#000000',
+                            style: {
+                                color: 'yellow'
+                            }
+                        }
+                    }
+                },
+                inputStyle: {
+                    backgroundColor: '#333',
+                    color: 'silver'
+                },
+                labelStyle: {
+                    color: 'silver'
+                }
+            },
+
+            navigator: {
+                handles: {
+                    backgroundColor: '#666',
+                    borderColor: '#AAA'
+                },
+                outlineColor: '#CCC',
+                maskFill: 'rgba(16, 16, 16, 0.5)',
+                series: {
+                    color: '#7798BF',
+                    lineColor: '#A6C7ED'
+                }
+            },
+
+            scrollbar: {
+                barBackgroundColor: {
+                    linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
+                    stops: [
+                        [0.4, '#888'],
+                        [0.6, '#555']
+                    ]
+                },
+                barBorderColor: '#CCC',
+                buttonArrowColor: '#CCC',
+                buttonBackgroundColor: {
+                    linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
+                    stops: [
+                        [0.4, '#888'],
+                        [0.6, '#555']
+                    ]
+                },
+                buttonBorderColor: '#CCC',
+                rifleColor: '#FFF',
+                trackBackgroundColor: {
+                    linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
+                    stops: [
+                        [0, '#000'],
+                        [1, '#333']
+                    ]
+                },
+                trackBorderColor: '#666'
+            },
+
+            // special colors for some of the demo examples
+            legendBackgroundColor: 'rgba(48, 48, 48, 0.8)',
+            legendBackgroundColorSolid: 'rgb(70, 70, 70)',
+            dataLabelsColor: '#444',
+            textColor: '#E0E0E0',
+            maskColor: 'rgba(255,255,255,0.3)'
+        };
+
+// Apply the theme
+        var highchartsOptions = Highcharts.setOptions(Highcharts.theme);
+
+
+
+        var chart1;
+
+// Once DOM (document) is finished loading
+        $(function() {
+
+            // First chart initialization
+            chart1 = new Highcharts.Chart({
+                chart: {
+                    renderTo: 'chart_1',
+                    type: 'line',
+                    height: 350
+                },
+                title: {
+                    text: '收益情况'
+                },
+                xAxis: {
+                    categories: orderdate.slice(23,30)
+                },
+                yAxis: {
+                    title: {
+                        text: '每日订单'
+                    },
+                    min:0
+                },
+                series: [{
+                    name: '下单',
+                    data: orderNum.slice(23,30)
+                }, {
+                    name: '成交单量',
+                    data: finishOrderNum.slice(23,30)
+                }, {
+                    name: '收益(百)',
+                    data: money.slice(23,30)
+                }]
+            });
+
+
+
+            // Switchers (of the Chart1 type) - onclick handler
+            $('#J_day30').click(function () {
+                chart1 = new Highcharts.Chart({
+                    chart: {
+                        renderTo: 'chart_1',
+                        type: 'line',
+                        height: 350
+                    },
+                    title: {
+                        text: '收益情况'
+                    },
+                    xAxis: {
+                        categories: orderdate.slice(0,30)
+                    },
+                    yAxis: {
+                        title: {
+                            text: '每日订单'
+                        },
+                        min:0
+                    },
+                    series: [{
+                        name: '下单',
+                        data: orderNum.slice(0,30)
+                    }, {
+                        name: '成交单量',
+                        data: finishOrderNum.slice(0,30)
+                    }, {
+                        name: '收益(百)',
+                        data: money.slice(0,30)
+                    }]
+                });
+            });
+
+            $('#J_day7').click(function () {
+                chart1 = new Highcharts.Chart({
+                    chart: {
+                        renderTo: 'chart_1',
+                        type: 'line',
+                        height: 350
+                    },
+                    title: {
+                        text: '收益情况'
+                    },
+                    xAxis: {
+                        categories: orderdate.slice(23,30)
+                    },
+                    yAxis: {
+                        title: {
+                            text: '每日订单'
+                        },
+                        min:0
+                    },
+                    series: [{
+                        name: '下单',
+                        data: orderNum.slice(23,30)
+                    }, {
+                        name: '成交单量',
+                        data: finishOrderNum.slice(23,30)
+                    }, {
+                        name: '收益(百)',
+                        data: money.slice(23,30)
+                    }]
+                });
+
+            });
+            //生成推广链接
+            $('#J_generateLink').on('click',function(){
+                var _html = '<div class="generateLink"><div class="linkInput">推广链接：<input type="text" value=http://m.weadoc.com?friendshare=<?php echo $_SESSION['share_username'] ?> /></div><div class="Qrcode"><img src="http://bshare.optimix.asia/barCode?site=weixin&url=http://m.weadoc.com?friendshare=<?php echo $_SESSION['share_username'] ?>" alt="二维码"></div>只有通过此链接或者二维码下单才有钱哦！</div>';
+                $popUpBox.init({
+                    html:_html,
+                    close:true
+                });
+            });
+        });
+
+
+</script>
+
+<!-- Container -->
+<div id="container">
+    <div id="header">
+        <div id="top">
+            <include file="Public:top"  title="分销中心" />
+        </div>
+        <div id="navbar">
+            <include file="Public:menu"  title="分销中心" />
+        </div>
+    </div>
+    <!-- End of Header -->
+
+    <!-- Background wrapper -->
+    <div id="bgwrap">
+
+        <!-- Main Content -->
+        <div id="content">
+            <div id="main">
+            <a href="#" class="button" id="J_day7" ><span class="ui-icon ui-icon-radio-off"></span>近7日</a>
+                <a href="#" class="button" id="J_day30" ><span class="ui-icon ui-icon-radio-off"></span>近30日</a>
+<hr>
+                <div id="chart_1" class="chart"></div>
+
+                <div class="pad20">
+                    <!-- Big buttons -->
+                    <ul class="dash">
+<!--
+                        <li>
+                            <a href="http://p.qiao.baidu.com//im/index?siteid=7651073&ucid=10004487" target="_blank" class="tooltip">
+                                <img src="__STATIC__/assets/icons/26_48x48.png" alt="" />
+                                <span>联系客服</span>
+                            </a>
+                        </li>-->
+                        <li>
+                            <!--<a href="javascript:;" id="J_generateLink"  class="tooltip" >-->
+                                <div  class="generateLink"><div class="linkInput">推广链接：<input type="text" value=http://m.weadoc.com?friendshare=<?php echo $_SESSION['share_username'] ?> /></div><div class="Qrcode"><img src="http://bshare.optimix.asia/barCode?site=weixin&url= http://m.weadoc.com?friendshare=<?php echo $_SESSION['share_username'] ?>" alt="二维码"></div>只有通过此链接或者二维码下单才有钱哦！</div>
+                               <!-- <img src="__STATIC__/assets/icons/3_48x48.png" alt="">
+                                <span>生成推广链接</span>-->
+                            <!--</a>-->
+                        </li>
+                    </ul>
+
+                    <!-- End of Big buttons -->
+                </div>
+
+
+            </div>
+        </div>
+        <!-- End of Main Content -->
+        <!-- Sidebar -->
+        <div id="sidebar">
+
+            <h2>闪修侠联盟公告<?php echo $allOrderNum; ?></h2>
+            <!-- Accordion -->
+            <div id="accordion">
+                <div>
+                    <h3><a href="#"class="tooltip">关于闪修侠联盟上线公告</a></h3>
+                    <div>联盟将于12月初正式上线，因处于测试期间，所以遇到任何问题请联系我们，我们将在第一时间处理！</div>
+                </div>
+                <div>
+                    <h3><a href="#" class="tooltip">关于分红</a></h3>
+                    <div>维修单10%的提成</div>
+                </div>
+
+            </div>
+            <!-- End of Accordion-->
+
+
+
+            <!-- Statistics -->
+            <h2>收益统计</h2>
+            <div class="myMoney">
+                <p><b>今日收益:</b> ￥<?php echo $dayPrice; ?></p>
+                <p><b>当月收益:</b> ￥<?php echo $monthPrice; ?></p>
+                <p><b>累计收益:</b> ￥<?php echo $allPrice; ?></p>
+            </div>
+
+            <h2>下单单数统计</h2>
+            <div class="myMoney">
+                <p><b>今日下单单数:</b> <?php echo $dayOrderNum; ?></p>
+                <p><b>当月下单单数:</b> <?php echo $monthOrderNum; ?></p>
+                <p><b>累计下单单数:</b> <?php echo $allOrderNum; ?></p>
+            </div>
+
+            <h2>成交单数统计</h2>
+            <div class="myMoney">
+                <p><b>今日成交单数:</b> <?php echo $dayFinishOrderNum; ?></p>
+                <p><b>当月成交单数:</b> <?php echo $monthFinishOrderNum; ?></p>
+                <p><b>累计成交单数:</b> <?php echo $allFinishOrderNum; ?></p>
+            </div>
+
+            <hr>
+            <!-- End of Statistics -->
+        </div>
+        <!-- End of Sidebar -->
+
+    </div>
+    <!-- End of bgwrap -->
+</div>
+<!-- End of Container -->
+
+<!-- Footer -->
+<div id="footer">
+    <p class="mid">
+        <a href="http://www.weadoc.com" class="tooltip">闪修侠官网</a>&middot;<a href="#" class="tooltip">关于我们</a>
+    </p>
+    <p class="mid">
+        <!-- Change this to your own once purchased -->
+        &copy; 闪修侠版权所有 技术支持:闪修侠研发团队
+        <!-- -->
+    </p>
+</div>
+<!-- End of Footer -->
+<!-- http://bshare.optimix.asia/barCode?site=weixin&url=http://www.weadoc.com 二维码api-->
+<include file="Public:footer"/>

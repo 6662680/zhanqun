@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>user</title>
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/default/easyui.css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/icon.css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/css/user.css">
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/locale/easyui-lang-zh_CN.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/js/user.js"></script>
+    <script type="text/javascript">
+        var url;
+
+        //新增
+        function newItem(){
+            $('#dlg').dialog('open').dialog('center').dialog('setTitle', '添加');
+            $('#fm').form('clear');
+            $('#fm').form('load', {'type':2});
+            $('#preferential_amount').textbox('textbox').removeAttr('readonly'); 
+            url = '/admin/preferential/add';
+        }
+
+        //编辑
+        function editItem(){
+            var row = $('#dg').datagrid('getSelected');
+            console.log(row);
+            if (row){
+                $('#dlg').dialog('open').dialog('center').dialog('setTitle','编辑');
+                
+                if (!isNaN(row.start_time)) {
+                	row.start_time = formatDate(row.start_time);
+                    row.end_time = formatDate(row.end_time);
+                }
+                
+                $('#fm').form('load', row);
+                $('#preferential_amount').textbox('textbox').attr('readonly', true);
+                
+                if (row.category == 1) {
+                    //代金券
+                    $('.preferential_threshold_price').show();
+                    $('.preferential_price').show();
+                    $('.preferential_discount').hide();
+                } else if (row.category == 2) {
+                    //折扣
+                    $('.preferential_threshold_price').hide();
+                    $('.preferential_price').hide();
+                    $('.preferential_discount').show();
+                    
+                } else if (row.category == 3) {
+                    //特价
+                    $('.preferential_threshold_price').hide();
+                    $('.preferential_price').show();
+                    $('.preferential_discount').hide();
+                }
+                
+                url = '/admin/preferential/edit/id/' + row.id;
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+        
+        function detailItem(){
+            var row = $('#dg').datagrid('getSelected');
+
+            if (row){
+                $('#dlg-detail').dialog('open').dialog('center').dialog('setTitle','优惠详情');
+                
+                row.start_time = formatDate(row.start_time);
+                row.end_time = formatDate(row.end_time);
+                $('#fm-detail').form('load', row);
+                
+                if (row.category == 1) {
+                    //代金券
+                    $('.preferential_threshold_price').show();
+                    $('.preferential_price').show();
+                    $('.preferential_discount').hide();
+                } else if (row.category == 2) {
+                    //折扣
+                    $('.preferential_threshold_price').hide();
+                    $('.preferential_price').hide();
+                    $('.preferential_discount').show();
+                    
+                } else if (row.category == 3) {
+                    //特价
+                    $('.preferential_threshold_price').hide();
+                    $('.preferential_price').show();
+                    $('.preferential_discount').hide();
+                }
+                
+                $('#preferential_address').datagrid({    
+                    url:'/admin/preferential/preferentialAddress/id/' + row.id,        
+                });
+                $('#preferential_phone').datagrid({    
+                    url:'/admin/preferential/preferentialPhones/id/' + row.id,        
+                });
+                $('#preferential_phomal').datagrid({    
+                    url:'/admin/preferential/preferentialPhomals/id/' + row.id,        
+                });
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+        //保存优惠信息
+        function saveItem(form) {
+            form.form('submit',{
+                url: url,
+                onSubmit: function(){
+                    if ($(this).form('validate')) {
+                        $('#load').dialog('open');
+                    };
+                    return $(this).form('validate');
+                },
+                success: function(result){
+                    $('#load').dialog('close');
+                    var result = eval('('+result+')');
+
+                    if (result.success){
+                        
+                        $('#dlg').dialog('close');
+                        
+                        if (typeof(result.errorMsg) != "undefined" && result.errorMsg.length > 0) {
+                            $.messager.show({
+                                title: '提示',
+                                msg: result.errorMsg,
+                                showType:'fade',
+                                style:{
+                                    right:'',
+                                    bottom:'',
+                                }
+                            });
+                        }
+                        
+                        $('#dg').datagrid('reload');
+                    } else {
+                        $.messager.show({
+                            title: '错误',
+                            msg: result.errorMsg,
+                            showType:'fade',
+                            style:{
+                                right:'',
+                                bottom:''
+                            }
+                        });
+                    }
+                }
+            });
+        }
+        
+        //删除
+        function deleteItem(){
+            var row = $('#dg').datagrid('getSelected');
+            if (row){
+                $.messager.confirm('Confirm', '确认删除此记录?',function(r){
+                    if (r){
+                        $.post('/admin/preferential/delete',{id:row.id},function(result){
+                            if (result.success){
+                                $('#dg').datagrid('reload');
+                            } else {
+                                $.messager.show({
+                                    title: '错误',
+                                    msg: result.errorMsg,
+                                    showType:'fade',
+                                    style:{
+                                        right:'',
+                                        bottom:''
+                                    }
+                                });
+                            }
+                        },'json');
+                    }
+                });
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+        //搜索
+        function searchItem(){
+            $('#dg').datagrid({
+                queryParams: {
+                    type: $('#search-type').combobox('getValue'),
+                    category: $('#search-category').combobox('getValue'),
+                    address_id: $('#search-address').combobox('getValue'),
+                    phone_id: $('#search-phone').combobox('getValue'),
+                    malfunction_id: $('#search-malfunction').combobox('getValue'),
+                    keyword: $('#search-keyword').val(),
+                }
+            });
+        }
+        
+        //机型故障搜索
+        function searchPhomalItem(){
+        	
+        	var row = $("#dg").datagrid('getSelected');
+        	
+        	if (row) {
+        		
+        		var phone_id = $('#search-phomal-phone').combobox('getValue');
+        		
+        		if (!phone_id) {
+        			return;
+        		}
+        		
+        		$('#phomals').datagrid({    
+                    url:'/admin/preferential/Phomals/id/' + row.id + '/phone_id/' + phone_id,        
+                });
+        	} else {
+        		$.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+        	}
+        }
+        
+        //优惠机型故障搜索
+        function searchPreferentialPhomalItem(){
+        	
+        	var row = $("#dg").datagrid('getSelected');
+        	
+        	if (row) {
+        		
+        		var phone_id = $('#search-preferential-phomal-phone').combobox('getValue');
+        		
+        		if (!phone_id) {
+        			return;
+        		}
+        		
+        		$('#joinedPhomals').datagrid({    
+                    url:'/admin/preferential/preferentialPhomals/id/' + row.id + '/phone_id/' + phone_id,        
+                });
+        	} else {
+        		$.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+        	}
+        }
+        
+        //优惠地区弹出框
+        function belongAddress(){
+            var row = $("#dg").datagrid('getSelected');
+
+            if(row) {
+                $("#belongAddress").dialog("open").dialog("setTitle", "优惠地区");
+                $('#joinedAddress').datagrid({    
+                    url:'/admin/preferential/preferentialAddress/id/' + row.id,        
+                });
+                $('#address').datagrid({    
+                    url:'/admin/preferential/address/id/' + row.id,        
+                });
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+        
+        //设置优惠地区
+        function setAddress(type) {
+        	type = type || 1;
+            var row = $("#dg").datagrid('getSelected'); 
+            
+            if (type == 1) {
+            	var row1 = $("#address").datagrid('getSelections');
+            } else {
+            	var row1 = $("#joinedAddress").datagrid('getSelections');
+            }
+            
+            if (row1.length > 0) {
+                
+                var city = [];
+                
+                for (var i in row1) {
+                    city.push(row1[i].city);
+                }
+                
+                if (type == 1) {
+                	$.post('/admin/preferential/joinedAddress',{preferential_id:row.id, address_id:city.join(',')}, function(result){
+                        if (result.success){
+                            $('#joinedAddress').datagrid('reload');
+                            $('#address').datagrid('reload');
+                        } else {
+                            $.messager.show({
+                                title: '错误',
+                                msg: result.errorMsg,
+                                showType:'fade',
+                                style:{
+                                    right:'',
+                                    bottom:''
+                                }
+                            });
+                        }
+                    },'json');
+                } else {
+                	$.post('/admin/preferential/cancelAddress', {preferential_id:row.id, address_id:city.join(',')}, function(result){
+                        if (result.success){
+                        	$('#joinedAddress').datagrid('reload');
+                            $('#address').datagrid('reload');
+                        } else {
+                            $.messager.show({
+                                title: '错误',
+                                msg: result.errorMsg,
+                                showType:'fade',
+                                style:{
+                                    right:'',
+                                    bottom:''
+                                }
+                            });
+                        }
+                    },'json');
+                }
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+        
+        //优惠机型弹出框
+        function belongPhone(){
+            var row = $("#dg").datagrid('getSelected');
+
+            if(row) {
+                $("#belongPhone").dialog("open").dialog("setTitle", "优惠机型");
+                $('#joinedPhones').datagrid({    
+                    url:'/admin/preferential/preferentialPhones/id/' + row.id,        
+                });
+                $('#phones').datagrid({    
+                    url:'/admin/preferential/Phones/id/' + row.id,        
+                });
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+        
+        //设置优惠机型
+        function setPhone(type) {
+        	type = type || 1;
+            var row = $("#dg").datagrid('getSelected'); 
+            
+            if (type == 1) {
+            	var row1 = $("#phones").datagrid('getSelections');
+            } else {
+            	var row1 = $("#joinedPhones").datagrid('getSelections');
+            }
+            
+            if (row1.length > 0) {
+                
+                var phone = [];
+                
+                for (var i in row1) {
+                	phone.push(row1[i].phone_id);
+                }
+                
+                if (type == 1) {
+                	$.post('/admin/preferential/joinedPhones',{preferential_id:row.id, phone_id:phone.join(',')}, function(result){
+                        if (result.success){
+                            $('#joinedPhones').datagrid('reload');
+                            $('#phones').datagrid('reload');
+                        } else {
+                            $.messager.show({
+                                title: '错误',
+                                msg: result.errorMsg,
+                                showType:'fade',
+                                style:{
+                                    right:'',
+                                    bottom:''
+                                }
+                            });
+                        }
+                    },'json');
+                } else {
+                	$.post('/admin/preferential/cancelPhones', {preferential_id:row.id, phone_id:phone.join(',')}, function(result){
+                        if (result.success){
+                        	$('#joinedPhones').datagrid('reload');
+                            $('#phones').datagrid('reload');
+                        } else {
+                            $.messager.show({
+                                title: '错误',
+                                msg: result.errorMsg,
+                                showType:'fade',
+                                style:{
+                                    right:'',
+                                    bottom:''
+                                }
+                            });
+                        }
+                    },'json');
+                }
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+        
+        //优惠故障弹出框
+        function belongPhomal(){
+            var row = $("#dg").datagrid('getSelected');
+
+            if(row) {
+                $("#belongPhomal").dialog("open").dialog("setTitle", "优惠故障");
+                $('#joinedPhomals').datagrid({    
+                    url:'/admin/preferential/preferentialPhomals/id/' + row.id,        
+                });
+                $('#phomals').datagrid({    
+                    url:'/admin/preferential/Phomals/id/' + row.id,        
+                });
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+        
+        //设置优惠故障
+        function setPhomal(type) {
+        	type = type || 1;
+            var row = $("#dg").datagrid('getSelected'); 
+            
+            if (type == 1) {
+            	var row1 = $("#phomals").datagrid('getSelections');
+            } else {
+            	var row1 = $("#joinedPhomals").datagrid('getSelections');
+            }
+            
+            if (row1.length > 0) {
+                
+                var ids = [];
+                
+                for (var i in row1) {
+                	ids.push(row1[i].phomal_id);
+                }
+                
+                if (type == 1) {
+                	$.post('/admin/preferential/joinedPhomals',{preferential_id:row.id, phomal_id:ids.join(',')}, function(result){
+                        if (result.success){
+                            $('#joinedPhomals').datagrid('reload');
+                            $('#phomals').datagrid('reload');
+                        } else {
+                            $.messager.show({
+                                title: '错误',
+                                msg: result.errorMsg,
+                                showType:'fade',
+                                style:{
+                                    right:'',
+                                    bottom:''
+                                }
+                            });
+                        }
+                    },'json');
+                } else {
+                	$.post('/admin/preferential/cancelPhomals', {preferential_id:row.id, phomal_id:ids.join(',')}, function(result){
+                        if (result.success){
+                        	$('#joinedPhomals').datagrid('reload');
+                            $('#phomals').datagrid('reload');
+                        } else {
+                            $.messager.show({
+                                title: '错误',
+                                msg: result.errorMsg,
+                                showType:'fade',
+                                style:{
+                                    right:'',
+                                    bottom:''
+                                }
+                            });
+                        }
+                    },'json');
+                }
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+        
+        //优惠状态
+        function formatPreferentialStatus(val)
+        {
+            if (val == -1) {
+                return '<span class="label label-bg3">作废</span>';
+            } else if (val == 0) {
+                return '<span class="label label-bg5">待激活</span>';
+            } else if (val == 1) {
+                return '<span class="label label-bg2">已激活</span>';
+            } else if (val == 2) {
+            	return '<span class="label label-bg">已使用</span>';
+            }
+        }
+        
+        //优惠类型
+        function formatPreferentialType(val)
+        {
+            if (val == 1) {
+                return '<span class="label label-bg2">促销活动</span>';
+            } else if (val == 2) {
+                return '<span class="label label-bg5">优惠券</span>';
+            }
+        }
+        
+        //优惠方式
+        function formatPreferentialCategory(val)
+        {
+            if (val == 1) {
+                return '<span class="label label-bg7">代金券</span>';
+            } else if (val == 2) {
+                return '<span class="label label-bg6">折扣</span>';
+            } else if (val == 3) {
+                return '<span class="label label-bg5">特价</span>';
+            }
+        }
+        
+        //优惠券
+        function couponItem()
+        {
+        	var row = $('#dg').datagrid('getSelected');
+            if (row){
+            	$("#dlg-coupon").dialog("open").dialog("setTitle", "优惠券列表");
+            	$('#preferential_coupon').datagrid({    
+                    url:'/admin/preferential/coupon/preferential_id/' + row.id,    
+                });
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+        
+        //搜索
+        function searchCouponItem(){
+            $('#preferential_coupon').datagrid({
+                queryParams: {
+                    status: $('#search-coupon-status').combobox('getValue'),
+                    keyword: $('#search-coupon-keyword').val()
+                }
+            });
+        }
+        
+        //订单行操作按钮
+        function formatOrderRowActionButton(val, row)
+        {
+            var html = $('#rowmenu').html();
+            
+            //优惠券
+            if (row.type == 2 && row.flag == 2) {
+                html = html.replace(/preferential-coupon/, '');
+                
+                if (row.status == 1) {
+                	html = html.replace(/preferential-export/, '');
+                } else {
+                	html = html.replace(/preferential-export/, 'hide');
+                }
+            } else {
+            	html = html.replace(/preferential-coupon/, 'hide');
+            	html = html.replace(/preferential-export/, 'hide');
+            }
+            
+            return html;
+        }
+        
+        //导出优惠券
+        function exportItem()
+        {
+        	var row = $('#dg').datagrid('getSelected');
+        	
+            if (row){
+            	location.href='/admin/preferential/export/preferential_id/' + row.id;
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+       
+        $(function(){
+            $('#mm').menu();
+            $(document).bind('contextmenu',function(e){
+                e.preventDefault();
+                $('#mm').menu('show', {
+                    left: e.pageX,
+                    top: e.pageY
+                });
+            });
+            
+            $('#dlg input[name="category"]').change(function(){
+                var _category = $(this).val();
+                
+                if (_category == 1) {
+                    //代金券
+                    $('.preferential_threshold_price').show();
+                    $('.preferential_price').show();
+                    $('.preferential_discount').hide();
+                } else if (_category == 2) {
+                    //折扣
+                    $('.preferential_threshold_price').hide();
+                    $('.preferential_price').hide();
+                    $('.preferential_discount').show();
+                    
+                } else if (_category == 3) {
+                    //特价
+                    $('.preferential_threshold_price').hide();
+                    $('.preferential_price').show();
+                    $('.preferential_discount').hide();
+                }
+            });
+        });
+    </script>
+</head>
+<body class="easyui-layout">
+        <table id="dg" title="优惠列表" class="easyui-datagrid" style="width:100%;" url="/admin/preferential/rows" toolbar="#toolbar" pagination="true" pageSize="30" pagePosition="top" rownumbers="true" fitColumns="true" singleSelect="true" rownumbers="true" pagination="true" nowrap="false">
+        <thead>
+            <tr>
+                <th field="id" width="5">ID</th>
+                <th field="title" width="20">标题</th>
+                <th field="type" width="8" formatter="formatPreferentialType">类型</th>
+                <th field="category" width="8" formatter="formatPreferentialCategory">优惠方式</th>
+                <th field="threshold_price" width="8">满减价</th>
+                <th field="price" width="8">价格</th>
+                <th field="discount" width="8">折扣</th>
+                <th field="status" width="8" formatter="formatPreferentialStatus">状态</th>
+                <th field="amount" width="10">数量</th>
+                <th field="use_times" width="10">使用次数</th>
+                <th field="start_time" width="15" formatter="formatDate">开始时间</th>
+                <th field="end_time" width="15" formatter="formatDate">结束时间</th>
+                <th field="remark" width="20">说明</th>
+                <th field='action' width="40" formatter="formatOrderRowActionButton">操作</th>
+            </tr>
+        </thead>
+    </table>
+    <div id="toolbar">
+        <span>类型:</span>
+        <select class="easyui-combobox" panelheight="auto" id='search-type'>
+        <option value='all'>全部</option>
+        <option value='1'>促销活动</option>
+        <option value='2'>优惠券</option>
+        </select>
+        &nbsp;&nbsp;
+        <span>类别:</span>
+        <select class="easyui-combobox" panelheight="auto" id='search-category'>
+        <option value='all'>全部</option>
+        <option value='1'>代金券</option>
+        <option value='2'>打折</option>
+        <option value='3'>特价</option>
+        </select>
+        &nbsp;&nbsp;
+        <span>地区:</span>
+        <select class="easyui-combobox" limitToList="true" id='search-address' url="/admin/preferential/address" valueField="city" textField="name" style="width:150px;">
+        </select>
+        &nbsp;&nbsp;
+        <span>机型:</span>
+        <select class="easyui-combobox" limitToList="true" id='search-phone' url="/admin/preferential/phones" valueField="phone_id" textField="phone_name" style="width:150px;">
+        </select>
+        &nbsp;&nbsp;
+        <span>故障:</span>
+        <select class="easyui-combobox"  id='search-malfunction' url="/admin/preferential/malfunctions" valueField="id" textField="name" style="width:150px;">
+        </select>
+        &nbsp;&nbsp;
+        <span>关键字:</span>
+        <input type="text" class="easyui-textbox" id='search-keyword' panelHeight="auto">
+        <a href="javascript:void(0)" class="easyui-linkbutton" plain="true" iconCls="icon-search" onclick="searchItem()">搜索</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['新增'])) { echo 'hide';} ?>" iconCls="icon-add" plain="true" onclick="newItem()">添加</a>
+    </div>
+    <div id="mm" style="width:120px;">
+        <div iconCls="icon-edit" class="<?php if(!isset($buttons['编辑'])) { echo 'hide';} ?>" onclick="editItem()"><span>编辑</span></div>
+        <div iconCls="icon-remove" class="<?php if(!isset($buttons['删除'])) { echo 'hide';} ?>" onclick="deleteItem()"><span>删除</span></div>
+    </div>
+    <div id="rowmenu" class="hide">
+    	<a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['优惠详情'])) { echo 'hide';} ?>" iconCls="icon-detail" plain="true" onclick="selectedRow($(this));detailItem();">优惠详情</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton preferential-coupon <?php if(!isset($buttons['优惠券'])) { echo 'hide';} ?>" iconCls="icon-detail" plain="true" onclick="selectedRow($(this));couponItem()">优惠劵</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['编辑'])) { echo 'hide';} ?>" iconCls="icon-edit" plain="true" onclick="selectedRow($(this));editItem();">编辑</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['删除'])) { echo 'hide';} ?>" iconCls="icon-remove" plain="true" onclick="selectedRow($(this));deleteItem();">删除</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton preferential-export <?php if(!isset($buttons['导出'])) { echo 'hide';} ?>" iconCls="icon-export" plain="true" onclick="selectedRow($(this));exportItem()">导出</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['优惠地区'])) { echo 'hide';} ?>" iconCls="icon-earth" plain="true" onclick="selectedRow($(this));belongAddress()">优惠地区</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['优惠机型'])) { echo 'hide';} ?>" iconCls="icon-phone" plain="true" onclick="selectedRow($(this));belongPhone()">优惠机型</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['优惠故障'])) { echo 'hide';} ?>" iconCls="icon-malfunction" plain="true" onclick="selectedRow($(this));belongPhomal()">优惠故障</a>
+    </div>
+    <div id="dlg" class="easyui-dialog" style="width:700px;height:530px;padding:10px 20px" closed="true" buttons="#dlg-add-buttons">
+        <div class="ftitle">优惠信息</div>
+        <form id="fm" method="post">
+            <div class="fitem">
+                <label>类型:</label>
+                <input class="easyui-validatebox" name="type" type="radio" value="1" required="true" disabled="true">促销活动
+                <input class="easyui-validatebox" name="type" type="radio" value="2" required="true" validType="requireRadio['input[name=\'type\']']">优惠券
+            </div>
+            <div class="fitem">
+                <label>标题:</label>
+                <input name="title" class="easyui-textbox" data-options="required:true" style="width:400px;">
+            </div>
+            <div class="fitem">
+                <label>开始时间:</label>
+                <input name="start_time" class="easyui-datetimebox" style="width:200px;" data-options="required:true">
+            </div>
+            <div class="fitem">
+                <label>结束时间:</label>
+                <input name="end_time" class="easyui-datetimebox" style="width:200px;" data-options="required:true">
+            </div>
+            <div class="fitem">
+                <label>优惠方式:</label>
+                <input class="easyui-validatebox" name="category" type="radio" value="1" required="true">代金券
+                <input class="easyui-validatebox" name="category" type="radio" value="2" required="true">打折
+                <input class="easyui-validatebox" name="category" type="radio" value="3" required="true" validType="requireRadio['input[name=\'category\']']">特价
+            </div>
+            <div class="fitem preferential_threshold_price hide">
+                <label>满减价格:</label>
+                <input name="threshold_price" class="easyui-textbox" prompt="触发优惠的门槛价格，0表示无门槛。" style="width:300px;">
+            </div>
+            <div class="fitem preferential_price hide">
+                <label>优惠券金额:</label>
+                <input name="price" class="easyui-textbox" prompt="代金券或特价券金额" style="width:300px;">
+            </div>
+            <div class="fitem preferential_discount hide">
+                <label>折扣:</label>
+                <input name="discount" class="easyui-textbox" prompt="折扣券折扣，为1-100之间的整数。" style="width:300px;">
+            </div>
+            <div class="fitem">
+                <label>状态:</label>
+                <input class="easyui-validatebox" name="status" type="radio" value="-1" required="true">作废
+                <input class="easyui-validatebox" name="status" type="radio" value="0" required="true">待激活
+                <input class="easyui-validatebox" name="status" type="radio" value="1" required="true" validType="requireRadio['input[name=\'category\']']">已激活
+            </div>
+            <div class="fitem">
+                <label>数量:</label>
+                <input id="preferential_amount" name="amount" class="easyui-textbox"  data-options="required:true">
+            </div>
+            <div class="fitem">
+                <label>说明:</label>
+                <input class="easyui-textbox" name="remark" style="width:300px;height:60px" data-options="{multiline:true, required:true}">
+            </div>
+        </form>
+    </div>
+    <div id="dlg-add-buttons">
+        <a href="javascript:void(0)" class="easyui-linkbutton c6" iconCls="icon-ok" onclick="saveItem($('#fm'))" style="width:90px">保存</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg').dialog('close')" style="width:90px">取消</a>
+    </div>
+    
+    <div id="dlg-detail" class="easyui-dialog" style="width:700px;height:530px;padding:10px 20px" closed="true">
+        <div class="ftitle">优惠信息</div>
+        <form id="fm-detail" method="post">
+            <div class="fitem">
+                <label>类型:</label>
+                <input class="easyui-validatebox" name="type" type="radio" value="1" disabled="true">促销活动
+                <input class="easyui-validatebox" name="type" type="radio" value="2" disabled="true">优惠券
+            </div>
+            <div class="fitem">
+                <label>标题:</label>
+                <input name="title" class="easyui-textbox" data-options="disabled:true" style="width:400px;">
+            </div>
+            <div class="fitem">
+                <label>开始时间:</label>
+                <input name="start_time" class="easyui-datetimebox" style="width:200px;" data-options="disabled:true">
+            </div>
+            <div class="fitem">
+                <label>结束时间:</label>
+                <input name="end_time" class="easyui-datetimebox" style="width:200px;" data-options="disabled:true">
+            </div>
+            <div class="fitem">
+                <label>优惠方式:</label>
+                <input class="easyui-validatebox" name="category" type="radio" value="1" disabled="true">代金券
+                <input class="easyui-validatebox" name="category" type="radio" value="2" disabled="true">打折
+                <input class="easyui-validatebox" name="category" type="radio" value="3" disabled="true">特价
+            </div>
+            <div class="fitem preferential_threshold_price hide">
+                <label>满减价格:</label>
+                <input name="threshold_price" class="easyui-textbox" prompt="触发优惠的门槛价格，0表示无门槛。" style="width:300px;" disabled="true">
+            </div>
+            <div class="fitem preferential_price hide">
+                <label>优惠券金额:</label>
+                <input name="price" class="easyui-textbox" prompt="代金券或特价券金额" style="width:300px;" disabled="true">
+            </div>
+            <div class="fitem preferential_discount hide">
+                <label>折扣:</label>
+                <input name="discount" class="easyui-textbox" prompt="折扣券折扣，为1-100之间的整数。" style="width:300px;" disabled="true">
+            </div>
+            <div class="fitem">
+                <label>状态:</label>
+                <input class="easyui-validatebox" name="status" type="radio" value="-1" disabled="true">作废
+                <input class="easyui-validatebox" name="status" type="radio" value="0" disabled="true">待激活
+                <input class="easyui-validatebox" name="status" type="radio" value="1" disabled="true">已激活
+            </div>
+            <div class="fitem">
+                <label>数量:</label>
+                <input id="preferential_amount" name="amount" class="easyui-textbox"  data-options="disabled:true">
+            </div>
+            <div class="fitem">
+                <label>说明:</label>
+                <input class="easyui-textbox" name="remark" style="width:300px;height:60px" data-options="{multiline:true,disabled:true}">
+            </div>
+            <div class="fitem">
+            	<label>优惠地区:</label>
+            	<table title="优惠地区" id="preferential_address" class="easyui-datagrid"  style="width:400px; max-height: 300px; float:left;">
+                    <thead>
+                        <tr>
+                            <th field="city" width="50">ID</th>
+                            <th field="name" width="150" >地区</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+            <div class="fitem">
+            	<label>优惠机型:</label>
+                <table title="优惠机型" id="preferential_phone" class="easyui-datagrid"  style="width:400px; max-height: 300px; float:left;">
+                    <thead>
+                        <tr>
+                            <th field="phone_id">ID</th>
+                            <th field="phone_name">机型</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+            <div class="fitem">
+                <label>优惠故障:</label>
+                <table title="优惠故障" id="preferential_phomal" class="easyui-datagrid"  style="width:400px; max-height: 300px; float:left;">
+                    <thead>
+                        <tr>
+                            <th field="phomal_id">ID</th>
+                            <th field="phomal_name">故障</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+        </form>
+    </div>
+    
+    <div id="belongAddress" class="easyui-dialog" style="width: 500px;min-height: 400px; max-height:600px;" closed="true">
+        <div id="cc" class="easyui-layout" fit="true">     
+            <div data-options="region:'west'" style="width:200px;">
+                <table id="address" class="easyui-datagrid" title="地区列表">
+                    <thead>
+                        <tr>
+                            <th field="ck" checkbox="true"></th>
+                            <th field="city">ID</th>
+                            <th field="name">地区</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>   
+            <div data-options="region:'east'" style="width:200px;">
+                <table id="joinedAddress" class="easyui-datagrid" title="优惠地区">
+                    <thead>
+                        <tr>
+                            <th field="ck" checkbox="true"></th>
+                            <th field="city">ID</th>
+                            <th field="name">地区</th>
+                        </tr>
+                    </thead>
+                </table>        
+            </div>   
+            <div data-options="region:'center'">
+                <div align="center" style="height:100px;padding-top:30px;">
+                    <a href="javascript:setAddress(1)" class="easyui-linkbutton">&nbsp;&nbsp;&gt;&gt;&nbsp;&nbsp;</a>
+                </div>
+                <div align="center">
+                    <a href="javascript:setAddress(-1)" class="easyui-linkbutton">&nbsp;&nbsp;&lt;&lt;&nbsp;&nbsp;</a>
+                </div>
+            </div>   
+        </div> 
+    </div>
+    
+    <div id="belongPhone" class="easyui-dialog" style="width: 700px;min-height: 400px; max-height:600px;" closed="true">
+        <div id="cc" class="easyui-layout" fit="true">     
+            <div data-options="region:'west'" style="width:300px;">
+                <table id="phones" class="easyui-datagrid" title="机型列表">
+                    <thead>
+                        <tr>
+                            <th field="ck" checkbox="true"></th>
+                            <th field="phone_id">ID</th>
+                            <th field="phone_name">机型</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>   
+            <div data-options="region:'east'" style="width:300px;">
+                <table id="joinedPhones" class="easyui-datagrid" title="优惠机型">
+                    <thead>
+                        <tr>
+                            <th field="ck" checkbox="true"></th>
+                            <th field="phone_id">ID</th>
+                            <th field="phone_name">机型</th>
+                        </tr>
+                    </thead>
+                </table>        
+            </div>   
+            <div data-options="region:'center'">
+                <div align="center" style="height:100px;padding-top:30px;">
+                    <a href="javascript:setPhone(1)" class="easyui-linkbutton">&nbsp;&nbsp;&gt;&gt;&nbsp;&nbsp;</a>
+                </div>
+                <div align="center">
+                    <a href="javascript:setPhone(-1)" class="easyui-linkbutton">&nbsp;&nbsp;&lt;&lt;&nbsp;&nbsp;</a>
+                </div>
+            </div>   
+        </div> 
+    </div>
+    
+    <div id="belongPhomal" class="easyui-dialog" style="width: 800px;min-height: 400px; max-height:600px;" closed="true">
+        <div id="cc" class="easyui-layout" fit="true">     
+            <div data-options="region:'west'" style="width:350px;">
+                <table id="phomals" class="easyui-datagrid" title="故障列表" toolbar="#toolbar_phone">
+                    <thead>
+                        <tr>
+                            <th field="ck" checkbox="true"></th>
+                            <th field="phomal_id">ID</th>
+                            <th field="phomal_name">故障</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+            <div id="toolbar_phone">
+		        <span>机型:</span>
+		        <select class="easyui-combobox" limitToList="true" id='search-phomal-phone' url="/admin/preferential/phones" valueField="phone_id" textField="phone_name" style="width:150px;">
+		        </select>
+		        &nbsp;&nbsp;
+		        <a href="javascript:void(0)" class="easyui-linkbutton" plain="true" iconCls="icon-search" onclick="searchPhomalItem()">搜索</a>
+    		</div>
+            <div data-options="region:'east'" style="width:350px;">
+                <table id="joinedPhomals" class="easyui-datagrid" title="优惠故障" toolbar="#toolbar_phone2">
+                    <thead>
+                        <tr>
+                            <th field="ck" checkbox="true"></th>
+                            <th field="phomal_id">ID</th>
+                            <th field="phomal_name">故障</th>
+                        </tr>
+                    </thead>
+                </table>        
+            </div>
+            <div id="toolbar_phone2">
+		        <span>机型:</span>
+		        <select class="easyui-combobox" limitToList="true" id='search-preferential-phomal-phone' url="/admin/preferential/phones" valueField="phone_id" textField="phone_name" style="width:150px;">
+		        </select>
+		        &nbsp;&nbsp;
+		        <a href="javascript:void(0)" class="easyui-linkbutton" plain="true" iconCls="icon-search" onclick="searchPreferentialPhomalItem()">搜索</a>
+    		</div>
+            <div data-options="region:'center'">
+                <div align="center" style="height:100px;padding-top:30px;">
+                    <a href="javascript:setPhomal(1)" class="easyui-linkbutton">&nbsp;&nbsp;&gt;&gt;&nbsp;&nbsp;</a>
+                </div>
+                <div align="center">
+                    <a href="javascript:setPhomal(-1)" class="easyui-linkbutton">&nbsp;&nbsp;&lt;&lt;&nbsp;&nbsp;</a>
+                </div>
+            </div>
+        </div> 
+    </div>
+    
+    <div id="dlg-coupon" class="easyui-dialog" style="width:700px;height:530px;padding:10px 20px" closed="true">
+        <div class="fitem">
+            <table title="优惠券列表" id="preferential_coupon" toolbar="#toolbar2" class="easyui-datagrid" width="600" pagination="true" pageSize="30" pagePosition="top" fitColumns="true" singleSelect="true" rownumbers="true" pagination="true">
+                <thead>
+                    <tr>
+                        <th field="coupon_number" width="30">优惠券编码</th>
+                        <th field="coupon_status" width="20" formatter="formatPreferentialStatus">状态</th>
+                        <th field="coupon_ctime"  width="30" formatter="formatDate">生成时间</th>
+                        <th field="coupon_orderid" width="20">订单ID</th>
+                        <th field="coupon_utime" width="30" formatter="formatDate">使用时间</th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+        <div id="toolbar2">
+	        <span>状态:</span>
+	        <select class="easyui-combobox" panelheight="auto" id='search-coupon-status'>
+	        <option value='all'>全部</option>
+	        <option value='-1'>作废</option>
+	        <option value='0'>待激活</option>
+	        <option value='1'>已激活</option>
+	        <option value='2'>已使用</option>
+	        </select>
+	        &nbsp;&nbsp;
+	        <span>关键字(优惠券编码/订单ID):</span>
+	        <input type="text" class="easyui-textbox" id='search-coupon-keyword' panelHeight="auto">
+	        <a href="javascript:void(0)" class="easyui-linkbutton" plain="true" iconCls="icon-search" onclick="searchCouponItem()">搜索</a>
+    	</div>
+    </div>
+    
+    <div id="load" class="easyui-dialog" title="消息" closed="true" style="width:200px;height:100px;padding:10px">
+        <span>处理中...</span>
+    </div>
+</body>
+</html>

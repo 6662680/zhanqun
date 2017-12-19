@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>user</title>
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/default/easyui.css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/icon.css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/css/user.css">
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/locale/easyui-lang-zh_CN.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/js/user.js"></script>
+    <script type="text/javascript">
+        var url;
+
+        function newItem(){
+            $('#dlg').dialog('open').dialog('center').dialog('setTitle', '添加');
+            $('#fm').form('clear');
+            url = '/admin/breakage/add';
+        }
+
+        function saveItem() {
+            $('#fm').form('submit',{
+                url: url,
+                onSubmit: function(){
+
+                    if ($(this).form('validate')) {
+
+                        $('#load').dialog('open');
+                        return true;
+                    } else {
+                        $('#load').dialog('close');
+                        return false;
+                    }
+                },
+                success: function(result){
+                    $('#load').dialog('close');
+                    var result = eval('('+result+')');
+
+                    if (result.success){
+                        $('#dlg').dialog('close');
+                        $('#dg').datagrid('reload');
+                    } else {
+                        $.messager.show({
+                            title: '错误',
+                            msg: result.errorMsg,
+                            showType:'fade',
+                            style:{
+                                right:'',
+                                bottom:''
+                            }
+                        });
+                    }
+                }
+            });
+        }
+
+        // 审核
+        function auditItem (flag) {
+            var row = $('#dg').datagrid('getSelected');
+            
+            if (row) {
+            	
+            	if (row.status != 0) {
+            		$.messager.show({
+                        title: '错误',
+                        msg: '此记录不在未审核状态，请刷新页面！',
+                        showType:'fade',
+                        style:{
+                            right:'',
+                            bottom:''
+                        }
+                    });
+            		return false;
+            	}
+            	
+                $.messager.confirm('Confirm', '确认审核此记录?',function(r){
+                    if (r) {
+                        $.post('/admin/breakage/auditor', {id:row.id, flag: flag},function(result){
+
+                            if (result.success){
+                                $('#dg').datagrid('reload');
+                            } else {
+                                $.messager.show({
+                                    title: '错误',
+                                    msg: result.errorMsg,
+                                    showType:'fade',
+                                    style:{
+                                        right:'',
+                                        bottom:''
+                                    }
+                                });
+                            }
+                        },'json');
+                    }
+                });
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+        function searchItem() {
+        	
+            $('#dg').datagrid({
+                queryParams: {
+                    starttime: $('#search-starttime').datetimebox('getValue'),
+                    endtime: $('#search-endtime').datetimebox('getValue'),
+                    proposer_org: $('#search-org').combobox('getValue'),
+                    type: $('#search-type').combobox('getValue'),
+                    status: $('#search-status').combobox('getValue'),
+                    keyword:$('#search-keyword').val()
+                }
+            });
+        }
+
+        // 格式化状态
+        function formatBreakageStatus(val, row) {
+            switch (val)
+            {
+                case '0':
+                    return '<span class="label label-bg5">待审核</span>';
+                    break;
+                case '1':
+                    return '<span class="label label-bg2">审核通过</span>';
+                    break;
+                case '-1':
+                    return '<span class="label label-bg3">取消</span>';
+                    break;
+            }
+        }
+
+        // 格式化类型
+        function formatBreakageType(val, row) {
+            switch (val)
+            {
+                case '1':
+                    return '<span class="label label-bg6">工程师报损</span>';
+                    break;
+                case '2':
+                    return '<span class="label label-bg1">管理员报损</span>';
+                    break;
+            }
+        }
+        
+        //报损行操作按钮
+        function formatBreakAgeRowActionButton(val, row)
+        {
+            var html = $('#rowmenu').html();
+            
+            //未审核
+            if (row.status != 0) {
+                html = html.replace(/auditor/g, 'hide');
+            }
+            
+            return html;
+        }
+
+        $(function(){
+            // 右键目录
+            $('#mm').menu();
+            $(document).bind('contextmenu', function(e){
+                e.preventDefault();
+                $('#mm').menu('show', {
+                    left: e.pageX,
+                    top: e.pageY
+                });
+            });
+
+            // 组织地区
+            $.get('/admin/breakage/organization', {}, function(data) {
+
+                if (data.length > 0) {
+                    $('#search-org').combobox('loadData', data);
+                    $('#organization_id').combobox('loadData', data);
+                };
+            });
+
+            // 组织工程师和配件
+            $('#organization_id').combobox({
+                onChange: function(newValue, oldValue){
+                    $.get('/admin/breakage/engineers', {organization_id: newValue}, function(data) {
+                        $('#engineer_id').combobox('loadData', data);
+                        $('#engineer_id').combobox('setValue', '');
+                    });
+                    
+                    $.get('/admin/breakage/fittings', {organization_id: newValue}, function(data) {
+                        $('#fitting_id').combobox('loadData', data);
+                        $('#fitting_id').combobox('setValue', '');
+                    });
+                }
+            });
+            
+            //工程师物料
+            $('#engineer_id').combobox({
+                onChange: function(newValue, oldValue){
+                    $.get('/admin/breakage/fittings', {organization_id: $('#organization_id').combobox('getValue'), engineer_id: newValue}, function(data) {
+                        $('#fitting_id').combobox('loadData', data);
+                        $('#fitting_id').combobox('setValue', '');
+                    });
+                }
+            });
+            
+            //物料数量
+            $('#fitting_id').combobox({
+                onChange: function(newValue, oldValue){
+                    
+                    var _data = $('#fitting_id').combobox('getText').split('* ');
+                    var num = _data.pop();
+                     
+                    $.get('/admin/breakage/fittingsAmount', {amount: num}, function(data) {
+                        $('#amount').combobox('loadData', data);
+                        $('#amount').combobox('setValue', '');
+                    });
+                }
+            });
+            
+            //类型切换
+            $('#engineer_item').hide();
+            $('#user_item').hide();
+            $('input[name=type]').change(function(){
+                if ($(this).val() == 1) {
+                	 $('#engineer_item').show();
+                     $('#user_item').hide();
+                } else {
+                	$('#engineer_item').hide();
+                    $('#user_item').show();
+                }
+            });
+        });
+    </script>
+</head>
+<body class="easyui-layout">
+    <table id="dg" title="报损记录" class="easyui-datagrid" style="width:100%;" url="/admin/breakage/rows" toolbar="#toolbar" pagination="true" pageSize="30" pagePosition="top" rownumbers="true" fitColumns="true" singleSelect="true" rownumbers="true" pagination="true">
+        <thead>
+            <tr>
+                <th field="id" width="4">ID</th>
+                <th field="organization" width="5">组织</th>
+                <th field="type" width="6" formatter="formatBreakageType">类型</th>
+                <th field="engineer" width="5">责任人</th>
+                <th field="auditor" width="5">审核人</th>
+                <th field="fitting" width="15">配件</th>
+                <th field="amount" width="5">数量</th>
+                <th field="numbers" width="20">编号</th>
+                <th field="time" width="12" formatter="formatDate">时间</th>
+                <th field="status" width="6" formatter="formatBreakageStatus">状态</th>
+                <th field="remark" width="15">备注</th>
+                <th field='action' width="5" formatter="formatBreakAgeRowActionButton">操作</th>
+            </tr>
+        </thead>
+    </table>
+    <div id="toolbar">
+        <span>开始时间:</span>
+        <input class="easyui-datetimebox" id="search-starttime" >
+        &nbsp;
+        <span>结束时间:</span>
+        <input class="easyui-datetimebox" id="search-endtime">
+        &nbsp;
+        <span>仓库（地区）:</span>
+        <select class="easyui-combobox" id="search-org" valueField="id" textField="alias" style="width: 150px;" prompt="仓库"></select>
+        &nbsp;
+        <span>类型:</span>
+        <select class="easyui-combobox" id='search-type' panelHeight="auto">
+            <option value="all">全部</option>
+            <option value="1">工程师报损</option>
+            <option value="2">管理员报损</option>
+        </select>
+        &nbsp;
+        <span>状态:</span>
+        <select class="easyui-combobox" id='search-status' panelHeight="auto">
+            <option value="all">全部</option>
+            <option value="0">待审核</option>
+            <option value="1">审核通过</option>
+            <option value="-1">取消</option>
+        </select>
+        &nbsp;
+        <span>关键字(编号/名称):</span>
+        <input type="text" class="easyui-textbox" id='search-keyword' panelHeight="auto">
+        <a href="javascript:void(0)" class="easyui-linkbutton" plain="true" iconCls="icon-search" onclick="searchItem()">搜索</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['添加'])) { echo 'hide';} ?>" iconCls="icon-add" plain="true" onclick="newItem()">添加</a>
+    </div>
+    <div id="mm" style="width:120px;">
+        <div iconCls="icon-add" class="<?php if(!isset($buttons['添加'])) { echo 'hide';} ?>" onclick="newItem()"><span>添加</span></div>
+    </div>
+    <div id="rowmenu" class="hide">
+        <!-- <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['详情'])) { echo 'hide';} ?>" iconCls="icon-detail" plain="true" onclick="detailItem()">详情</a> -->
+        <a href="javascript:void(0)" class="easyui-linkbutton auditor <?php if(!isset($buttons['通过'])) { echo 'hide';} ?>" iconCls="icon-pass" plain="true" onclick="selectedRow($(this));auditItem(1);">通过</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton auditor <?php if(!isset($buttons['不通过'])) { echo 'hide';} ?>" iconCls="icon-nopass" plain="true" onclick="selectedRow($(this));auditItem(0);">不通过</a>
+    </div>
+    <div id="dlg" class="easyui-dialog" style="width:800px;min-height:350px;padding:10px 20px" closed="true" buttons="#dlg-buttons">
+        <div class="ftitle">报损信息</div>
+        <form id="fm" method="post">
+            <div class="fitem">
+                <label>类型:</label>
+                <span>工程师报损:</span>
+                <input class="easyui-validatebox" name="type" type="radio" required="true" value="1">
+                <span>&nbsp;|&nbsp;</span>
+                <span>管理员报损:</span>
+                <input class="easyui-validatebox" name="type" type="radio" required="true" value="2" validType="requireRadio['input[name=\'type\']']">
+            </div>
+            <div class="fitem">
+                <label>仓库（地区）:</label>
+                <select class="easyui-combobox" id="organization_id" name="organization_id" valueField="id" textField="alias" style="width: 150px;" prompt="仓库" required="true" editable="false"></select>
+            </div>
+            <div class="fitem" id="engineer_item">
+                <label>责任人:</label>
+                <select class="easyui-combobox" id="engineer_id" name="engineer_id" valueField="id" textField="name" style="width: 150px;" prompt="责任人" editable="false"></select>
+            </div>
+            <div class="fitem" id="user_item">
+                <label>责任人:</label>
+                <select class="easyui-combobox" id="user_id" url="/admin/breakage/users" name="user_id" valueField="id" textField="username" style="width: 150px;" prompt="责任人" editable="false"></select>
+            </div>
+            <!-- 
+            <div class="fitem" id="phone_id">
+                <label>机型:</label>
+                <select class="easyui-combobox nameof" name="phone_id" url="/admin/phone/phones" valueField="id" textField="alias" style="width: 150px;" prompt="机型"></select>
+            </div>
+            -->
+            <div class="fitem">
+                <label>配件:</label>
+                <select class="easyui-combobox" id="fitting_id" name="fitting_id" valueField="id" textField="title" style="width: 200px;" prompt="配件" required="true" editable="false"></select>
+            </div>
+            <div class="fitem">
+                <label>数量:</label>
+                <select class="easyui-combobox" id="amount" name="amount" valueField="amount" textField="amount" style="width: 150px;" prompt="数量" required="true" editable="false"></select>
+            </div>
+            <div class="fitem" id="provider">
+                <label>唯一编码:</label>
+                <input class="easyui-textbox" name="numbers" style="width:260px;height:60px" data-options="multiline:true" prompt="唯一编码,使用逗号(',')隔开" required="true">
+            </div>
+            <div class="fitem">
+                <label>备注(50个字):</label>
+                <input class="easyui-textbox" name="remark" style="width:260px;height:60px" data-options="multiline:true">
+            </div>
+        </form>
+    </div>
+    <div id="dlg-buttons">
+        <a href="javascript:void(0)" class="easyui-linkbutton c6" iconCls="icon-ok" onclick="saveItem()" style="width:90px">保存</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg').dialog('close')" style="width:90px">取消</a>
+    </div>
+    <div id="load" class="easyui-dialog" title="消息" closed="true" style="width:200px;height:100px;padding:10px">
+        <span>处理中...</span>
+    </div>
+</body>
+</html>

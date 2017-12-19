@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>user</title>
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/default/easyui.css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/icon.css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/css/user.css">
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/locale/easyui-lang-zh_CN.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/js/user.js"></script>
+    <script type="text/javascript">
+        var url;
+
+        function newItem()
+        {
+            $('#dlg-add').dialog('open').dialog('center').dialog('setTitle', '添加');
+            $('#fm').form('clear');
+            url = '/admin/engineer/add';
+        }
+
+        function editItem()
+        {
+            var row = $('#dg').datagrid('getSelected');
+            if (row){
+                $('#dlg-edit').dialog('open').dialog('center').dialog('setTitle','编辑');
+                $('#fm-edit').form('load', row);
+                $('#brith').datebox('setValue', formatEngineerDate(row.brith));
+                url = '/admin/engineer/edit/id/' + row.id;
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+        function saveItem(form) 
+        {
+            $(form).form('submit',{
+                url: url,
+                onSubmit: function(){
+                    if ($(this).form('validate')) {
+                        $('#load').dialog('open');
+                    };
+                    return $(this).form('validate');
+                },
+                success: function(result){
+                    $('#load').dialog('close');
+                    var result = eval('('+result+')');
+                    if (result.success){
+                        $('#dlg-add').dialog('close');
+                        $('#dlg-edit').dialog('close');
+                        $('#dg').datagrid('reload');
+                    } else {
+                        $.messager.show({
+                            title: '错误',
+                            msg: result.errorMsg,
+                            showType:'fade',
+                            style:{
+                                right:'',
+                                bottom:''
+                            }
+                        });
+                    }
+                }
+            });
+        }
+
+        function deleteItem()
+        {
+            var row = $('#dg').datagrid('getSelected');
+            if (row){
+                $.messager.confirm('Confirm', '确认删除此记录?',function(r){
+                    if (r){
+                        $.post('/admin/engineer/delete',{id:row.id},function(result){
+                            if (result.success){
+                                $('#dg').datagrid('reload');
+                            } else {
+                                $.messager.show({
+                                    title: '错误',
+                                    msg: result.errorMsg,
+                                    showType:'fade',
+                                    style:{
+                                        right:'',
+                                        bottom:''
+                                    }
+                                });
+                            }
+                        },'json');
+                    }
+                });
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+        function resetItem()
+        {
+            var row = $('#dg').datagrid('getSelected');
+            if (row){
+                $.messager.confirm('Confirm', '确认重置(重置后密码[12345678])?',function(r){
+                    if (r){
+                        $.post('/admin/engineer/reset',{id:row.id},function(result){
+                            if (result.success){
+                                $('#dg').datagrid('reload');
+                            } else {
+                                $.messager.show({
+                                    title: '错误',
+                                    msg: result.errorMsg,
+                                    showType:'fade',
+                                    style:{
+                                        right:'',
+                                        bottom:''
+                                    }
+                                });
+                            }
+                        },'json');
+                    }
+                });
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+        function emptyItem()
+        {
+            var row = $('#dg').datagrid('getSelected');
+            if (row){
+                $.messager.confirm('Confirm', '确认重置设备号?',function(r){
+                    if (r){
+                        $.post('/admin/engineer/emptys',{id:row.id},function(result){
+                            if (result.success){
+                                $('#dg').datagrid('reload');
+                            } else {
+                                $.messager.show({
+                                    title: '错误',
+                                    msg: result.errorMsg,
+                                    showType:'fade',
+                                    style:{
+                                        right:'',
+                                        bottom:''
+                                    }
+                                });
+                            }
+                        },'json');
+                    }
+                });
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+        function searchItem()
+        {
+            $('#dg').datagrid({
+                queryParams: {
+                    organization_id: $('#search-organization').combobox('getValue'),
+                    status: $('#search-status').combobox('getValue'),
+                    keyword: $('#search-keyword').val(),
+                }
+            });
+        }
+
+        function exportItem()
+        {
+            $('#search').form('submit', {
+                url: '/admin/engineer/export',
+                queryParams: {
+                    organization_id: $('#search-organization').combobox('getValue'),
+                    status: $('#search-status').combobox('getValue'),
+                    keyword: $('#search-keyword').val(),
+                }
+            });
+        }
+
+        $(function(){
+            $('#mm').menu();
+            $(document).bind('contextmenu',function(e){
+                e.preventDefault();
+                $('#mm').menu('show', {
+                    left: e.pageX,
+                    top: e.pageY
+                });
+            });
+        });
+        
+        //将时间秒转化成Y-m-d格式
+        function formatEngineerDate(s)
+        {
+            s = parseInt(s) * 1000;
+            var oDate = new Date(s),  
+            oYear = oDate.getFullYear(),  
+            oMonth = oDate.getMonth()+1,  
+            oDay = oDate.getDate();
+            oMonth = parseInt(oMonth) < 10 ? '0'+oMonth : oMonth;
+            oDay = parseInt(oDay) < 10 ? '0'+oDay : oDay;
+            return oYear +'-'+ oMonth +'-'+ oDay;
+        }
+            
+        //工程师是否接单显示
+        function formatEngineerIsWork(val) 
+        {  
+            if(val == 1) {  
+                return '<span class="label label-bg2">是<span>';  
+            } else {  
+                return '<span class="label label-bg3">否<span>';  
+            } 
+        }
+
+        //工程师类型显示
+        function formatEngineerType(val) 
+        {  
+            var type = eval(<?php echo json_encode(C("ENGINEER_TYPE"))?>);
+            return type[val];
+        }
+    </script>
+</head>
+<body class="easyui-layout">
+        <table id="dg" title="工程师列表" class="easyui-datagrid" style="width:100%;" url="/admin/engineer/rows" toolbar="#toolbar" pagination="true" pageSize="30" pagePosition="top" rownumbers="true" fitColumns="true" singleSelect="true">
+        <thead>
+            <tr>
+                <th field="id" width="5">ID</th>
+                <th field="name" width="5">姓名</th>
+                <th field="work_number" width="10">工号</th>
+                <th field="cellphone" width="10">手机</th>
+                <th field="alias" width="10">地区</th>
+                <th field="title" width="10">等级</th>
+                <th field="quota" width="10">额度</th>
+                <th field="type" width="10" formatter="formatEngineerType">类型</th>
+                <th field="is_work" width="5" formatter="formatEngineerIsWork">是否接单</th>
+                <th field="status" width="5" formatter="formatStatus">状态</th>
+                <th field='action' width="25" formatter="formatRowActionButton">操作</th>
+            </tr>
+        </thead>
+    </table>
+    <div id="toolbar">
+        <form id="search" method="post" action="<?php echo U('admin/engineer/export');?>">
+        <span>地区:</span>
+        <select class="easyui-combobox" panelHeight="auto" limitToList="true" id='search-organization' url="/admin/engineer/organization" valueField="id" textField="alias" style="width:150px;">
+        </select>
+        &nbsp;&nbsp;
+        <span>状态:</span>
+        <select class="easyui-combobox" id='search-status' panelHeight="auto">
+            <option value="all">全部</option>
+            <option value="1">启用</option>
+            <option value="0">禁用</option>
+            <option value="-1">删除</option>
+        </select>
+        &nbsp;&nbsp;
+        <span>关键字(工程师ID/工程师手机/工程师姓名/工号):</span>
+        <input type="text" class="easyui-textbox" id='search-keyword' panelHeight="auto">
+        <a href="javascript:void(0)" class="easyui-linkbutton" plain="true" iconCls="icon-search" onclick="searchItem()">搜索</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['导出'])) { echo 'hide';} ?>" plain="true" iconCls="icon-export" onclick="exportItem()">导出</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['添加'])) { echo 'hide';} ?>" plain="true" iconCls="icon-add" onclick="newItem()">添加</a>
+        </form>
+    </div>
+    <div id="mm" style="width:120px;">
+        <div iconCls="icon-add" class="<?php if(!isset($buttons['添加'])) { echo 'hide';} ?>" onclick="newItem()"><span>添加</span></div>
+        <div iconCls="icon-edit" class="<?php if(!isset($buttons['编辑'])) { echo 'hide';} ?>" onclick="editItem()"><span>编辑</span></div>
+        <div iconCls="icon-remove" class="<?php if(!isset($buttons['删除'])) { echo 'hide';} ?>" onclick="deleteItem()"><span>删除</span></div>
+        <div iconCls="icon-reset" class="<?php if(!isset($buttons['重置密码'])) { echo 'hide';} ?>" onclick="resetItem()"><span>重置密码</span></div>
+        <div iconCls="icon-empty" class="<?php if(!isset($buttons['重置设备'])) { echo 'hide';} ?>" onclick="emptyItem()"><span>重置设备</span></div>
+    </div>
+    <div id="rowmenu" class="hide">
+       <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['编辑'])) { echo 'hide';} ?>" iconCls="icon-edit" plain="true" onclick="selectedRow($(this));editItem();">编辑</a>
+       <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['删除'])) { echo 'hide';} ?>" iconCls="icon-remove" plain="true" onclick="selectedRow($(this));deleteItem();">删除</a>
+       <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['重置密码'])) { echo 'hide';} ?>" iconCls="icon-reset" plain="true" onclick="selectedRow($(this));resetItem();">重置密码</a>
+       <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['重置设备'])) { echo 'hide';} ?>" iconCls="icon-empty" plain="true" onclick="selectedRow($(this));emptyItem();">重置设备</a>
+    </div>
+    <div id="dlg-add" class="easyui-dialog" style="width:600px;min-height:350px;max-height:500px; padding:10px 20px" closed="true" buttons="#dlg-buttons">
+        <div class="ftitle">工程师信息</div>
+        <form id="fm" method="post" enctype="multipart/form-data">
+            <div class="fitem">
+                <label>工号:</label>
+                <input id="work_number" name="work_number" class="easyui-textbox" prompt="工号" required="true">
+            </div>
+            <div class="fitem">
+                <label>姓名:</label>
+                <input id="name" name="name" class="easyui-textbox" prompt="姓名" required="true">
+            </div>
+            <div class="fitem">
+                <label>地区:</label>
+                <select class="easyui-combobox" limitToList="true" name='organization_id' url="/admin/engineer/organization" valueField="id" textField="alias" style="width:150px;">
+                </select>
+            </div>
+            <div class="fitem">
+                <label>手机:</label>
+                <input id="cellphone" name="cellphone" class="easyui-textbox" prompt="手机"  required="true">
+            </div>
+            <div class="fitem">
+                <label>密码:</label>
+                <input class="easyui-passwordbox" prompt="密码" iconWidth="28" name="password" id="pass" required="true">
+            </div>
+            <div class="fitem">
+                <label>重复密码:</label>
+                <input class="easyui-passwordbox" prompt="重复密码" iconWidth="28" validType="confirmPass['#pass']" required="true">
+            </div>
+            <div class="fitem">
+                <label>等级:</label>
+                <select class="easyui-combobox" limitToList="true" name='level' url="/admin/engineer/level" valueField="id" textField="title" style="width:150px;">
+                </select>
+            </div>
+            <div class="fitem">
+                <label>类型:</label>
+                <select class="easyui-combobox" name='type' style="width:150px;">
+                    <?php foreach(C('ENGINEER_TYPE') as $k => $v) {?>
+                    <option value="<?php echo $k;?>"><?php echo $v;?></option>
+                    <?php }?>
+                </select>
+            </div>
+            <div class="fitem">
+                <label>是否接单:</label>
+                是:
+                <input class="easyui-validatebox" name="is_work" type="radio" required="true" value="1">
+                否:
+                <input class="easyui-validatebox" name="is_work" type="radio" required="true" value="0" validType="requireRadio['input[name=\'is_work\']']">
+            </div>
+            <div class="fitem">
+                <label>账号状态:</label>
+                启用:
+                <input class="easyui-validatebox" name="status" type="radio" required="true" value="1">
+                禁用:
+                <input class="easyui-validatebox" name="status" type="radio" required="true" value="0">
+                删除:
+                <input class="easyui-validatebox" name="status" type="radio" required="true" value="-1" validType="requireRadio['input[name=\'status\']']">
+            </div>
+            <div class="fitem">
+                <label>性别:</label>
+                男:
+                <input class="easyui-validatebox" name="sex" type="radio" value="1">
+                女:
+                <input class="easyui-validatebox" name="sex" type="radio" value="0">
+            </div>
+            <div class="fitem">
+                <label>出生日期:</label>
+                <input name="brith" class="easyui-datebox" prompt="出生日期">
+            </div>
+            <div class="fitem">
+                <label>地址:</label>
+                <input id="address" name="address" class="easyui-textbox" prompt="地址" style="width:300px;" required="true">
+            </div>
+            <div class="fitem">
+                <label>身份证号:</label>
+                <input id="id_card" name="id_card" class="easyui-textbox" prompt="身份证号">
+            </div>
+            <div class="fitem">
+                <label>邮箱:</label>
+                <input id="email" name="email" class="easyui-textbox" prompt="邮箱" required="true">
+            </div>
+            <div class="fitem">
+                <label>微信:</label>
+                <input id="weixin" name="weixin" class="easyui-textbox" prompt="微信">
+            </div>
+            <div class="fitem">
+                <label>支付宝:</label>
+                <input id="alipay" name="alipay" class="easyui-textbox" prompt="支付宝">
+            </div>
+            <div class="fitem">
+                <label>头像:</label>
+                <input class="easyui-filebox" name="avatar" prompt="头像" required="true">
+            </div>
+        </form>
+    </div>
+    <div id="dlg-buttons">
+        <a href="javascript:void(0)" class="easyui-linkbutton c6" iconCls="icon-ok" onclick="saveItem('#fm')" style="width:90px">保存</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg-add').dialog('close')" style="width:90px">取消</a>
+    </div>
+    <div id="dlg-edit" class="easyui-dialog" style="width:600px;min-height:350px; max-height:500px; padding:10px 20px" closed="true" buttons="#dlg-buttons">
+        <div class="ftitle">工程师信息</div>
+        <form id="fm-edit" method="post" enctype="multipart/form-data">
+            <div class="fitem">
+                <label>工号:</label>
+                <input id="work_number" name="work_number" class="easyui-textbox" prompt="工号" required="true">
+            </div>
+            <div class="fitem">
+                <label>姓名:</label>
+                <input id="name" name="name" class="easyui-textbox" prompt="姓名" data-options="required:true">
+            </div>
+            <div class="fitem">
+                <label>地区:</label>
+                <select class="easyui-combobox" limitToList="true" name='organization_id' url="/admin/engineer/organization" valueField="id" textField="alias" style="width:150px;">
+                </select>
+            </div>
+            <div class="fitem">
+                <label>手机:</label>
+                <input name="cellphone" class="easyui-textbox" prompt="手机" required="true">
+            </div>
+            <div class="fitem">
+                <label>等级:</label>
+                <select class="easyui-combobox" limitToList="true" name='level' url="/admin/engineer/level" valueField="id" textField="title" style="width:150px;">
+                </select>
+            </div>
+            <div class="fitem">
+                <label>类型:</label>
+                <select class="easyui-combobox" name='type' style="width:150px;">
+                    <?php foreach(C('ENGINEER_TYPE') as $k => $v) {?>
+                    <option value="<?php echo $k;?>"><?php echo $v;?></option>
+                    <?php }?>
+                </select>
+            </div>
+            <div class="fitem">
+                <label>是否接单:</label>
+                是:
+                <input class="easyui-validatebox" name="is_work" type="radio" required="true" value="1">
+                否:
+                <input class="easyui-validatebox" name="is_work" type="radio" required="true" value="0" validType="requireRadio['input[name=\'is_work\']']">
+            </div>
+            <div class="fitem">
+                <label>账号状态:</label>
+                启用:
+                <input class="easyui-validatebox" name="status" type="radio" required="true" value="1">
+                禁用:
+                <input class="easyui-validatebox" name="status" type="radio" required="true" value="0">
+                删除:
+                <input class="easyui-validatebox" name="status" type="radio" required="true" value="-1" validType="requireRadio['input[name=\'status\']']">
+            </div>
+            <div class="fitem">
+                <label>性别:</label>
+                男:
+                <input class="easyui-validatebox" name="sex" type="radio" value="1">
+                女:
+                <input class="easyui-validatebox" name="sex" type="radio" value="0">
+            </div>
+            <div class="fitem">
+                <label>出生日期:</label>
+                <input id="brith" name="brith" class="easyui-datebox" prompt="出生日期"/>
+            </div>
+            <div class="fitem">
+                <label>地址:</label>
+                <input id="address" name="address" class="easyui-textbox" prompt="地址" style="width:300px;">
+            </div>
+            <div class="fitem">
+                <label>身份证号:</label>
+                <input id="id_card" name="id_card" class="easyui-textbox" prompt="身份证号">
+            </div>
+            <div class="fitem">
+                <label>邮箱:</label>
+                <input id="email" name="email" class="easyui-textbox" prompt="邮箱">
+            </div>
+            <div class="fitem">
+                <label>微信:</label>
+                <input id="weixin" name="weixin" class="easyui-textbox" prompt="微信">
+            </div>
+            <div class="fitem">
+                <label>支付宝:</label>
+                <input id="alipay" name="alipay" class="easyui-textbox" prompt="支付宝" data-options="required:true">
+            </div>
+            <div class="fitem">
+                <label>头像:</label>
+                <input class="easyui-filebox" id="avatar" name="avatar" prompt="头像">
+            </div>
+        </form>
+    </div>
+    <div id="dlg-buttons">
+        <a href="javascript:void(0)" class="easyui-linkbutton c6" iconCls="icon-ok" onclick="saveItem('#fm-edit')" style="width:90px">保存</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg-edit').dialog('close')" style="width:90px">取消</a>
+    </div>
+    <div id="load" class="easyui-dialog" title="消息" closed="true" style="width:200px;height:100px;padding:10px">
+        <span>处理中...</span>
+    </div>
+</body>
+</html>

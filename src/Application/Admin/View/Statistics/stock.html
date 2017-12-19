@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>user</title>
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/default/easyui.css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/icon.css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/css/user.css">
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/locale/easyui-lang-zh_CN.js"></script>
+    <script type="text/javascript">
+        $(function(){
+            $('#search-start-time').datebox('setValue', '<?php echo $startTime;?>');
+            $('#search-end-time').datebox('setValue', '<?php echo $endTime;?>');
+        });
+    </script>
+</head>
+<body>
+<body class="easyui-layout">
+    <table id="dg" title="进销存" class="easyui-datagrid" style="width:100%;" toolbar="#toolbar" rownumbers="true" fitColumns="true" singleSelect="true">
+        <thead>
+            <tr>
+                <th field="field<?php echo $i++;?>" width="10">城市</th>
+                <th field="field<?php echo $i++;?>" width="10">期初余额</th>
+                <th field="field<?php echo $i++;?>" width="10">本期进货</th>
+                <th field="field<?php echo $i++;?>" width="10">本期销货</th>
+                <th field="field<?php echo $i++;?>" width="10">期末余额</th>
+            </tr>
+        </thead>
+        <?php foreach($data as $item) {?>
+        <tr>
+        	<td><?php echo $item['name'];?></td>
+        	<td><?php echo $item['beginningBalance'];?></td>
+        	<td><?php echo $item['currentStock'];?></td>
+        	<td><?php echo $item['currentSales'];?></td>
+        	<td><?php echo $item['endingBalance'];?></td>
+        </tr>
+        <?php }?>
+    </table>
+    <div id="toolbar">
+        <form id="search" method="post" action="<?php echo U('admin/statistics/stock');?>">
+        <p>
+            <span>日期:</span>
+            <input type="text" class="easyui-datebox" id='search-start-time' name="start_time" panelHeight="auto"> 至
+            <input type="text" class="easyui-datebox" id='search-end-time' name="end_time" panelHeight="auto">
+            <a href="javascript:void(0)" class="easyui-linkbutton" plain="true" iconCls="icon-search" onclick="$('#search').submit();">搜索</a>
+        </p>
+        </form>
+    </div>
+</body>
+</html>

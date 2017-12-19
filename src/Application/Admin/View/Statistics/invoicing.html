@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>user</title>
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/default/easyui.css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/icon.css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/css/user.css">
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/locale/easyui-lang-zh_CN.js"></script>
+    <script type="text/javascript">
+        $(function(){
+            $('#search-start-time').datebox('setValue', '<?php echo $startTime;?>');
+            $('#search-end-time').datebox('setValue', '<?php echo $endTime;?>');
+
+            //机型配件联动
+            var s_fitting_id = $('#search-fitting-id');
+            $('#search-phone').combobox({
+                onChange: function(newValue, oldValue) {
+
+                    if (newValue != '') {
+                        s_fitting_id.combobox({
+                            disabled:false,
+                            url:'/admin/warehouse/fittings/phone_id/' + newValue,
+                            valueField:'id',
+                            textField:'name',
+                            onLoadSuccess:function(){
+                            }
+                        });
+                    } else {
+                        s_fitting_id.combobox('setValue', '');
+                        s_fitting_id.combobox('loadData', []);
+                    }
+                }
+            });
+        });
+
+    </script>
+</head>
+<body>
+<body class="easyui-layout">
+    <table id="dg" title="进销存报表" class="easyui-datagrid" style="width:100%; max-height: 800px;" toolbar="#toolbar" rownumbers="true" fitColumns="true" singleSelect="true">
+        <thead>
+            <tr>
+                <th field="date1" width="25" rowspan="2" align="center">库位</th>
+                <th field="date2" width="35" rowspan="2" align="center">商品名称</th>
+                <!--<th field="total1" colspan="2" width="80" align="center">期初库存</th>-->
+                <th field="total2" colspan="2" width="50" align="center">本期入库</th>
+                <th field="total3" colspan="2" width="50" align="center">本期出库</th>
+                <th field="total4" colspan="2" width="50" align="center">本期回收</th>
+                <th field="total5" colspan="2" width="50" align="center">本期损溢</th>
+                <th field="total6" colspan="2" width="50" align="center">本期调拨</th>
+                <th field="total6" colspan="2" width="50" align="center">期末结余</th>
+                <!--<?php $i = 0;?>-->
+                <!--<?php foreach ($address as $k => $v) {?>-->
+                <!--<th field="order<?php echo $i++;?>" width="30" colspan="2" align="center"><?php echo $v;?></th>-->
+                <!--<?php }?>-->
+
+            </tr>
+            <tr>
+                <!--<?php foreach ($address as $k => $v) {?>-->
+                <!--<th width="10" field="amount<?php echo $k;?>">单量</th>-->
+                <!--<th width="20" field="order<?php echo $i++;?>">收款金额</th>-->
+                <!--<?php }?>-->
+                <!--<th field="total8" width="20" >单量</th>-->
+                <!--<th field="total9" width="20">收款金额</th>-->
+                <th field="total10" width="20" >单量</th>
+                <th field="total11" width="20" >收款金额</th>
+                <th field="total12" width="20" >单量</th>
+                <th field="total13" width="20" >收款金额</th>
+                <th field="total14" width="20" >单量</th>
+                <th field="total15" width="20" >收款金额</th>
+                <th field="total16" width="20">单量</th>
+                <th field="total17" width="20" >收款金额</th>
+                <th field="total18" width="20" >单量</th>
+                <th field="total19" width="20" >收款金额</th>
+                <th field="total20" width="20" >单量</th>
+                <th field="total21" width="20" >收款金额</th>
+
+            </tr>
+        </thead>
+
+        <?php foreach ($rst['rows'] as $date => $item) {?>
+            <?php foreach ($item as $d => $i) {?>
+                <tr>
+                    <td><?php echo $i['organization'];?></td>
+                    <td><?php echo $i['name'];?></td>
+                    <td><?php echo $i['benqiruku_amount'];?></td>
+                    <td><?php echo $i['benqiruku_totalPrice'];?></td>
+                    <td><?php echo $i['benqichuku_amount'];?></td>
+                    <td><?php echo $i['benqichuku_totalPrice'];?></td>
+                    <td><?php echo $i['benqihuishou_amount'];?></td>
+                    <td><?php echo $i['benqihuishou_totalPrice'];?></td>
+                    <td><?php echo $i['benqisunyi_amount'];?></td>
+                    <td><?php echo $i['benqisunyi_totalPrice'];?></td>
+                    <td><?php echo $i['benqidiaobo_amount'];?></td>
+                    <td><?php echo $i['benqidiaobo_totalPrice'];?></td>
+                    <td><?php echo $i['qimojiecun_amount'];?></td>
+                    <td><?php echo $i['qimojiecun_totalPrice'];?></td>
+                </tr>
+            <?php }?>
+        <?php }?>
+    </table>
+    <div id="toolbar">
+        <form id="search" method="post" action="<?php echo U('admin/statistics/invoicing');?>">
+        <p>
+            <span>日期:</span>
+            <input type="text" class="easyui-datebox" id='search-start-time' name="start_time" panelHeight="auto" required="true"> 至
+            <input type="text" class="easyui-datebox" id='search-end-time' name="end_time" panelHeight="auto" required="true">
+            <span>仓库（地区）:</span>
+            <select class="easyui-combobox nameof" id="search-org" url="/admin/warehouse/organization" name="organization_id" valueField="id" textField="alias" style="width: 150px;" prompt="仓库"></select>
+            &nbsp;&nbsp;
+            <span>供应商:</span>
+            <select class="easyui-combobox" limitToList="true" name="provider" id='search-provider' url="/admin/statistics/provider" valueField="id" textField="title" style="width:150px;" prompt="供应商">
+            </select>
+            <span>机型:</span>
+            <select class="easyui-combobox" limitToList="true" id='search-phone' url="/admin/warehouse/phones" valueField="id" textField="alias" style="width:150px;" prompt="机型">
+            </select>
+            &nbsp;&nbsp;
+            <span>配件:</span>
+            <select class="easyui-combobox" limitToList="true" id='search-fitting-id' name="fitting_id" style="width:220px;">
+            </select>
+            <a href="javascript:void(0)" class="easyui-linkbutton" plain="true" iconCls="icon-search" onclick="$('#search').submit();">搜索</a>
+        </p>
+        </form>
+    </div>
+</body>
+</html>

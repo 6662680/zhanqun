@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>user</title>
+	<link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/default/easyui.css">
+	<link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/icon.css">
+	<link rel="stylesheet" type="text/css" href="__PUBLIC__/css/user.css">
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/datagrid-cellediting.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/js/user.js"></script>
+    <script type="text/javascript">
+        var url;
+
+        function editItem(){
+            var row = $('#dg').datagrid('getSelected');
+
+            if (row){
+                delete row.time;
+                delete row.contact_time;
+                $('#fm').form('clear');
+                $('#dlg').dialog('open').dialog('center').dialog('setTitle','编辑');
+                $('#fm').form('load', row);
+                url = '/admin/Clientdata/edit/id/' + row.id;
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+
+            }
+        }
+
+
+        function deleteActType(){
+            var row = $('#dg-fitting').datagrid('getSelected');
+            if (row){
+                $.messager.confirm('Confirm', '确认删除此记录?',function(r){
+                    if (r){
+                        $.post('/admin/Clientdata/deleteActType/id/'+row.id,function(result){
+                            if (result.success){
+
+                                $('#dg-fitting').datagrid('reload');	// reload the user data
+
+                            } else {
+                                $.messager.show({
+                                    title: '错误',
+                                    msg: result.errorMsg,
+                                    showType:'fade',
+                                    style:{
+                                        right:'',
+                                        bottom:''
+                                    }
+                                });
+                            }
+                        },'json');
+                    }
+                });
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+        function deleteCliType(){
+            var row = $('#dg-fitting1').datagrid('getSelected');
+            if (row){
+                $.messager.confirm('Confirm', '确认删除此记录?',function(r){
+                    if (r){
+                        $.post('/admin/Clientdata/deleteCliType/id/'+row.id,function(result){
+                            if (result.success){
+                                $('#dg-fitting1').datagrid('reload');	// reload the user data
+                            } else {
+                                $.messager.show({
+                                    title: '错误',
+                                    msg: result.errorMsg,
+                                    showType:'fade',
+                                    style:{
+                                        right:'',
+                                        bottom:''
+                                    }
+                                });
+                            }
+                        },'json');
+                    }
+                });
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+        function deleteItem(){
+            var row = $('#dg').datagrid('getSelected');
+            if (row){
+                $.messager.confirm('Confirm', '确认删除此记录?',function(r){
+                    if (r){
+                        $.post('/admin/Clientdata/delete',{id:row.id},function(result){
+                            if (result.success){
+                                $('#dg').datagrid('reload');
+                            } else {
+                                $.messager.show({
+                                    title: '错误',
+                                    msg: result.errorMsg,
+                                    showType:'fade',
+                                    style:{
+                                        right:'',
+                                        bottom:''
+                                    }
+                                });
+                            }
+                        },'json');
+                    }
+                });
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+        function searchItem(){
+            $('#dg').datagrid({
+                queryParams: {
+                    key: $('#search-keyword').val(),
+                    city: $('#search-city').val(),
+                    activity_type: $('#activity-searc').combobox('getValue'),
+                    client_type: $('#client-searc').combobox('getValue'),
+                    day: $('#day').combobox('getValue'),
+                    contact_time_start: $('#search-create-time-start').datetimebox('getValue'),
+                    contact_time_end: $('#search-create-time-end').datetimebox('getValue'),
+                }
+            });
+        }
+
+
+        function saveUser(){
+
+            $('#fm').form('submit',{
+                url: url,
+                onSubmit: function(){
+                    return $(this).form('validate');
+                },
+                success: function(result){
+                    var result = eval('('+result+')');
+                    if (result.errorMsg){
+                        $.messager.show({
+                            title: 'Error',
+                            msg: result.errorMsg
+                        });
+                    } else {
+                        $('#dlg').dialog('close');		// close the dialog
+                        $('#dg').datagrid('reload');	// reload the user data
+                    }
+                }
+            });
+        }
+
+
+        function saveUsered(){
+            $('#fmed').form('submit',{
+                url: url,
+                onSubmit: function(){
+                    return $(this).form('validate');
+                },
+                success: function(result){
+                    var result = eval('('+result+')');
+                    if (result.errorMsg){
+                        $.messager.show({
+                            title: 'Error',
+                            msg: result.errorMsg
+                        });
+                    } else {
+                        $('#dlged').dialog('close');		// close the dialog
+                        $('#dg').datagrid('reload');	// reload the user data
+                    }
+                }
+            });
+        }
+
+        function exportItem()
+        {
+            $('#search').form('submit', {
+                url: '/admin/clientdata/export',
+                queryParams: {
+                    key: $('#search-keyword').val(),
+                    city: $('#search-city').val(),
+                }
+            });
+        }
+
+        //导入
+        function importItem()
+        {
+            $('#dlg-import').dialog('open').dialog('center').dialog('setTitle', '导入');
+            $('#fm-import').form('clear');
+            url = '/admin/clientdata/import';
+        }
+
+        $(function(){
+
+            $('#mm').menu();
+            $(document).bind('contextmenu',function(e){
+                e.preventDefault();
+                $('#mm').menu('show', {
+                    left: e.pageX,
+                    top: e.pageY
+                });
+            });
+        });
+
+        function add(){
+            $('#dlg').dialog('open').dialog('center').dialog('setTitle', '添加');
+            $('#fm').form('clear');
+            $('#dlg-buttons').show();
+            url = '/admin/Clientdata/add';
+        }
+
+        function type_management(){
+            $('#type_management').dialog('open').dialog('center').dialog('setTitle', '类型管理');
+            $('#fm-type').form('clear');
+            //url = '/admin/Clientdata/activity_type';
+        }
+        //行操作按钮
+        function formatButton(){
+            return $('#rowmenu').html();
+        }
+
+        //行操作按钮
+        function aButton(){
+            return $('#activity_type').html();
+        }
+        //行操作按钮
+        function cButton(){
+            return $('#client_type').html();
+        }
+
+
+
+        function saveItem(form) {
+
+            $('#fm-import').form('submit', {
+                url: '/admin/clientdata/import',
+                onSubmit: function () {
+                    if ($(this).form('validate')) {
+                        $('#load').dialog('open');
+                    }
+                },
+
+//            form.form('submit', {
+//                url: url,
+//                onSubmit: function () {
+//                    if ($(this).form('validate')) {
+//                        $('#load').dialog('open');
+//                    }
+//                    ;
+//                    return $(this).form('validate');
+//                },
+                success: function (result) {
+
+                    $('#load').dialog('close');
+                    var result = eval('(' + result + ')');
+
+                    if (result.success) {
+                        alert(result.msg)
+//
+                        $('#dlg').dialog('close');
+                        $('#dlg-import').dialog('close');
+                        $('#dg').datagrid('reload');
+                    } else {
+                        $.messager.show({
+                            title: '错误',
+                            msg: result.msg,
+                            showType: 'fade',
+                            style: {
+                                right: '',
+                                bottom: ''
+                            }
+                        });
+                    }
+                }
+            });
+        }
+
+        function newFitting(type) {
+            $('#dlg-fitting').dialog('open').dialog('center').dialog('setTitle', '添加');
+            $('#fm-fitting').form('clear');
+            url = "/admin/Clientdata/"+ type;
+        }
+
+        function editActType() {
+            var row = $('#dg-fitting').datagrid('getSelected');
+            url = "/admin/Clientdata/editActType/id/"+row.id;
+            $('#dlg-edit').dialog('open').dialog('center').dialog('setTitle', '编辑');
+            $('#dg-fitting').form('load', row);
+        }
+
+        function editCliType() {
+            var row = $('#dg-fitting1').datagrid('getSelected');
+//
+            url = "/admin/Clientdata/editCliType/id/"+row.id;
+
+            $('#dlg-edit').dialog('open').dialog('center').dialog('setTitle', '编辑');
+            $('#dg-fitting1').form('load', row);
+
+        }
+
+        function add_type()
+        {
+
+            $('#fm-fitting').form('submit', {
+                url:url,
+                onSubmit: function () {
+                    type_name: $('#type-name').val()
+                },
+                success: function(result){
+                    var result = eval('('+result+')');
+                    if (result.errorMsg){
+                        $.messager.show({
+                            title: 'Error',
+                            msg: result.errorMsg
+                        });
+                    } else {
+                        $('#dlg-fitting').dialog('close');		// close the dialog
+                        $('#dg-fitting').datagrid('reload');	// reload the user data
+                        $('#dg-fitting1').datagrid('reload');	// reload the user data
+                    }
+                }
+            });
+        }
+
+        function edit_type(){
+
+            $.post(url,{
+                    type_name : $('#edit-type-name').val(),
+                },
+                function(result){
+                    if (result.success){
+                        $('#dlg-edit').dialog('close');		// close the dialog
+                        $('#dg-fitting').datagrid('reload');	// reload the user data
+                        $('#dg-fitting1').datagrid('reload');	// reload the user data
+                    } else {
+                        $.messager.show({
+                            title: '错误',
+                            msg: result.errorMsg,
+                            showType:'fade',
+                            style:{
+                                right:'',
+                                bottom:''
+                            }
+                        });
+                    }
+            },'json');
+
+        }
+
+        $(function() {
+            // 隐藏显示
+            $('#activity').combobox({
+                onChange: function (newValue, oldValue) {
+
+                    if (newValue == 1) {
+                        //$('#number').removeAttr('required');
+                        //$('#number').css('display', 'none');
+                        $(".time").css('display', 'block');
+                        $('.time1').attr('required', true);
+
+                    } else {
+                        //$('#number').attr('required', true);
+                        //$('#number').css('display', 'block');
+                        $(".time").css('display', 'none');
+
+
+                    }
+
+                }
+            });
+
+            $('#is_change').combobox({
+                onChange: function (newValue, oldValue) {
+
+                    if (newValue == 1) {
+                        $('.number').css('display', 'block');
+                    } else {
+                        $('.number').css('display', 'none');
+                    }
+                }
+            });
+        })
+
+        function is_activity(val) {
+            if (val == 1) {
+                return '是';
+            } else {
+                return "否"
+            }
+        }
+
+        function deletes() {
+            var row = $('#dg').datagrid('getSelected');
+            console.log(row);
+            if (row) {
+                $('#dlg').dialog('open').dialog('center').dialog('setTitle','详情');
+                $('#fm').form('load', row);
+                $('#close').css('display', 'none');
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+
+
+
+    </script>
+</head>
+<body class="easyui-layout">
+
+        <div id="box" class="easyui-dialog" style="width: 900px;min-height: 400px;" closed="true">
+            <div data-options="region:'east'" style="width:880px;">
+
+                <!--<table id="joinex" class="easyui-datagrid" singleSelect="true" pagination="true" pageSize="20">-->
+                    <!--<thead>-->
+                    <!--<tr>-->
+                        <!--<th field="id" width="33%">ID</th>-->
+                        <!--<th field="client_organization" width="33%">公司</th>-->
+                        <!--<th field="client_city" width="33%">城市</th>-->
+                        <!--<th field="client_type" width="33%">客户类型</th>-->
+                        <!--<th field="client_type" width="33%">客户类型</th>-->
+                        <!--<th field="client_type" width="33%">客户类型</th>-->
+                        <!--<th field="amount" width="33%">数量</th>-->
+                    <!--</tr>-->
+                    <!--</thead>-->
+                <!--</table>-->
+            </div>
+        </div>
+        <table id="dg" title="大客户数据" class="easyui-datagrid" style="width:100%;" url="/admin/clientdata/userrow" toolbar="#toolbar" pagination="true" pageSize="30" pagePosition="top" rownumbers="true" fitColumns="true" singleSelect="true" rownumbers="true" pagination="true">
+            <thead>
+            <tr>
+                <th field="id" width="3%">ID</th>
+                <th field="client_organization" width="5%">公司</th>
+                <th field="client_city" width="3%">城市</th>
+                <th field="client_type" width="5%" >客户类型</th>
+                <th field="client_name" width="5%">客户联系人</th>
+                <th field="client_mobile" width="8%">客户电话</th>
+                <th field="client_name2" width="10%">第二联系人</th>
+                <th field="client_mobile2" width="8%">第二联系方式</th>
+                <th field="write_user" width="10%">填写人</th>
+                <th field="result" width="5%">本次联系结果</th>
+                <th field="is_change" width="3%" formatter="is_activity" >是否转化订单</th>
+                <th field="is_activity" width="3%" formatter="is_activity">是否活动</th>
+                <th field="activity_type" width="4%" >活动类型</th>
+                <th field="create_time" width="7%" formatter="formatDate">创建时间</th>
+                <th field="time" width="7%" formatter="formatDate">本次联系时间</th>
+                <th field="contact_time" width="7%" formatter="formatDate">下次联系时间</th>
+
+                <!--<th field="remark" width="10%">留言</th>-->
+                <!--<th field="activity_summarize" width="27%">活动总结</th>-->
+                <th field="action" width="15%" formatter="formatButton" >操作</th>
+            </tr>
+            </thead>
+    </table>
+
+    <div id="toolbar">
+        <form id="search" method="post" action="<?php echo U('admin/clientdata/export');?>">
+        <span>关键字:</span>
+        <input type="text" class="easyui-textbox" id='search-keyword' panelHeight="auto" prompt="公司名称,手机号,联系人">
+        <span>市:</span>
+        <input type="text" class="easyui-textbox" id='search-city' panelHeight="auto" prompt="例:杭州市">
+        <label>客户类型:</label>
+        <select class="easyui-combobox" id='client-searc' name="client_type" style="width: 190px" url="/admin/clientdata/clientType/id/1" valueField="id" textField="client_type" panelHeight="auto">
+        </select>
+
+        <label>最近天数:</label>
+        <select class="easyui-combobox" id='day' name="day" style="width: 90px" url="/admin/clientdata/day" valueField="value" textField="key" panelHeight="auto">
+        </select>
+
+        <label>活动类型:</label>
+        <select class="easyui-combobox" id='activity-searc' style="width: 190px" url="/admin/clientdata/activityType/id/1"  valueField="id" textField="activity_type" name="activity_type" panelHeight="auto">
+        </select>
+        <span>下次联系日期:</span>
+        <input type="text" class="easyui-datebox" id='search-create-time-start' panelHeight="auto">至<input type="text" class="easyui-datebox" id='search-create-time-end' panelHeight="auto">
+
+        <a href="javascript:void(0)" class="easyui-linkbutton" plain="true" iconCls="icon-search" onclick="searchItem()">搜索</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['导出'])) { echo 'hide';} ?>" plain="true" iconCls="icon-export" onclick="exportItem()">导出</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['导出'])) { echo 'hide';} ?>" plain="true" iconCls="icon-export" onclick="importItem()">导入</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-add" plain="true" onclick="add()">新增</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-detail" plain="true" onclick="type_management()">类型管理</a>
+        </form>
+
+    </div>
+    <div id="load" class="easyui-dialog" title="消息" closed="true" style="width:200px;height:100px;padding:10px">
+        <span>处理中...</span>
+    </div>
+        <div id="dlg" class="easyui-dialog" style="width:800px;height:480px;padding:10px 20px"
+             closed="true" buttons="#dlg-buttons">
+            <form id="fm" method="post">
+                <div class="fitem">
+                    <div class="fitem">
+                        <label>公司:</label>
+                        <input name="client_organization" class="easyui-textbox"  required="true"  >
+
+                    </div>
+                    <div class="fitem">
+                        <label>第一联系人:</label>
+                        <input name="client_name" class="easyui-textbox" prompt="姓名">
+                        &nbsp;&nbsp;&nbsp;
+                        <label>第二联系人:</label>
+                        <input name="client_name2" class="easyui-textbox" prompt="姓名">
+
+                    </div>
+                    <div class="fitem">
+                        <label>第一联系人:</label>
+                        <input name="client_mobile" class="easyui-textbox" prompt="手机号" required="true"  >
+                        &nbsp;&nbsp;&nbsp;
+                        <label>第二联系人:</label>
+                        <input name="client_mobile2" class="easyui-textbox" prompt="手机号"  >
+
+                    </div>
+                    <div class="fitem">
+                        <label>填写人:</label>
+                        <input name="write_user" class="easyui-textbox"  required="true"  >
+                        &nbsp;&nbsp;&nbsp;
+                        <label>城市:</label>
+                        <input name="client_city" class="easyui-textbox" prompt="例:杭州市" required="true"  >
+                    </div>
+
+                    <div class="fitem">
+                        <label>客户类型:</label>
+                        <select class="easyui-combobox" id=client-type' name="client_type" style="width: 120px" url="/admin/clientdata/clientType" valueField="id" textField="client_type" panelHeight="auto">
+
+                        </select>
+                        <div style="float: right;margin-right: 190px">
+                        <label>活动类型:</label>
+                        <select class="easyui-combobox" id='activity-type' style="width: 120px"  url="/admin/clientdata/activityType"  valueField="id" textField="activity_type" name="activity_type" panelHeight="auto">
+
+                        </select>
+                        </div>
+                    </div>
+
+
+                    <div class="fitem">
+                        <label>是否做活动:</label>
+                        <select class="easyui-combobox" id='activity' style="width: 70px" name="is_activity" panelHeight="auto"  required="true">
+                            <option value="1">是</option>
+                            <option value="0">否</option>
+                        </select>
+
+                        <div class="time" style="float: right;margin-right: 239px">
+                        <label>是否已转化:</label>
+                        <select class="easyui-combobox" id='is_change' style="width: 70px" name="is_change" panelHeight="auto" >
+                            <option value="1">是</option>
+                            <option value="0">否</option>
+                        </select>
+                        </div>
+                    </div>
+
+                    <div class="fitem time" >
+                        <label>本次结果:</label>
+                        <input name="result" class="easyui-textbox" prompt="本次联系结果" >
+                    </div>
+
+                    <div class="fitem time" >
+                        <label>本次联系:</label>
+                        <input name="time" class="easyui-datebox time1 time2" prompt="本次联系时间" >
+                    </div>
+
+                    <div class="fitem" >
+                        <label>下次联系:</label>
+                        <input name="contact_time" class="easyui-datebox time2 " prompt="下次联系时间"  >
+                    </div>
+                    <div class="fitem number" >
+                        <label>订单编号:</label>
+                        <input name="number" class="easyui-textbox " id="number" prompt="订单号必须为16位">
+                    </div>
+                    <div class="fitem">
+                        <label>备注:</label>
+                        <input name="remark" class="easyui-textbox"data-options="multiline:true"  prompt="备注" >
+                    </div>
+                    <div class="fitem">
+                        <label>活动总结:</label>
+                        <input name="activity_summarize" class="easyui-textbox"data-options="multiline:true" style="width: 300px;height: 300px"  prompt="不超过三百字符" >
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div id="type" class="easyui-dialog" style="width:800px;height:480px;padding:10px 20px"
+             closed="true">
+            <!--<form id="fm-type" method="post">-->
+
+            <!--</form>-->
+        </div>
+        <div id="dlg-buttons">
+            <a href="#" id="close" class="easyui-linkbutton" iconCls="icon-ok" onclick="saveUser()">保存</a>
+            <a href="#" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg').dialog('close')">取消</a>
+        </div>
+
+        <div id="mm" style="width:120px;">
+            <div iconCls="icon-add" class="<?php if(!isset($buttons['添加'])) { echo 'hide';} ?>" onclick="add()"><span>新增</span></div>
+            <div iconCls="icon-edit" class="<?php if(!isset($buttons['编辑'])) { echo 'hide';} ?>" onclick="editItem()"><span>编辑</span></div>
+            <div iconCls="icon-remove" class="<?php if(!isset($buttons['删除'])) { echo 'hide';} ?>" onclick="deleteItem()"><span>删除</span></div>
+        </div>
+        <div id="rowmenu" class="hide">
+            <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['编辑'])) { echo 'hide';} ?>" iconCls="icon-edit" plain="true" onclick="selectedRow($(this));editItem();">编辑</a>
+            <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['删除'])) { echo 'hide';} ?>" iconCls="icon-remove" plain="true" onclick="selectedRow($(this));deleteItem();">删除</a>
+            <a href="javascript:void(0)" class="easyui-linkbutton " iconCls="icon-detail" plain="true" onclick="selectedRow($(this));deletes();">详情</a>
+        </div>
+        <div id="win" class="easyui-dialog" style="width: 900px;min-height: 400px;" closed="true">
+            <div data-options="region:'east'" style="width:880px;">
+
+            </div>
+        </div>
+        <div id="w" class="easyui-window" closed="true" data-options="title:'错误',inline:true" style="width:50px;height:25px;padding:10px">
+
+        </div>
+        <div id="im-buttons">
+
+                <a href="javascript:void(0)" class="easyui-linkbutton c6" iconCls="icon-ok" onclick="saveItem()" style="width:90px">导入</a>
+                <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg-import').dialog('close')" style="width:90px">取消</a>
+        </div>
+        <div id="dlg-import" class="easyui-dialog" style="width:500px;min-height:200px;padding:10px 20px" closed="true" buttons="#im-buttons">
+            <div class="ftitle">导入数据</div>
+            <form id="fm-import" method="post" enctype="multipart/form-data">
+                <div class="fitem">
+                    <label>数据:</label>
+                    <input name="fitting_file" class="easyui-filebox"  data-options="required:true">
+                </div>
+                <div class="fitem">
+                    <label>下载模板:</label>
+                    <a href="__PUBLIC__/templates/import_clientdata_template.xls">点击下载模板</a>
+                </div>
+            </form>
+        </div>
+
+        <div id="type_management" class="easyui-dialog" style="width:800px;height:455px;padding:10px 20px" closed="true" >
+            <div class="ftitle">类型管理</div>
+            <form id="fm-type" method="post">
+                <div class="fitem" id="fittings" style="min-height:100px;">
+                    <div data-options="region:'south',collapsible:false" style="width: 40% ;float: left ;"  >
+                        <table id="dg-fitting" title="活动类型" class="easyui-datagrid" url="/admin/clientdata/activityrow" style="width:100%; float: right" pagination="true" pageSize="30" pagePosition="top" rownumbers="true" fitColumns="true" singleSelect="true" rownumbers="true" pagination="true" toolbar="#toolbar-fitting">
+                            <thead>
+                            <tr>
+                                <th field="id" width="10%">id</th>
+                                <th field="activity_type" width="40%">活动类型</th>
+                                <th field="action" width="50%" formatter="aButton">操作</th>
+                            </tr>
+                            </thead>
+                        </table>
+                    </div>
+                    <div data-options="region:'north',collapsible:false" title="" style="width: 40% ; float: right;">
+                        <table id="dg-fitting1" title="客户类型" class="easyui-datagrid" url="/admin/clientdata/clientrow" style="width:100%;"pagination="true" pageSize="30" pagePosition="top" rownumbers="true" fitColumns="true" singleSelect="true" rownumbers="true" pagination="true" toolbar="#toolbar-fitting1">
+                            <thead>
+                            <tr>
+                                <th field="id" width="10%">id</th>
+                                <th field="client_type" width="40%">客户类型</th>
+                                <th field="action" width="50%" formatter="cButton">操作</th>
+                            </tr>
+                            </thead>
+                        </table>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div id="toolbar-fitting">
+            <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-add" plain="true" onclick="newFitting('addactivity')">添加</a>
+        </div>
+        <div id="toolbar-fitting1">
+            <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-add" plain="true" onclick="newFitting('addclient')">添加</a>
+        </div>
+        <div id="dlg-fitting" class="easyui-dialog" style="width:350px;min-height:200px;max-height:400px;padding:10px 20px"  closed="true" buttons="#type-buttons">
+            <form id="fm-fitting" method="post">
+                <div class="fitem"  style="min-height:100px;">
+                    <label>类型名称:</label>
+                    <input class="easyui-textbox" id="type-name" name="type_name" prompt="类型名称" style="width: 150px;" data-options="required:true">
+                </div>
+            </form>
+        </div>
+        <div id="dlg-edit" class="easyui-dialog" style="width:350px;min-height:200px;max-height:400px;padding:10px 20px"  closed="true" buttons="#edit-buttons">
+            <form id="fm-edit" method="post">
+                <div class="fitem"  style="min-height:100px;">
+                    <label>类型名称:</label>
+                    <input class="easyui-textbox" id="edit-type-name" name="type_name" prompt="类型名称" style="width: 150px;" data-options="required:true">
+                </div>
+            </form>
+        </div>
+        <div id="activity_type" class="hide">
+            <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['编辑'])) { echo 'hide';} ?>" iconCls="icon-edit" plain="true" onclick="selectedRow($(this),$('#dg-fitting'));editActType();">编辑</a>
+            <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['删除'])) { echo 'hide';} ?>" iconCls="icon-remove" plain="true" onclick="selectedRow($(this),$('#dg-fitting'));deleteActType();">删除</a>
+        </div>
+        <div id="client_type" class="hide">
+            <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['编辑'])) { echo 'hide';} ?>" iconCls="icon-edit" plain="true" onclick="selectedRow($(this),$('#dg-fitting1'));editCliType();">编辑</a>
+            <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['删除'])) { echo 'hide';} ?>" iconCls="icon-remove" plain="true" onclick="selectedRow($(this),$('#dg-fitting1'));deleteCliType();">删除</a>
+        </div>
+        <div id="type-buttons">
+            <a href="javascript:void(0)" class="easyui-linkbutton c6" iconCls="icon-ok" onclick="add_type()" style="width:90px">保存</a>
+            <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg-fitting').dialog('close')" style="width:90px">取消</a>
+        </div>
+        <div id="edit-buttons">
+            <a href="javascript:void(0)" class="easyui-linkbutton c6" iconCls="icon-ok" onclick="edit_type()" style="width:90px">保存</a>
+            <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg-edit').dialog('close')" style="width:90px">取消</a>
+        </div>
+</body>
+</html>

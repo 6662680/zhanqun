@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>user</title>
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/default/easyui.css">
+	<link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/icon.css">
+	<link rel="stylesheet" type="text/css" href="__PUBLIC__/css/user.css">
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/datagrid-cellediting.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/locale/easyui-lang-zh_CN.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/js/user.js"></script>
+    <script type="text/javascript">
+        var url;
+
+        function newItem(){
+            $('#dlg').dialog('open').dialog('center').dialog('setTitle', '添加');
+            $('#fm').form('clear');
+            $('#provider').show();
+
+            url = '/admin/outrecycling/add';
+            $('#dg-fitting').datagrid({data: []});
+        }
+
+        function editItem(){
+            var row = $('#dg').datagrid('getSelected');
+
+            if (row) {
+                url = '/admin/outrecycling/save/id/' + row.id;
+
+                $('#dlg').dialog('open').dialog('center').dialog('setTitle','编辑');
+                $('#fm').form('load', row);
+                $('#provider').show();
+                var fittitngs = row.fittings;
+                $('#dg-fitting').datagrid({data: fittitngs});
+                $('#batch').hide();
+
+
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+        function saveItem() {
+            $('#fm').form('submit',{
+                url: url,
+                onSubmit: function(){
+
+                    if ($(this).form('validate')) {
+                        var dg = $('#dg-fitting').datagrid('getData');
+
+                        if (dg.total > 0) {
+                            $('.fittings').remove();
+                            var rows = dg.rows;
+
+                            for (var i in rows) {
+                                str = '';
+                                str += '<input type="hidden" name="fittings[]" class="fittings" value="' + rows[i].phone + '_,' + rows[i].phone_id + '_,' + rows[i].fitting + '_,' + rows[i].fitting_id + '_,' + rows[i].amount + '_,' + rows[i].price + '">';
+                                $('#fm').append(str);
+                            }
+                        };
+
+                        $('#load').dialog('open');
+                        return true;
+                    } else {
+                        $('#load').dialog('close');
+                        return false;
+                    }
+                },
+                success: function(result){
+                    $('#load').dialog('close');
+                    var result = eval('('+result+')');
+
+                    if (result.success){
+                        $('#dlg').dialog('close');
+                        $('#dg').datagrid('reload');
+                    } else {
+                        $.messager.show({
+                            title: '错误',
+                            msg: result.errorMsg,
+                            showType:'fade',
+                            style:{
+                                right:'',
+                                bottom:''
+                            }
+                        });
+                    }
+                }
+            });
+        }
+
+        function deleteItem(){
+            var row = $('#dg').datagrid('getSelected');
+
+            if (row) {
+                $.messager.confirm('Confirm', '确认删除此记录?',function(r){
+                    if (r){
+                        $.post('/admin/outrecycling/delete',{id:row.id},function(result){
+                            if (result.success){
+                                $('#dg').datagrid('reload');
+                            } else {
+                                $.messager.show({
+                                    title: '错误',
+                                    msg: result.errorMsg,
+                                    showType:'fade',
+                                    style:{
+                                        right:'',
+                                        bottom:''
+                                    }
+                                });
+                            }
+                        },'json');
+                    }
+                });
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+        // 审核
+        function auditItem (flag) {
+            var row = $('#dg').datagrid('getSelected');
+
+            if (row) {
+                $.messager.confirm('Confirm', '确认审核此记录?',function(r){
+                    if (r){
+                        $.post('/admin/outrecycling/auditor', {id:row.id, flag: flag},function(result){
+
+                            if (result.success){
+                                $('#dg').datagrid('reload');
+                            } else {
+                            	$.messager.alert({
+                                    title: '错误',
+                                    msg: result.errorMsg,
+                                    showType:'error',
+                                    style:{
+                                        right:'',
+                                        bottom:''
+                                    }
+                                });
+                            }
+                        },'json');
+                    }
+                });
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+        // 回退
+        function rollbackItem () {
+            var row = $('#dg').datagrid('getSelected');
+
+            if (row) {
+                $.messager.confirm('Confirm', '确认回退此记录?',function(r){
+                    if (r){
+                        $.post('/admin/outrecycling/rollback', {id:row.id}, function(result) {
+
+                            if (result.success){
+                                $('#dg').datagrid('reload');
+                            } else {
+                            	$.messager.alert({
+                                    title: '错误',
+                                    msg: result.errorMsg,
+                                    showType:'error',
+                                    style:{
+                                        right:'',
+                                        bottom:''
+                                    }
+                                });
+                            }
+                        },'json');
+                    }
+                });
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+        // 转换
+        function transformItem () {
+            var row = $('#dg').datagrid('getSelected');
+
+            if (row) {
+                $.messager.confirm('Confirm', '确认将此记录转换为调拨申请?',function(r){
+                    if (r){
+                        $.post('/admin/outrecycling/transform', {id:row.id}, function(result) {
+
+                            if (result.success){
+                                $('#dg').datagrid('reload');
+                            } else {
+                            	$.messager.alert({
+                                    title: '错误',
+                                    msg: result.errorMsg,
+                                    showType:'error',
+                                    style:{
+                                        right:'',
+                                        bottom:''
+                                    }
+                                });
+                            }
+                        },'json');
+                    }
+                });
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+        function searchItem(){
+            $('#dg').datagrid({
+                queryParams: {
+                    starttime: $('#search-starttime').datetimebox('getValue'),
+                    endtime: $('#search-endtime').datetimebox('getValue'),
+                    proposer_org: $('#search-org').combobox('getValue'),
+
+                    status: $('#search-status').combobox('getValue'),
+                }
+            });
+        }
+
+        function newFitting() {
+            $('#dlg-fitting').dialog('open').dialog('center').dialog('setTitle', '添加');
+            $('#fm-fitting').form('clear');
+        }
+
+        function saveFitting() {
+            $('#dg-fitting').datagrid('appendRow', {
+                phone: $('#phone_id').combobox('getText'),
+                phone_id: $('#phone_id').combobox('getValue'),
+                fitting: $('#fittings_id').combobox('getText'),
+                fitting_id: $('#fittings_id').combobox('getValue'),
+                amount: $('#fittings_amount').textbox('getValue'),
+                price: $('#fittings_price').textbox('getValue'),
+                recycling: $('#recycling').combobox('getValue'),
+            });
+
+            $('#dlg-fitting').dialog('close');
+        }
+        
+        function importFitting() {
+            $('#dlg-import').dialog('open').dialog('center').dialog('setTitle', '导入');
+            $('#fm-import').form('clear');
+        }
+        
+        function saveImportFitting() {
+            $('#fm-import').form('submit',{
+                url: '/admin/outrecycling/import',
+                onSubmit: function(){
+                    if ($(this).form('validate')) {
+                        $('#load').dialog('open');
+                    };
+                    return $(this).form('validate');
+                },
+                success: function(result){
+                    $('#load').dialog('close');
+                    $('#dlg-import').dialog('close');
+                    var result = eval('('+result+')');
+                    
+                    if (result.success) {
+                        for (var i in result.data) {
+                            $('#dg-fitting').datagrid('appendRow', result.data[i]);
+                        }
+                    } else {
+                    	$.messager.show({
+                            title: '错误',
+                            msg: result.errorMsg,
+                            showType:'fade',
+                            style:{
+                                right:'',
+                                bottom:''
+                            }
+                        });
+                    }
+                }
+            });
+        }
+
+        function deleteFitting() {
+            var rows = $('#dg-fitting').datagrid('getSelections');
+
+            for (var i in rows)
+            {
+                var index = $('#dg-fitting').datagrid('getRowIndex', rows[i]); 
+                $('#dg-fitting').datagrid('deleteRow', index);
+            }
+        }
+
+        // 详情
+        function detailItem() {
+            var row = $('#dg').datagrid('getSelected');
+
+            if (row) {
+                $('#dlg-detail').dialog('open').dialog('center').dialog('setTitle', '详情');
+                $('#fm-detail').form('load', row);
+
+                var fittitngs = $.parseJSON(row.fittings);;
+                $('#dg-fitting-detail').datagrid({data: fittitngs});
+
+                if (row.type == 1) {
+                    $('#batch-detail').hide();
+                    $('#provider-detail').hide();
+                } else {
+                    $('#batch-detail').show();
+                    $('#provider-detail').show();
+                }
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+        // 格式化类型
+        function formatPurchaseType(val, row) {
+            switch (val)
+            {
+                case '1':
+                    return '<span class="label label-bg7">采购申请</span>';
+                    break;
+                case '2':
+                    return '<span class="label label-bg1">采购入库</span>';
+                    break;
+            }     
+        }
+
+        // 格式化状态
+        function formatPurchaseStatus(val, row) {
+            switch (val)
+            {
+                case '0':
+                    return '<span class="label label-bg5">待采购审核</span>';
+                    break;
+                case '1':
+                    return '<span class="label label-bg2">待供应审核</span>';
+                    break;
+                case '2':
+                    return '<span class="label label-bg">待财务审核</span>';
+                    break;
+                case '3':
+                    return '<span class="label label-bg">待出库</span>';
+                    break;
+                case '4':
+                    return '<span class="label label-bg">出库成功</span>';
+                    break;
+                case '-1':
+                    return '<span class="label label-bg3">不通过</span>';
+                    break;
+            }
+        }
+
+        $(function(){
+            // 右键目录
+            $('#mm').menu();
+            $(document).bind('contextmenu',function(e){
+                e.preventDefault();
+                $('#mm').menu('show', {
+                    left: e.pageX,
+                    top: e.pageY
+                });
+            });
+
+            // 类型切换
+            $('#batch').hide();
+            $('#provider').hide();
+            $('input[name="type"]').change(function(){
+
+                if ($(this).val() == 1) {
+                    $('#batch').hide();
+                    $('#provider').hide();
+                } else {
+                    $('#batch').show();
+                    $('#provider').show();
+
+                    // 批次
+                    if ($('#batch_input').textbox('getValue') == '') {
+                        $.get("/admin/purchase/batch", function(data) {
+                            $('#batch_input').textbox('setValue', data);
+                        });
+                    };
+                }
+            });
+
+            // 配件
+            $('#phone_id').combobox({
+                onChange: function(newValue, oldValue){
+                	$('#fittings_id').combobox('loadData', []);
+                	$('#fittings_id').combobox('setValue', '');
+                    $.get('/admin/outrecycling/fittings', {
+                        id: newValue,
+                        org_id : $('#org_id').combobox('getValue'),
+                    }, function(data) {
+
+                        if (data.length > 0) {
+                            $('#fittings_id').combobox('loadData', data);
+                        };
+                    });
+                }
+            });
+            
+            $('#dg-fitting').datagrid('enableCellEditing').datagrid('gotoCell', {
+                index: 0,
+                field: 'fittings_id'
+            });
+        });
+        
+        //行操作按钮
+        function formatPurchaseRowActionButton(value, row, index)
+        {
+            var buttons = '';
+            buttons += $('#rowmenu .btn-detail').prop("outerHTML");
+
+            // 状态： 0 待审核 1 待入库 2 已入库 -1 取消 5 待调拨
+            switch (row.status) 
+            {
+                case '-1':
+                    break;
+                case '0':
+                    buttons += $('#rowmenu .btn-pass1').prop("outerHTML");
+                    buttons += $('#rowmenu .btn-nopass').prop("outerHTML");
+                    buttons += $('#rowmenu .btn-edit').prop("outerHTML");
+
+                    break;
+                case '1':
+                    buttons += $('#rowmenu .btn-pass2').prop("outerHTML");
+                    buttons += $('#rowmenu .btn-nopass').prop("outerHTML");
+
+                    break;
+                case '2':
+                    buttons += $('#rowmenu .btn-pass3').prop("outerHTML");
+                    buttons += $('#rowmenu .btn-nopass').prop("outerHTML");
+
+                    break;
+                case '3':
+                    buttons += $('#rowmenu .btn-pass4').prop("outerHTML");
+                    buttons += $('#rowmenu .btn-nopass').prop("outerHTML");
+
+                    break;
+            }
+
+            return buttons;
+        }
+        
+        function formatFittings(value, row, index){
+
+            if (!value) {
+                return '';
+            }
+
+            var fittings = row.fittings;
+            var str = '<div class="cls_toggle cls_toggle'+index+'" onclick="toggleBox(\''+index+'\')">';
+
+            for (var i in fittings) {
+                str += '<p>'+fittings[i].phone + ' ' + fittings[i].fitting + "(￥" + fittings[i].price +") * " + fittings[i].amount + '</p>';
+            }
+
+            str += '</div>';
+
+            return str;
+        }
+
+
+
+        function exportItem()
+        {
+            $('#search').form('submit', {
+                url: '/admin/outrecycling/export',
+                queryParams: {
+                    starttime: $('#search-starttime').datetimebox('getValue'),
+                    endtime: $('#search-endtime').datetimebox('getValue'),
+                    proposer_org: $('#search-org').combobox('getValue'),
+                    status: $('#search-status').combobox('getValue'),
+                }
+            });
+        }
+
+
+    </script>
+</head>
+<body class="easyui-layout">
+    <table id="dg" title="采购单列表" class="easyui-datagrid" style="width:100%; max-height:800px;" url="/admin/outrecycling/rows" toolbar="#toolbar" pagination="true" pageSize="30" pagePosition="top" rownumbers="true" fitColumns="true" singleSelect="true" rownumbers="true" pagination="true" minimized="false">
+        <thead>
+            <tr>
+                <th field="id" width="5">ID</th>
+                <th field="batch" width="10">批次号</th>
+                <th field="fittings" width="25" formatter="formatFittings"><div onclick="toggleBox()">物料（点击显示/隐藏）</div></th>
+                <th field="proposer_name" width="10">申请人</th>
+                <th field="proposer_org_name" width="10">申请组织</th>
+                <th field="title" width="10">回收商</th>
+                <th field="audit" width="25">审核人</th>
+                <th field="create_time" width="12" formatter="formatDate">创建时间</th>
+                <th field="status" width="5" formatter="formatPurchaseStatus">状态</th>
+                <th field="remark" width="10">备注</th>
+                <th field='action' width="30" formatter="formatPurchaseRowActionButton">操作</th>
+            </tr>
+        </thead>
+    </table>
+    <div id="toolbar">
+        <form id="search" method="post" action="<?php echo U('admin/qutrecycling/export');?>">
+        <span>开始时间:</span>
+        <input class="easyui-datebox" id="search-starttime" data-options="sharedCalendar:'#cal'">
+        &nbsp;
+        <span>结束时间:</span>
+        <input class="easyui-datebox" id="search-endtime" data-options="sharedCalendar:'#cal'">
+        &nbsp;
+        <span>仓库（地区）:</span>
+        <select class="easyui-combobox nameof" id="search-org" url="/admin/outrecycling/proposerorg" valueField="id" textField="alias" style="width: 150px;" prompt="仓库"></select>
+        &nbsp;
+        <span>状态:</span>
+        <select class="easyui-combobox" id='search-status' panelHeight="auto">
+            <option value="all">全部</option>
+            <option value="0">待审核</option>
+            <option value="3">已出库</option>
+            <option value="-1">取消</option>
+        </select>
+        &nbsp;&nbsp;
+        <a href="javascript:void(0)" class="easyui-linkbutton" plain="true" iconCls="icon-search" onclick="searchItem()">搜索</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['添加'])) { echo 'hide';} ?>" iconCls="icon-add" plain="true" onclick="newItem()">添加</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['导出'])) { echo 'hide';} ?>" iconCls="icon-export" plain="true" onclick="exportItem()">导出</a>
+        <!--<a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['详情'])) { echo 'hide';} ?>" iconCls="icon-detail" plain="true" onclick="detailItem()">详情</a>-->
+        </form>
+    </div>
+    <div id="mm" style="width:120px;">
+        <div iconCls="icon-add" class="<?php if(!isset($buttons['添加'])) { echo 'hide';} ?>" onclick="newItem()"><span>添加</span></div>
+        <!--<div iconCls="icon-detail" class="<?php if(!isset($buttons['详情'])) { echo 'hide';} ?>" onclick="detailItem()"><span>详情</span></div>-->
+    </div>
+    <div id="rowmenu" class="hide">
+        <a href="javascript:void(0)" class="easyui-linkbutton btn-detail <?php if(!isset($buttons['详情'])) { echo 'hide';} ?>" iconCls="icon-detail" plain="true" onclick="selectedRow($(this));detailItem();">详情</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton btn-edit <?php if(!isset($buttons['编辑'])) { echo 'hide';} ?>" iconCls="icon-edit" plain="true" onclick="selectedRow($(this));editItem();">编辑</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton btn-pass1 <?php if(!isset($buttons['采购通过'])) { echo 'hide';} ?>" iconCls="icon-pass" plain="true" onclick="selectedRow($(this));auditItem(1);">通过</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton btn-pass2 <?php if(!isset($buttons['供应部通过'])) { echo 'hide';} ?>" iconCls="icon-pass" plain="true" onclick="selectedRow($(this));auditItem(2);">通过</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton btn-pass3 <?php if(!isset($buttons['财务部通过'])) { echo 'hide';} ?>" iconCls="icon-pass" plain="true" onclick="selectedRow($(this));auditItem(3);">通过</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton btn-pass4 <?php if(!isset($buttons['出库'])) { echo 'hide';} ?>" iconCls="icon-pass" plain="true" onclick="selectedRow($(this));auditItem(4);">出库</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton btn-nopass <?php if(!isset($buttons['不通过'])) { echo 'hide';} ?>" iconCls="icon-nopass" plain="true" onclick="selectedRow($(this));auditItem(-1);">不通过</a>
+        <!--<a href="javascript:void(0)" class="easyui-linkbutton btn-delete <?php if(!isset($buttons['删除'])) { echo 'hide';} ?>" iconCls="icon-remove" plain="true" onclick="selectedRow($(this));deleteItem();">删除</a>-->
+        <a href="javascript:void(0)" class="easyui-linkbutton btn-transform <?php if(!isset($buttons['转换'])) { echo 'hide';} ?>" iconCls="icon-transform" plain="true" onclick="selectedRow($(this));transformItem();">转换</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton btn-rollback <?php if(!isset($buttons['回退'])) { echo 'hide';} ?>" iconCls="icon-rollback" plain="true" onclick="selectedRow($(this));rollbackItem();">回退</a>
+    </div>
+    <div id="dlg" class="easyui-dialog" style="width:800px;height:455px;padding:10px 20px" closed="true" buttons="#dlg-buttons">
+        <div class="ftitle">采购出库单</div>
+        <form id="fm" method="post">
+            <div class="fitem" id="org">
+                <label>仓库（地区）:</label>
+                <select class="easyui-combobox nameof" id="org_id" name="proposer_org" url="/admin/purchase/proposerorg" valueField="id" textField="alias" style="width: 150px;" prompt="仓库"></select>
+            </div>
+            <div class="fitem none" id="batch">
+                <label>批次:</label>
+                <input name="batch" id="batch_input" class="easyui-textbox" prompt="批次" value="">
+            </div>
+            <div class="fitem" id="provider">
+                <label>收购商:</label>
+                <select class="easyui-combobox nameof" id="recycling" name="recycling" url="/admin/outrecycling/recycling" valueField="id" textField="title" style="width: 150px;" prompt="收购商"></select>
+            </div>
+            <div class="fitem" id="fittings" style="min-height:100px;">
+                <p>配件:</p>
+                <table id="dg-fitting" title="配件列表" class="easyui-datagrid" style="width:100%;" checkOnSelect="true" toolbar="#toolbar-fitting">
+                    <thead>
+                        <tr>
+                            <th field="ck" checkbox="true" width="5%"></th>
+                            <th field="phone" width="30%">机型</th>
+                            <th field="fitting" width="30%">配件</th>
+                            <th field="amount" width="20%" data-options="field:'amount',width:80,align:'left',editor:'numberbox'">数量(点击可编辑)</th>
+                            <th field="price" width="20%" data-options="field:'price',width:80,align:'left',editor:{type:'numberbox',options:{precision:2}}">单价(点击可编辑)</th>
+                        </tr>
+                    </thead>
+                </table>
+                <div id="toolbar-fitting">
+                    <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-add" plain="true" onclick="newFitting()">添加</a>
+                    <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-export" plain="true" onclick="importFitting()">导入</a>
+                    <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-remove" plain="true" onclick="deleteFitting()">删除</a>
+                </div>
+            </div>
+            <div class="fitem">
+                <label>备注(50个字):</label>
+                <input class="easyui-textbox" name="remark" style="width:160px;height:60px" data-options="multiline:true">
+            </div>
+        </form>
+    </div>
+    <div id="dlg-buttons">
+        <a href="javascript:void(0)" class="easyui-linkbutton c6" iconCls="icon-ok" onclick="saveItem()" style="width:90px">保存</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg').dialog('close')" style="width:90px">取消</a>
+    </div>
+    <!-- 过程弹窗 -->
+    <div id="load" class="easyui-dialog" title="消息" closed="true" style="width:200px;height:100px;padding:10px">
+        <span>处理中...</span>
+    </div>
+    <!-- 日历 -->
+    <div id="cal" class="easyui-calendar"></div>
+    <!-- 配件弹窗 -->
+    <div id="dlg-fitting" class="easyui-dialog" style="width:350px;min-height:300px;max-height:400px;padding:10px 20px" closed="true" buttons="#dlg-fitting-buttons">
+        <div class="ftitle">配件信息</div>
+        <form id="fm-fitting" method="post">
+            <div class="fitem">
+                <label>机型:</label>
+                <select class="easyui-combobox nameof" id="phone_id" url="/admin/outrecycling/phones" valueField="id" textField="alias" style="width: 150px;" required="true" prompt="机型"></select>
+            </div>
+            <div class="fitem" id="batch">
+                <label>配件:</label>
+                <select class="easyui-combobox nameof" id="fittings_id" style="width: 150px;" valueField="id" textField="name" required="true" prompt="配件"></select>
+            </div>
+            <div class="fitem" id="provider">
+                <label>数量:</label>
+                <input class="easyui-textbox" id="fittings_amount" prompt="数量" style="width: 150px;" data-options="required:true">
+            </div>
+            <div class="fitem" id="fittings" style="min-height:100px;">
+                <label>价格:</label>
+                <input class="easyui-textbox" id="fittings_price" prompt="价格" style="width: 150px;" data-options="required:true">
+            </div>
+        </form>
+    </div>
+    <div id="dlg-fitting-buttons">
+        <a href="javascript:void(0)" class="easyui-linkbutton c6" iconCls="icon-ok" onclick="saveFitting()" style="width:90px">保存</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg-fitting').dialog('close')" style="width:90px">取消</a>
+    </div>
+    <!-- 导入配件弹窗 -->
+    <div id="dlg-import" class="easyui-dialog" style="width:350px;height:200px;padding:10px 20px" closed="true" buttons="#dlg-fitting-buttons">
+        <div class="ftitle">导入配件信息</div>
+        <form id="fm-import" method="post" enctype="multipart/form-data">
+            <div class="fitem">
+                <label>配件:</label>
+                <input name="fitting_file" class="easyui-filebox" prompt="配件"  data-options="required:true">
+            </div>
+            <div class="fitem">
+                <label>下载模板:</label>
+                <a href="__PUBLIC__/templates/import_purchase_fitting_template.xls">点击下载模板</a>
+            </div>
+        </form>
+    </div>
+    <div id="dlg-fitting-buttons">
+        <a href="javascript:void(0)" class="easyui-linkbutton c6" iconCls="icon-ok" onclick="saveImportFitting()" style="width:90px">导入</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg-import').dialog('close')" style="width:90px">取消</a>
+    </div>
+    <!-- 详情弹窗 -->
+    <div id="dlg-detail" class="easyui-dialog" style="width:800px;height:455px;padding:10px 20px" closed="true" buttons="#dlg-detail-buttons">
+        <div class="ftitle">采购出库单</div>
+        <form id="fm-detail" method="post">
+            <div class="fitem">
+                <label>仓库（地区）:</label>
+                <select class="easyui-combobox nameof" name="proposer_org" url="/admin/outrecycling/proposerorg" valueField="id" textField="alias" style="width: 150px;" prompt="仓库"></select>
+            </div>
+
+            <div class="fitem" id="batch-detail">
+                <label>批次:</label>
+                <input name="batch" class="easyui-textbox" prompt="批次" value="">
+            </div>
+            <div class="fitem">
+                <label>收购商:</label>
+                <input name="recycling" field="recycling"  class="easyui-textbox" prompt="收购商" value="">
+            </div>
+            <div class="fitem" style="min-height:100px;">
+                <p>配件:</p>
+                <table id="dg-fitting-detail" title="配件列表" class="easyui-datagrid" style="width:100%;">
+                    <thead>
+                        <tr>
+                            <th field="ck" checkbox="true" width="5%"></th>
+                            <th field="phone" width="30%">机型</th>
+                            <th field="fitting" width="30%">配件</th>
+                            <th field="amount" width="10%">数量</th>
+                            <th field="price" width="10%">单价</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+            <div class="fitem">
+                <label>备注(50个字):</label>
+                <input class="easyui-textbox" name="remark" style="width:160px;height:60px" data-options="multiline:true">
+            </div>
+        </form>
+    </div>
+    <div id="dlg-detail-buttons">
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg-detail').dialog('close')" style="width:90px">关闭</a>
+    </div>
+</body>
+</html>

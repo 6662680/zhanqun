@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/default/easyui.css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/icon.css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/css/user.css">
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/locale/easyui-lang-zh_CN.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/js/user.js"></script>
+    <script>
+
+
+        /**
+         * 加载全部用户
+         */
+        function loadUnselectEngineerTable(organization_id) {
+            $.ajax({
+                url: '/admin/insurance/userrow',
+                //data: {organization_id: organization_id},
+                success: function(data) {
+                    var unRows = data.rows;
+                    var selectedRows = $('#selected-engineer-table').datagrid('getRows');
+                    var rows = [];
+                    if (selectedRows && selectedRows.length > 0) {
+                        $.each(unRows, function(key, value){
+                            var flag = false;
+                            $.each(selectedRows, function(k, va){
+                                if (value.id == va.id) {
+                                    flag = true;
+                                    return false;
+                                }
+                            });
+
+                            if (!flag) {
+                                rows.push(value);
+                            }
+                        });
+                    } else {
+                        rows = unRows;
+                    }
+
+                    $('#unselect-engineer-table').datagrid('loadData', rows);
+                }
+            });
+        }
+
+        /**
+         * 添加消息
+         */
+        function addMessage() {
+            $('#win-edit-message').window('open');
+            loadUnselectEngineerTable(0);
+        }
+
+        /**
+         * 搜索消息
+         */
+        function searchMessage() {
+            $('#dg').datagrid('reload', {keyword: $('#id-toolbar-keyword').val()});
+        }
+
+        /**
+         * 消息详情
+         */
+        function detailItem() {
+            $('#win-edit-message').window('close');
+            var row = $('#dg').datagrid('getSelected');
+            if (row) {
+                $('#wid-detail-message').window()
+                $('#table-message-detail').datagrid({
+                    url: '/admin/messagepush/detail',
+                    queryParams: {
+                        id: row.id
+                    }
+                });
+            }
+        }
+
+        /**
+         * 添加新消息上的保存
+         */
+        function saveMessage() {
+            // 选中了的
+            var selectioneds = $('#selected-engineer-table').datagrid('getRows');
+            var eids = [];
+            if (selectioneds.length > 0) {
+                $.each(selectioneds, function(key, value){
+                    eids.push(value.id);
+                });
+            }
+            // 参数
+
+            var type = $('#form-add-message-type').combobox('getValue');
+            var title = (type == '2') ? $('#form-add-message-title').val() : $('#form-add-message-reason').val();
+            var content = (type == '2') ? $('#form-add-message-content').val() : $('#form-add-message-des').val();;
+
+            var params = {
+                id: $('#form-message-id').val(),
+                title: title,
+                content: content,
+                type: type,
+                eids: (eids.length > 0) ? eids : null
+            }
+            console.log(params);
+            $('#form-message-edit').form('submit', {
+                url: '/admin/messagepush/add',
+                method: 'post',
+                queryParams: params,
+                method: 'post',
+                onSubmit: function() {
+                    return $(this).form('enableValidation').form('validate');
+                },
+                success: function(data){
+                    console.log(data);
+                    var parsedJson = jQuery.parseJSON(data)
+                    if (parsedJson.res == 0) {
+                        $('#form-add-message').form('reset');
+                        $('#win-edit-message').window('close');
+                        $('#dg').datagrid('reload');
+                    } else {
+                        alert(parsedJson.msg);
+                    }
+                }
+            });
+        }
+
+        function pushMessage() {
+            var row = $('#dg').datagrid('getSelected');
+            if (row) {
+                $.messager.confirm('确认', '您确认要发送信息“'+row.title+'”吗？', function(res){
+                    if (res == true) {
+                        var message_id = row.id;
+                        if (message_id > 0) {
+                            $.ajax({
+                                url: '/admin/messagepush/push',
+                                data: {id: message_id},
+                                success: function(res) {
+//                                    console.log(res);
+                                    if (res.code == 0) {
+                                        $.messager.show({
+                                            title: '成功',
+                                            msg: '消息“' + row.title + '”推送成功',
+                                            timeout: 1000,
+                                            showType: 'slide',
+                                            style: {
+                                                top: document.body.scrollTop + document.documentElement.scrollTop,
+                                            }
+                                        });
+                                        $('#dg').datagrid('reload');
+                                    } else {
+                                        $.messager.alert('出错了', res.msg);
+                                    }
+                                }
+                            });
+                        }
+                    }
+                });
+            }
+        }
+
+        function editMessage() {
+            var row = $('#dg').datagrid('getSelected');
+            if (row) {
+                $('#win-edit-message').window('open');
+                $('#form-message-edit').form('reset');
+                $.ajax({
+                    url: '/admin/messagepush/edit/id/'+row.id,
+                    success: function(data) {
+                        // 已选中的员工
+                        var engineers = [];
+                        if (data.engineer_ids != null && data.engineer_names != null) {
+                            var ids = data.engineer_ids.split(',');
+                            var names = data.engineer_names.split(',');
+                            $.each(ids, function(key, value){
+                                engineers.push({id: value, name: names[key], organization_id: data.organization_id});
+                            });
+                        }
+                        $('#selected-engineer-table').datagrid('loadData', engineers);
+                        loadUnselectEngineerTable(0);
+                        showAppOrSms(data.type);
+                        $('#form-message-edit').form('load', {
+                            id: data.id,
+                            title: data.title,
+                            type: data.type,
+                            content: data.content
+                        });
+                    }
+                });
+            }
+        }
+
+        function cancel() {
+            $('#selected-engineer-table').datagrid('loadData', []);
+            $('#unselect-engineer-table').datagrid('loadData', []);
+            $('#form-message-edit').form('reset');
+            $('#win-edit-message').window('close');
+        }
+
+        function showAppOrSms(value) {
+            value = parseInt(value);
+            switch (value) {
+                case 1:
+                    $('#id-message-app').hide();
+                    $('#id-message-sms').show();
+                    break;
+                case 2:
+                    $('#id-message-app').show();
+                    $('#id-message-sms').hide();
+                    break;
+                default :
+                    break;
+            }
+        }
+
+
+        /**
+         * 操作处理
+         * @param val
+         * @returns {*|jQuery}
+         */
+        function actionButtons(val) {
+            var html = $('#rowButtons').html();
+            if (val == true) {  // 已推送
+                html = html.replace(/edit-class/, 'hide');
+                html = html.replace(/push-class/, 'hide');
+            }
+            return html;
+        }
+
+        /**
+         * 未选员工=>已选员工
+         */
+
+
+        function addUser(){
+            var row = $("#dg").datagrid('getSelected');
+            var row1 = $("#notr").datagrid('getSelected');
+
+            if(row1){
+                $.post('/admin/role/addUser',{userId:row1.id,roleId:row.id},function(result){
+                    if (result.success){
+                        $('#inr').datagrid('reload');
+                        $('#notr').datagrid('reload');
+                    } else {
+                        $.messager.show({
+                            title: '错误',
+                            msg: result.errorMsg,
+                            showType:'fade',
+                            style:{
+                                right:'',
+                                bottom:''
+                            }
+                        });
+                    }
+                },'json');
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+
+
+        function join() {
+            var rows = $('#unselect-engineer-table').datagrid('getSelections');
+
+            if (rows) {
+                $.post('/admin/insurance/adduser',{data:rows},function(result){
+                    $('#selected-engineer-table').datagrid('loadData', result);
+                    //$('#unselect-engineer-table').datagrid('loadData', unSelectData);
+                },'json');
+
+            }
+        }
+
+        /**
+         * 已选员工=>未选员工
+         */
+        function exit() {
+            var rows = $('#selected-engineer-table').datagrid('getSelections');
+            if (rows) {
+                $.post('/admin/insurance/delUser',{data:rows},function(result){
+                    $('#selected-engineer-table').datagrid('loadData', result);
+                    //$('#unselect-engineer-table').datagrid('loadData', unSelectData);
+                },'json');
+            }
+        }
+
+        /**
+         * 待通知员工=>值班员工
+         */
+        function toWork() {
+            var rows = $('#selected-engineer-table').datagrid('getSelections');
+            if (rows) {
+
+                $.post('/admin/insurance/upwork?param=1',{data:rows},function(result){
+                    $('#selected-engineer-table').datagrid('loadData', result);
+                    //$('#unselect-engineer-table').datagrid('loadData', unSelectData);
+                },'json');
+
+                $.post('/admin/insurance/workuser?param=1',{data:rows},function(result){
+                    $('#selected-user-table').datagrid('loadData', result);
+                    //$('#unselect-engineer-table').datagrid('loadData', unSelectData);
+                },'json');
+            }
+        }
+
+        /**
+         * 值班员工=>待通知员工
+         */
+        function offWork() {
+            var rows = $('#selected-user-table').datagrid('getSelections');
+
+            $.post('/admin/insurance/upwork?param=0',{data:rows},function(result){
+                $('#selected-engineer-table').datagrid('loadData', result);
+                //$('#unselect-engineer-table').datagrid('loadData', unSelectData);
+            },'json');
+
+            $.post('/admin/insurance/workuser?param=1',{data:rows},function(result){
+                $('#selected-user-table').datagrid('loadData', result);
+                //$('#unselect-engineer-table').datagrid('loadData', unSelectData);
+            },'json');
+        }
+
+        $(function() {
+            $('#id_organization').combobox({
+                onSelect: function(record) {
+                    loadUnselectEngineerTable(record.value);
+                }
+            });
+
+            $('#form-add-message-type').combobox({
+                onSelect: function(record) {
+                    showAppOrSms(record.value);
+                }
+            });
+        });
+
+    </script>
+</head>
+
+<body class="easyui-layout">
+    <!-- 新增（编辑）消息窗口开始-->
+    <div id="p" class="easyui-panel" title="个人中心" style="width:100%;height:900px;padding:10px;" buttons="#dlg-buttons">
+        <div class="easyui-layout" style="width:640px; height:402px;">
+            <form action="" id="form-message-edit">
+                <div data-options="region:'center',title:''" style=" height:400px;">
+                    <div class="easyui-layout" style="width:400px; height:400px ;float: left">
+                        <!-- 未选员工开始-->
+                        <div id="engineer-toolbar">
+                            <select name="organization" id="id_organization" class="easyui-combobox">
+                                <option value="0">全部</option>
+                                <foreach name="organizations" item="organization">
+                                    <option value="{$organization.id}">{$organization.name}</option>
+                                </foreach>
+                            </select>
+                        </div>
+
+                        <div data-options="region:'west',collapsible:false" style="width:175px;">
+                            <table id="unselect-engineer-table" class="easyui-datagrid" toolbar="#engineer-toolbar" title="所有员工" fitColumns="true" nowrap="false">
+                                <thead>
+                                <tr>
+                                    <th field="ck" checkbox="true"></th>
+                                    <th field="id">ID</th>
+                                    <th field="realname">姓名</th>
+                                </tr>
+                                </thead>
+                            </table>
+                        </div>
+                        <!-- 未选员工结束-->
+
+                        <!-- 已选员工开始-->
+                        <div data-options="region:'east',collapsible:false" style="width:150px;">
+                            <table id="selected-engineer-table" class="easyui-datagrid" title="待通知员工" fitColumns="true" nowrap="false" url="/admin/insurance/workUser?param=0">
+                                <thead>
+                                <tr>
+                                    <th field="ck" checkbox="true"></th>
+                                    <th field="id">ID</th>
+                                    <th field="realname">员工</th>
+                                </tr>
+                                </thead>
+                            </table>
+                        </div>
+
+                        <!-- 已选员工结束-->
+
+                        <div data-options="region:'center',collapsible:false" title="" style=";">
+                            <div align="center" style="height:200px;padding:50px 0 30px 0;">
+                                <a href="javascript:exit()" class="easyui-linkbutton">&nbsp;&nbsp;&lt;&lt;&nbsp;&nbsp;</a>
+                            </div>
+                            <div align="center">
+                                <a href="javascript:join()" class="easyui-linkbutton">&nbsp;&nbsp;&gt;&gt;&nbsp;&nbsp;</a>
+                            </div>
+                        </div>
+
+
+                </div>
+                    <div class="easyui-layout" style="width: 78px; height:400px; float: left">
+
+                        <!-- 已选员工结束-->
+                        <div data-options="region:'north',collapsible:false" title="" style=" height: 400px;width:100px;float: left">
+                            <div align="center" style="height:200px;padding:50px 0 30px 0;">
+                                <a href="javascript:offWork()" class="easyui-linkbutton">&nbsp;&nbsp;&lt;&lt;&nbsp;&nbsp;</a>
+                            </div>
+                            <div align="center">
+                                <a href="javascript:toWork()" class="easyui-linkbutton">&nbsp;&nbsp;&gt;&gt;&nbsp;&nbsp;</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="easyui-layout" style="width: 160px; height:400px; float: left">
+                        <div data-options="region:'west',collapsible:false" style=" width: 160px; height: 400px;">
+                            <table id="selected-user-table" class="easyui-datagrid" title="值班员工" fitColumns="true" nowrap="false"  url="/admin/insurance/workUser?param=1">
+                                <thead>
+                                <tr>
+                                    <th field="ck" checkbox="true"></th>
+                                    <th field="id">ID</th>
+                                    <th field="realname">员工</th>
+                                </tr>
+                                </thead>
+                            </table>
+                        </div>
+                    </div>
+            </div>
+            </form>
+        </div>
+        <div id="dlg-buttons" style="padding:5px">
+            <!--<a href="javascript:void(0)" class="easyui-linkbutton c6" iconCls="icon-ok" onclick="saveMessage()" style="width:90px">保存</a>-->
+            <!--<a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel" onclick="cancel()" style="width:90px">取消</a>-->
+        </div>
+
+    </div>
+
+</body>
+</html>

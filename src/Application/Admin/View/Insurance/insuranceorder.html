@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>user</title>
+	<link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/default/easyui.css">
+	<link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/icon.css">
+	<link rel="stylesheet" type="text/css" href="__PUBLIC__/css/user.css">
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/datagrid-cellediting.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/js/user.js"></script>
+    <script type="text/javascript">
+        var url;
+        function cancel(){
+            var row = $('#dg').datagrid('getSelected');
+
+            if (row){
+                $('#dlgsf').dialog('open').dialog('center').dialog('setTitle', '拒绝原因');
+                $('#sf').form('load', row);
+                url = '/admin/insurance/cancelOrder/id/'+ row.id;
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+        function receive() {
+            var row = $('#dg').datagrid('getSelected');
+            if (row){
+                $.messager.confirm('Confirm', '确认接单?',function(r){
+                    if (r){
+                        $.post('/admin/insurance/receiveOrder', {id:row.id},function(result){
+                            if (result.success){
+                                $('#dg').datagrid('reload');
+                            } else {
+                                $.messager.show({
+                                    title: '错误',
+                                    msg: result.errorMsg,
+                                    showType:'fade',
+                                    style:{
+                                        right:'',
+                                        bottom:''
+                                    }
+                                });
+                            }
+                        },'json');
+                    }
+                });
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+        function appointment(){
+            var row = $('#dg').datagrid('getSelected');
+
+            if (row){
+                $('#dlg').dialog('open').dialog('center').dialog('setTitle', '预约');
+                $('#fm').form('load', row);
+                url = '/admin/insurance/appointmentOrder/id/'+ row.id;
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+        function finish() {
+            var row = $('#dg').datagrid('getSelected');
+
+            if (row) {
+                $('#dlg-finish').dialog('open').dialog('center').dialog('setTitle', '完结');
+                url = '/admin/insurance/finishOrder/id/'+ row.id;
+                $('#fm-finish').form('clear');
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+        function finishSave() {
+            $('#fm-finish').form('submit', {
+                url: url,
+                onSubmit: function() {
+                    return $(this).form('validate');
+                },
+                success: function(result) {
+                    var result = eval('('+result+')');
+                    
+                    if (result.success == false){
+                        $.messager.show({
+                            title: '错误',
+                            msg: result.errorMsg,
+                            showType:'fade',
+                            style:{
+                                right:'',
+                                bottom:''
+                            }
+                        });
+                    }
+
+                    $('#dlg-finish').dialog('close');
+                    $('#dg').datagrid('reload');
+                }
+            });
+        }
+
+        function claim() {
+            var row = $('#dg').datagrid('getSelected');
+
+            if (row) {
+                $('#dlg-claim').dialog('open').dialog('center').dialog('setTitle', '核赔材料');
+                url = '/admin/insurance/updateAuditDatum/id/'+ row.id;
+                $('#fm-claim').form('load', row);
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+        function claimSave() {
+            $('#fm-claim').form('submit', {
+                url: url,
+                onSubmit: function() {
+                    return $(this).form('validate');
+                },
+                success: function(result) {
+                    var result = eval('('+result+')');
+                    
+                    if (result.success == false){
+                        $.messager.show({
+                            title: '错误',
+                            msg: result.errorMsg,
+                            showType:'fade',
+                            style:{
+                                right:'',
+                                bottom:''
+                            }
+                        });
+                    }
+
+                    $('#dlg-claim').dialog('close');
+                    $('#dg').datagrid('reload');
+                }
+            });
+        }
+
+        function deleteItem(){
+            var row = $('#dg').datagrid('getSelected');
+            if (row){
+                $.messager.confirm('Confirm', '确认删除此记录?',function(r){
+                    if (r){
+                        $.post('/admin/Share/delete',{id:row.id},function(result){
+                            if (result.success){
+                                $('#dg').datagrid('reload');
+                            } else {
+                                $.messager.show({
+                                    title: '错误',
+                                    msg: result.errorMsg,
+                                    showType:'fade',
+                                    style:{
+                                        right:'',
+                                        bottom:''
+                                    }
+                                });
+                            }
+                        },'json');
+                    }
+                });
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+        function searchItem(){
+            $('#dg').datagrid({
+                queryParams: {
+                    create_time_start: $('#origin_create_time').combobox('getValue'),
+                    create_time_end: $('#finish_create_time').combobox('getValue'),
+                    keyword: $('#search-keyword').val(),
+                    status: $('#status').combobox('getValue'),
+                    address: $('#search-organization').combobox('getValue'),
+                }
+            });
+        }
+
+        function saveUser(){
+
+            $('#fm').form('submit',{
+                url: url,
+                onSubmit: function(){
+                    return $(this).form('validate');
+                },
+                success: function(result){
+                    var result = eval('('+result+')');
+                    if (result.success == false){
+                        $.messager.show({
+                            title: '错误',
+                            msg: result.errorMsg,
+                            showType:'fade',
+                            style:{
+                                right:'',
+                                bottom:''
+                            }
+                        });
+                    } else {
+
+                    }
+                    $('#dlg').dialog('close');		// close the dialog
+                    $('#dg').datagrid('reload');	// reload the user data
+                }
+            });
+        }
+
+        function save(){
+
+            $('#sf').form('submit',{
+                url: url,
+                onSubmit: function(){
+                    return $(this).form('validate');
+                },
+                success: function(result){
+                    var result = eval('('+result+')');
+                    if (result.success == false){
+                        $.messager.show({
+                            title: '错误',
+                            msg: result.errorMsg,
+                            showType:'fade',
+                            style:{
+                                right:'',
+                                bottom:''
+                            }
+                        });
+                    } else {
+
+                    }
+                    $('#dlgsf').dialog('close');		// close the dialog
+                    $('#dg').datagrid('reload');	// reload the user data
+                }
+            });
+        }
+
+
+        $(function(){
+
+            $('#mm').menu();
+            $(document).bind('contextmenu',function(e){
+                e.preventDefault();
+                $('#mm').menu('show', {
+                    left: e.pageX,
+                    top: e.pageY
+                });
+            });
+        });
+        function formStatus(val){
+            var arr = new Array();
+            arr[1] = '<span class="label label-bg5">下单</span>';
+            arr[2] = '<span class="label label-bg5">受理</span>';
+            arr[3] = '<span class="label label-bg2">接单</span>';
+            arr[4] = '<span class="label label-bg2">预约</span>';
+            arr[5] = '<span class="label label-bg7">已完成</span>';
+            arr[10] = '<span class="label label-bg3">拒绝</span>';
+            arr[108] = '<span class="label label-bg3">预约超时"</span>';
+            arr[103] = '<span class="label label-bg3">履行超时</span>';
+            arr[12] = '<span class="label label-bg3">买家撤销</span>';
+            arr[11] = '<span class="label label-bg3">出险失败</span>';
+            return arr[val];
+        }
+        
+        function formatPrice(val, row)
+        {
+        	if (val > 0) {
+        		return val / 100;
+        	}
+        }
+
+        function add(){
+            $('#dlg').dialog('open').dialog('center').dialog('setTitle', '添加');
+            url = '/admin/Share/add';
+        }
+
+        function detailItem() {
+            var row = $('#dg').datagrid('getSelected');
+            console.log(row);
+
+            if (row){
+                $('#dlg-detail').dialog('open').dialog('center').dialog('setTitle','订单详情');
+                $('#fm-detail').form('load', row);
+
+            } else {
+            $.messager.show({
+                title: '错误',
+                msg: '请选择一条记录！',
+                showType:'fade',
+                style:{
+                    right:'',
+                    bottom:''
+                }
+            });
+        }
+        }
+
+        //导出
+        function exportItem()
+        {
+        	$('#search').form('submit', {
+                url: '/admin/insurance/insuranceExport',
+                queryParams: {
+                	create_time_start: $('#origin_create_time').combobox('getValue'),
+                    create_time_end: $('#finish_create_time').combobox('getValue'),
+                    keyword: $('#search-keyword').val(),
+                    status: $('#status').combobox('getValue'),
+                    address: $('#search-organization').combobox('getValue'),
+                }
+            });
+        }
+
+        //行操作按钮
+        function formatAllotButton(value, row, index)
+        {
+            var buttons = $('#rowmenu .btn-detail').prop("outerHTML");
+
+            // 状态：1 下单, 2受理, 3 接单, 4 预约，5已完成，10 取消
+            if (row.status == 1) {
+                buttons += $('#btn-receive').prop("outerHTML");
+                buttons += $('#btn-appointment').prop("outerHTML");
+            } else if (row.status == 2) {
+                buttons += $('#btn-receive').prop("outerHTML");
+                buttons += $('#btn-appointment').prop("outerHTML");
+                buttons += $('#btn-no').prop("outerHTML");
+            }  else if (row.status == 3) {
+                buttons += $('#btn-appointment').prop("outerHTML");
+                buttons += $('#btn-no').prop("outerHTML");
+            } else if (row.status == 4) {
+                buttons += $('#btn-convention').prop("outerHTML");
+                buttons += $('#btn-send').prop("outerHTML");
+                buttons += $('#btn-no').prop("outerHTML");
+            } else if (row.status == 5) {
+                buttons += $('#btn-claim').prop("outerHTML");
+            }
+
+            return buttons;
+        }
+
+        //行操作按钮
+        function formVisited(val, row, index)
+        {
+            var arr = new Array();
+            arr[0] = '<span>未上传</span>';
+            arr[1] = '<span>已上传</span>';
+            return arr[val];
+        }
+    </script>
+</head>
+<body class="easyui-layout">
+        <div id="box" class="easyui-dialog" style="width: 900px;min-height: 400px;" closed="true">
+            <div data-options="region:'east'" style="width:880px;">
+
+                <table id="joinex" class="easyui-datagrid" singleSelect="true"  pageSize="20">
+                    <thead>
+                    <tr>
+                        <th field="id" width="33%">ID</th>
+                        <th field="name" width="33%">名称</th>
+                        <th field="amount" width="33%">数量</th>
+                    </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+        <table id="dg" title="保险列表" class="easyui-datagrid" style="width:100%;" url="/admin/insurance/insuranceOrderRows" toolbar="#toolbar" pagination="true" pageSize="30" pagePosition="top" rownumbers="true" fitColumns="true" singleSelect="true" rownumbers="true" pagination="true">
+            <thead>
+            <tr>
+                <th field="id" id="id" width="3%">ID</th>
+                <th field="third_part_id" id="number" width="7%">订单号</th>
+                <th field="contract_id"  width="4%">合同编号</th>
+                <th field="name" width="5%">名称</th>
+                <th field="service_name" width="5%">服务名称</th>
+                <th field="commodity_name"  width="10%">商品名称</th>
+                <th field="commodity_price" width="5%" formatter="formatPrice">商品价格</th>
+                <th field="buyer_name" width="5%">客户名</th>
+                <th field="buyer_mobile" width="5%">手机号码</th>
+                <th field="apply_time" width="8%">申请时间</th>
+                <th field="modify_time" width="8%">更新时间</th>
+                <th field="appointment_time" formatter="formatDate" width="8%">预约时间</th>
+                <th field="finish_time" formatter="formatDate" width="8%">结单时间</th>
+                <th field="status" formatter="formStatus" width="5%" >状态</th>
+                <th field="is_update_claim" formatter="formVisited" width="5%" >核赔</th>
+                <th field="action" formatter="formatAllotButton" width="18%">操作</th>
+            </tr>
+            </thead>
+    </table>
+
+    <div id="toolbar">
+    	<form id="search" method="post">
+        <span>下单时间:</span>
+        <input class="easyui-datetimebox" id="origin_create_time" name="origin_create_time" style="width:200px">
+        <span>到</span>
+        <input class="easyui-datetimebox" id="finish_create_time" name="finish_create_time" style="width:200px">
+        <span>状态:</span>
+        <select class="easyui-combobox" limitToList="true" id='status'  valueField="id" textField="name" style="width:150px;">
+            <option value="all">全部</option>
+            <option value="1">下单</option>
+            <option value="3">预约</option>
+            <option value="5">已完成</option>
+            <option value="10">不满足服务规则</option>
+            <option value="108">预约超时</option>
+            <option value="103">履行预约</option>
+            <option value="12">买家撤销</option>
+            <option value="11">出险失败</option>
+        </select>
+        <span>地区:</span>
+        <select class="easyui-combobox" limitToList="true" id='search-organization' url="/admin/insurance/organization" valueField="id" textField="alias" style="width:150px;">
+        </select>
+        <span>关键字:</span>
+        <input type="text" class="easyui-textbox" id='search-keyword' panelHeight="auto">
+		<a href="javascript:void(0)" class="easyui-linkbutton" plain="true" iconCls="icon-search" onclick="searchItem()">搜索</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['导出'])) { echo 'hide';} ?>" iconCls="icon-export" plain="true" onclick="exportItem()">导出</a>
+    	</form>
+    </div>
+    <div id="load" class="easyui-dialog" title="消息" closed="true" style="width:200px;height:100px;padding:10px">
+        <span>处理中...</span>
+    </div>
+        <!-- 操作选项 -->
+        <div id="rowmenu" class="hide">
+            <a href="javascript:void(0)" class="easyui-linkbutton btn-detail <?php if(!isset($buttons['详情'])) { echo 'hide';} ?>" iconCls="icon-detail" plain="true" onclick="selectedRow($(this));detailItem()">详情</a>
+            <a href="javascript:void(0)" class="easyui-linkbutton btn-receive <?php if(!isset($buttons['接单'])) { echo 'hide';} ?>" iconCls="icon-receive" plain="true" id="btn-receive" onclick="selectedRow($(this));receive()">接单</a>
+            <a href="javascript:void(0)" class="easyui-linkbutton btn-appointment <?php if(!isset($buttons['预约'])) { echo 'hide';} ?>" iconCls="icon-receive" plain="true" id="btn-appointment" onclick="selectedRow($(this));appointment()">预约</a>
+            <a href="javascript:void(0)" class="easyui-linkbutton btn-convention <?php if(!isset($buttons['重新预约'])) { echo 'hide';} ?>" iconCls="icon-receive" plain="true" id="btn-convention" onclick="selectedRow($(this));appointment()">重新预约</a>
+            <a href="javascript:void(0)" class="easyui-linkbutton btn-send <?php if(!isset($buttons['结单'])) { echo 'hide';} ?>" iconCls="icon-pass" plain="true" id="btn-send" onclick="selectedRow($(this));finish();">结单</a>
+            <a href="javascript:void(0)" class="easyui-linkbutton btn-no <?php if(!isset($buttons['拒绝'])) { echo 'hide';} ?>" iconCls="icon-nopass" plain="true" id="btn-no" onclick="selectedRow($(this));cancel();">拒绝</a>
+            <a href="javascript:void(0)" class="easyui-linkbutton btn-claim <?php if(!isset($buttons['核赔'])) { echo 'hide';} ?>" iconCls="icon-receive" plain="true" id="btn-claim" onclick="selectedRow($(this));claim();">核赔</a>
+        </div>
+        <div id="dlg" class="easyui-dialog" style="width:300px;height:400px;padding:10px 20px" closed="true" buttons="#dlg-buttons">
+            <form id="fm" method="post">
+                <div class="fitem">
+                    <div class="fitem">
+                        <label>预约时间:</label>
+                        <input name="appointment_time" class="easyui-datetimebox" style="width:150px">
+                        <label>工程师:</label>
+                        <select class="easyui-combobox" limitToList="true" name="contact_engineer"  url="/admin/engineer/engineers" valueField="id" textField="name" style="width:150px;">
+                        </select>
+                        <label>地址:</label>
+                        <input name="address" class="easyui-textbox"  data-options="multiline:true"  prompt="地址" >
+                        <label>备注:</label>
+                        <input name="comments" class="easyui-textbox" data-options="multiline:true"  prompt="备注" >
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div id="dlg-buttons">
+            <a href="#" class="easyui-linkbutton" iconCls="icon-ok" onclick="saveUser()">保存</a>
+            <a href="#" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg').dialog('close')">取消</a>
+        </div>
+
+        <div id="dlgsf" class="easyui-dialog" style="width:300px;height:200px;padding:10px 20px" closed="true" buttons="#dlg-buttonsf">
+            <form id="sf" method="post">
+                <div class="fitem">
+                    <label>是否上门(必填):</label>
+                    <input class="easyui-validatebox" name="is_visited" type="radio" value="1" checked="checked" data-options="required:true">
+                    <span>是</span>
+                    <input class="easyui-validatebox" name="is_visited" type="radio" value="2">
+                    <span>否</span>
+                </div>
+                <div class="fitem">
+                    <div class="fitem">
+                        <label>备注:</label>
+                        <input name="comments" class="easyui-textbox" data-options="multiline:true"  prompt="备注" >
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div id="dlg-buttonsf">
+            <a href="#" class="easyui-linkbutton" iconCls="icon-ok" onclick="save()">保存</a>
+            <a href="#" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlgsf').dialog('close')">取消</a>
+        </div>
+
+        <!-- 完结弹窗 -->
+        <div id="dlg-finish" class="easyui-dialog" style="width:350px;height:400px;padding:10px 20px" closed="true" buttons="#dlg-btnfin">
+            <form id="fm-finish" method="post">
+                <div class="ftitle">完结工单</div>
+                <div class="fitem">
+                    <label>是否上门(必填):</label>
+                    <input class="easyui-validatebox" name="is_visited" type="radio" value="1" checked="checked" data-options="required:true">
+                    <span>是</span>
+                    <input class="easyui-validatebox" name="is_visited" type="radio" value="2">
+                    <span>否</span>
+                </div>
+                <div class="fitem">
+                    <label>服务费(必填):</label>
+                    <input name="service_fee" class="easyui-textbox" data-options="required:true">
+                </div>
+                <div class="fitem">
+                    <label>IMEI(必填):</label>
+                    <input name="phone_imei" class="easyui-textbox" data-options="required:true">
+                </div>
+                <div class="fitem">
+                    <label>维修前描述(必填):</label>
+                    <input name="before_service_memo" class="easyui-textbox" data-options="required:true,multiline:true">
+                </div>
+                <div class="fitem">
+                    <label>维修后描述(必填):</label>
+                    <input name="after_service_memo" class="easyui-textbox" data-options="required:true,multiline:true">
+                </div>
+            </form>
+        </div>
+        <div id="dlg-btnfin">
+            <a href="#" class="easyui-linkbutton" iconCls="icon-ok" onclick="finishSave()">保存</a>
+            <a href="#" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg-finish').dialog('close')">取消</a>
+        </div>
+
+        <!-- 核赔弹窗 -->
+        <div id="dlg-claim" class="easyui-dialog" style="width:450px;height:400px;padding:10px 20px" closed="true" buttons="#dlg-btncla">
+            <form id="fm-claim" method="post" enctype="multipart/form-data">
+                <div class="ftitle">核赔材料</div>
+                <div class="fitem">
+                    <label style="width:120px;">维修前的货物照片:</label>
+                    <input class="easyui-filebox" name="img1">
+                </div>
+                <div class="fitem">
+                    <label style="width:120px;">维修前拆借部位照片:</label>
+                    <input class="easyui-filebox" name="img2">
+                </div>
+                <div class="fitem">
+                    <label style="width:120px;">维修后的货物照片:</label>
+                    <input class="easyui-filebox" name="img3">
+                </div>
+                <div class="fitem">
+                    <label style="width:120px;">发票/维修收据图片:</label>
+                    <input class="easyui-filebox" name="img4">
+                </div>
+            </form>
+        </div>
+        <div id="dlg-btncla">
+            <a href="#" class="easyui-linkbutton" iconCls="icon-ok" onclick="claimSave()">保存</a>
+            <a href="#" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg-claim').dialog('close')">取消</a>
+        </div>
+
+        <div id="win" class="easyui-dialog" style="width: 900px;min-height: 400px;" closed="true">
+            <div data-options="region:'east'" style="width:880px;">
+            </div>
+        </div>
+        <div id="w" class="easyui-window" closed="true" data-options="title:'错误',inline:true" style="width:50px;height:25px;padding:10px">
+
+        </div>
+
+        <div id="dlg-detail" class="easyui-dialog" style="width:900px;height:550px;padding:10px 20px" closed="true" >
+            <form id="fm-detail" method="post" enctype="multipart/form-data">
+                <div class="ftitle">订单信息</div>
+                <div class="fitem">
+                    <label>订单ID:</label>
+                    <input name="id" class="easyui-textbox" disabled="true">
+                </div>
+                <div class="fitem">
+                    <label>合同ID:</label>
+                    <input name="contract_id" class="easyui-textbox" disabled="true">
+                </div>
+                <div class="fitem">
+                    <label>订单编号:</label>
+                    <input name="third_part_id" class="easyui-textbox" disabled="true">
+                </div>
+                <div class="fitem">
+                    <label>订单名称:</label>
+                    <input name="commodity_name" class="easyui-textbox" style="width:400px;" disabled="true">
+                </div>
+                <div class="fitem">
+                    <label>下单时间:</label>
+                    <input name="apply_time" class="easyui-textbox" disabled="true">
+                </div>
+                <div class="fitem">
+                    <label>备注:</label>
+                    <input name="comments" class="easyui-textbox" disabled="true">
+                </div>
+
+                <div class="ftitle">商品信息</div>
+                <div class="fitem">
+                    <label>商品名称:</label>
+                    <input name="commodity_name" class="easyui-textbox" style="width:400px;" disabled="true">
+                </div>
+                <div class="fitem">
+                    <label>商品价格:</label>
+                    <input name="commodity_price" class="easyui-textbox" disabled="true">
+                </div>
+                <div class="fitem">
+                    <label>商品编号:</label>
+                    <input name="commodity_number" class="easyui-textbox" disabled="true">
+                </div>
+                <div class="ftitle">客户信息</div>
+                <div class="fitem">
+                    <label>姓名:</label>
+                    <input name="buyer_name" class="easyui-textbox" disabled="true">
+                </div>
+                <div class="fitem">
+                    <label>电话:</label>
+                    <input name="buyer_mobile" class="easyui-textbox" disabled="true">
+                </div>
+                <div class="fitem">
+                    <label>邮箱:</label>
+                    <input name="buyer_email" class="easyui-textbox" disabled="true">
+                </div>
+                <div class="fitem">
+                    <label>地址:</label>
+                    <input name="buyer_address" class="easyui-textbox" style="width:400px;" disabled="true">
+                </div>
+
+            </form>
+        </div>
+</body>
+</html>

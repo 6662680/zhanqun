@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>user</title>
+	<link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/default/easyui.css">
+	<link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/icon.css">
+	<link rel="stylesheet" type="text/css" href="__PUBLIC__/css/user.css">
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/datagrid-cellediting.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/js/user.js"></script>
+    <script type="text/javascript">
+        var url;
+
+        function findOrder(){
+            var row = $('#dg').datagrid('getSelected');
+
+            if (row) {
+                $('#dg-detail').datagrid({
+                    queryParams: {
+                        id: row.id,
+                    }
+                });
+
+                $('#dlg-detail').dialog('open').dialog('center').dialog('setTitle', '详情');
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+        function editItem(){
+            var row = $('#dg').datagrid('getSelected');
+            if (row){
+                $('#fm').form('clear');
+                $('#dlg').dialog('open').dialog('center').dialog('setTitle','编辑');
+                $('#fm').form('load', row);
+                $('.password').hide();
+                url = '/admin/share/edit/id/' + row.id;
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+        function reset(){
+
+            var row = $('#dg').datagrid('getSelected');
+            if (row){
+                $.messager.confirm('Confirm', '确认重置密码?',function(r) {
+                    if (r) {
+                        $.post('/admin/share/reset', {id:row.id},function(result){
+
+                            if (result.success){
+                                $('#dg').datagrid('reload');
+                            } else {
+                                $.messager.alert({
+                                    title: '错误',
+                                    msg: result.errorMsg,
+                                    showType:'error',
+                                    style:{
+                                        right:'',
+                                        bottom:''
+                                    }
+                                });
+                            }
+                        },'json');
+                    }
+                })
+
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+        function deleteItem(){
+            var row = $('#dg').datagrid('getSelected');
+            if (row){
+                $.messager.confirm('Confirm', '确认删除此记录?',function(r){
+                    if (r){
+                        $.post('/admin/Share/delete',{id:row.id},function(result){
+                            if (result.success){
+                                $('#dg').datagrid('reload');
+                            } else {
+                                $.messager.show({
+                                    title: '错误',
+                                    msg: result.errorMsg,
+                                    showType:'fade',
+                                    style:{
+                                        right:'',
+                                        bottom:''
+                                    }
+                                });
+                            }
+                        },'json');
+                    }
+                });
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+        function searchItem(){
+            $('#dg').datagrid({
+                queryParams: {
+                    user: $('#search-keyword').val(),
+                }
+            });
+        }
+
+
+        function saveUser(){
+
+            $('#fm').form('submit',{
+                url: url,
+                onSubmit: function(){
+                    return $(this).form('validate');
+                },
+                success: function(result){
+                    var result = eval('('+result+')');
+                    if (result.errorMsg){
+                        $.messager.show({
+                            title: 'Error',
+                            msg: result.errorMsg
+                        });
+                    } else {
+                        $('#dlg').dialog('close');		// close the dialog
+                        $('#dg').datagrid('reload');	// reload the user data
+                    }
+                }
+            });
+        }
+
+
+        function saveUsered(){
+            $('#fm').form('submit',{
+                url: url,
+                onSubmit: function(){
+                    return $(this).form('validate');
+                },
+                success: function(result){
+                    var result = eval('('+result+')');
+                    if (result.errorMsg){
+                        $.messager.show({
+                            title: 'Error',
+                            msg: result.errorMsg
+                        });
+                    } else {
+                        $('#dlg').dialog('close');		// close the dialog
+                        $('#dg').datagrid('reload');	// reload the user data
+                    }
+                }
+            });
+        }
+
+
+        $(function(){
+
+            $('#mm').menu();
+            $(document).bind('contextmenu',function(e){
+                e.preventDefault();
+                $('#mm').menu('show', {
+                    left: e.pageX,
+                    top: e.pageY
+                });
+            });
+
+
+            // 隐藏显示
+            $('#search-type').combobox({
+                onChange: function (newValue, oldValue) {
+
+                    if (newValue == 1) {
+                        $('.none').hide();
+                    } else {
+                        $('.none').show();
+
+                    }
+
+                }
+            });
+
+        });
+
+
+        function formType(val){
+         if (val == 1){
+            return '个人'
+         } else {
+            return '企业'
+         }
+        }
+
+        function formType2(val){
+            if (val == 1){
+                return '市场人员'
+            }
+            if (val == 2) {
+                return '工程师';
+            }
+            if (val == 3) {
+                return '企业客户';
+            }
+            if (val == 0) {
+                return '';
+            }
+        }
+
+
+        function add(){
+            $('#dlg').dialog('open').dialog('center').dialog('setTitle', '添加');
+            $('#fm').form('clear');
+            $('.password').show();
+            url = '/admin/Share/add';
+        }
+        //行操作按钮
+        function formatButton(){
+            return $('#rowmenu').html();
+        }
+
+        //订单状态
+        function formatOrderStatus(val)
+        {
+            var order_staus = eval(<?php echo json_encode(C("ORDER_STATUS"))?>);
+
+            if (val == -1 || val == -2) {
+                return '<span class="label label-bg3">' + order_staus[val] + '</span>';
+            } else if (val == 1) {
+                return '<span class="label label-bg5">' + order_staus[val] + '</span>';
+            } else if (val == 2 || val == 3 || val == 4) {
+                return '<span class="label label-bg2">' + order_staus[val] + '</span>';
+            } else if (val == 5) {
+                return '<span class="label label-bg1">' + order_staus[val] + '</span>';
+            } else if (val == 6) {
+                return '<span class="label label-bg">' + order_staus[val] + '</span>';
+            } else if (val == 7) {
+                return '<span class="label label-bg6">' + order_staus[val] + '</span>';
+            } else if (val == 8) {
+                return '<span class="label label-bg3">' + order_staus[val] + '</span>';
+            } else if (val == 11) {
+                return '<span class="label label-bg7">' + order_staus[val] + '</span>';
+            } else if (val == 12) {
+                return '<span class="label label-bg7">' + order_staus[val] + '</span>';
+            } else if (val == 21) {
+                return '<span class="label label-bg2">' + order_staus[val] + '</span>';
+            } else if (val == 22) {
+                return '<span class="label label-bg">' + order_staus[val] + '</span>';
+            }
+        }
+
+        //订单类型
+        function formatOrderType(val)
+        {
+            var type = eval(<?php echo json_encode(C("ORDER_TYPE"))?>);
+            return type[val];
+        }
+
+        //订单付款方式
+        function formatOrderPaymentMethod(val)
+        {
+            var payment = eval(<?php echo json_encode(C("ORDER_PAYMENT"))?>);
+            return payment[val];
+        }
+
+        //订单维修方式
+        function formatOrderCategory(val)
+        {
+            var category = eval(<?php echo json_encode(C("ORDER_CATEGORY"))?>);
+            return category[val];
+        }
+
+
+        function findQrcode(){
+            var row = $('#dg').datagrid('getSelected');
+            if (row){
+
+
+                $('#qrcode').dialog('open').dialog('center').dialog('setTitle','查看二维码');
+                $('.qrcode').remove('img');
+                var qecode = '<img class="qrcode" style="height: 200px;right: 200px;" name="qrcode" src='+ row.qrcode +'>';
+                $('#qrcodeform').append(qecode);
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+        //订单是否结算
+        function formatOrderIsClearing(val)
+        {
+            if(val == 1) {
+                return '<span class="label label-bg2">是<span>';
+            } else {
+                return '<span class="label label-bg3">否<span>';
+            }
+        }
+    </script>
+</head>
+<body class="easyui-layout">
+        <div id="box" class="easyui-dialog" style="width: 900px;min-height: 400px;" closed="true">
+            <div data-options="region:'east'" style="width:880px;">
+
+                <table id="joinex" class="easyui-datagrid" singleSelect="true" pagination="true" pageSize="20">
+                    <thead>
+                    <tr>
+                        <th field="id" width="33%">ID</th>
+                        <th field="name" width="33%">名称</th>
+                        <th field="amount" width="33%">数量</th>
+                    </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+        <table id="dg" title="分享账号管理" class="easyui-datagrid" style="width:100%;" url="/admin/share/userrow" toolbar="#toolbar" pagination="true" pageSize="30" pagePosition="top" rownumbers="true" fitColumns="true" singleSelect="true" rownumbers="true" pagination="true">
+            <thead>
+            <tr>
+                <th field="id" id="id" width="5%">ID</th>
+                <th field="name" width="5%">姓名</th>
+                <th field="user" width="5%">手机号</th>
+                <th field="name2" width="5%">第二联系人</th>
+                <th field="mobile2" width="5%">第二电话</th>
+                <th field="enterprise_name" width="10%">企业名称</th>
+                <th field="type" formatter="formType" width="5%">类型</th>
+                <th field="user_type" formatter="formType2" width="10%">账户类型</th>
+                <th field="time" formatter="formatDate" width="10%">创建时间</th>
+                <th field="action" formatter="formatButton" width="20%">操作</th>
+                <th field="remark" width="20%">备注</th>
+            </tr>
+            </thead>
+    </table>
+
+    <div id="toolbar">
+        <span>手机号:</span>
+        <input type="text" class="easyui-textbox" id='search-keyword' panelHeight="auto">
+		<a href="javascript:void(0)" class="easyui-linkbutton" plain="true" iconCls="icon-search" onclick="searchItem()">搜索</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-add" plain="true" onclick="add()">新增</a>
+    </div>
+    <div id="load" class="easyui-dialog" title="消息" closed="true" style="width:200px;height:100px;padding:10px">
+        <span>处理中...</span>
+    </div>
+        <div id="dlg" class="easyui-dialog" style="width:800px;height:480px;padding:10px 20px"
+             closed="true" buttons="#dlg-buttons">
+            <form id="fm" method="post">
+                <div class="fitem">
+                    <div class="fitem">
+                        <label>姓名:</label>
+                        <input name="name" class="easyui-textbox" prompt="姓名">
+                    </div>
+                    <div class="fitem">
+                        <label>手机号:</label>
+                        <input name="user" class="easyui-textbox" prompt="手机号" required="true"  >
+                    </div>
+                    <div class="fitem password">
+                        <label>密码:</label>
+                        <input name="pwd" class="easyui-textbox pwd" >
+                    </div>
+                    <div class="fitem">
+                        <label>上级手机号:</label>
+                        <input name="pmobile" class="easyui-textbox" style="width: 150px" prompt="上级手机号" >
+                    </div>
+                    <div class="fitem">
+                        <label>状态:</label>
+                        <select class="easyui-combobox" id='search-type'name="type" panelHeight="auto">
+                            <option value="1">个人</option>
+                            <option value="2">企业</option>
+                        </select>
+                    </div>
+                    <div class="fitem password">
+                        <label>账号类型:</label>
+                        <select class="easyui-combobox" id='search-user-type'name="type2" panelHeight="auto">
+                            <option value="1">市场人员</option>
+                            <option value="2">工程师</option>
+                            <option value="3">企业客户</option>
+                        </select>
+                    </div>
+                    <div class="fitem none" hidden>
+                        <label>联系人2:</label>
+                        <input name="name2" class="easyui-textbox" style="width: 150px" prompt="姓名" >
+                    </div>
+                    <div class="fitem none" hidden>
+                        <label>联系人2:</label>
+                        <input name="mobile2" class="easyui-textbox"  style="width: 150px"prompt="手机号">
+                    </div>
+                    <div class="fitem none" hidden>
+                        <label>企业名称:</label>
+                        <input name="enterprise_name" class="easyui-textbox" style="width: 150px" prompt="企业名称">
+                    </div>
+                    <div class="fitem none password" hidden>
+                        <label>地区:</label>
+                        <select class="easyui-combobox" id='organization' style="width: 150px;" url="/admin/share/organization" name="organization" valueField="id" textField="alias" panelHeight="auto">
+
+                        </select>
+                    </div>
+                    <div class="fitem">
+                        <label>备注:</label>
+                        <input name="remark" class="easyui-textbox"data-options="multiline:true"  prompt="备注" >
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!--<div id="dlged" class="easyui-dialog" style="width:800px;height:480px;padding:10px 20px"-->
+             <!--closed="true" buttons="#dlged-buttons">-->
+            <!--<form id="fmed" method="post">-->
+                <!--<div class="fitem">-->
+                    <!--<div class="fitem">-->
+                        <!--<label>姓名:</label>-->
+                        <!--<input name="name" class="easyui-textbox" prompt="姓名"  >-->
+                    <!--</div>-->
+                    <!--<div class="fitem">-->
+                        <!--<label>手机号:</label>-->
+                        <!--<input name="user" class="easyui-textbox" prompt="手机号" required="true" >-->
+                    <!--</div>-->
+                    <!--<div class="fitem">-->
+                        <!--<label>状态:</label>-->
+                        <!--<select class="easyui-combobox" id='ed-search-type'name="type" panelHeight="auto">-->
+                            <!--<option value="1">个人</option>-->
+                            <!--<option value="2">企业</option>-->
+                        <!--</select>-->
+                    <!--</div>-->
+                    <!--<div class="fitem">-->
+                        <!--<label>账号类型:</label>-->
+                        <!--<select class="easyui-combobox" id='search-user-type'name="type2" panelHeight="auto">-->
+                            <!--<option value="1">市场人员</option>-->
+                            <!--<option value="2">工程师</option>-->
+                            <!--<option value="3">企业客户</option>-->
+                        <!--</select>-->
+                    <!--</div>-->
+                    <!--<div class="fitem">-->
+                        <!--<label>备注:</label>-->
+                        <!--<input name="remark" class="easyui-textbox"data-options="multiline:true"  prompt="备注" >-->
+                    <!--</div>-->
+                <!--</div>-->
+            <!--</form>-->
+        <!--</div>-->
+
+        <div id="qrcode" class="easyui-dialog" style="width:250px;height:250px;padding:10px 20px"
+             closed="true">
+            <form id="qrcodeform">
+
+            </form>
+
+        </div>
+
+        <div id="dlg-buttons">
+            <a href="#" class="easyui-linkbutton" iconCls="icon-ok" onclick="saveUser()">保存</a>
+            <a href="#" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg').dialog('close')">取消</a>
+        </div>
+        <!--<div id="dlged-buttons">-->
+            <!--<a href="#" class="easyui-linkbutton" iconCls="icon-ok" onclick="saveUsered()">保存</a>-->
+            <!--<a href="#" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlged').dialog('close')">取消</a>-->
+        <!--</div>-->
+        <div id="mm" style="width:120px;">
+            <div iconCls="icon-add" class="<?php if(!isset($buttons['添加'])) { echo 'hide';} ?>" onclick="newItem()"><span>添加</span></div>
+            <div iconCls="icon-edit" class="<?php if(!isset($buttons['编辑'])) { echo 'hide';} ?>" onclick="editItem()"><span>编辑</span></div>
+            <div iconCls="icon-remove" class="<?php if(!isset($buttons['删除'])) { echo 'hide';} ?>" onclick="deleteItem()"><span>删除</span></div>
+        </div>
+        <div id="rowmenu" class="hide">
+            <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['编辑'])) { echo 'hide';} ?>" iconCls="icon-edit" plain="true" onclick="selectedRow($(this));editItem();">编辑</a>
+            <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['重置密码'])) { echo 'hide';} ?>" iconCls="icon-edit" plain="true" onclick="selectedRow($(this));reset();">重置密码</a>
+            <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['删除'])) { echo 'hide';} ?>" iconCls="icon-remove" plain="true" onclick="selectedRow($(this));deleteItem();">删除</a>
+            <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['查看订单'])) { echo 'hide';} ?>" iconCls="icon-member" plain="true" onclick="selectedRow($(this));findOrder();">查看订单</a>
+            <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['查看二维码'])) { echo 'hide';} ?>" iconCls="icon-member" plain="true" onclick="selectedRow($(this));findQrcode();">查看二维码</a>
+        </div>
+        <div id="win" class="easyui-dialog" style="width: 900px;min-height: 400px;" closed="true">
+            <div data-options="region:'east'" style="width:880px;">
+
+            </div>
+        </div>
+        <div id="w" class="easyui-window" closed="true" data-options="title:'错误',inline:true" style="width:50px;height:25px;padding:10px">
+        </div>
+
+        <!-- 库存详情弹窗 -->
+        <div id="dlg-detail" class="easyui-dialog" style="width:1600px;min-height: 500px;padding:10px 20px" closed="true" buttons="#dlg-detail-buttons">
+            <div class="ftitle">订单详情</div>
+            <table id="dg-detail" title="订单详情" class="easyui-datagrid" style="width:100%;" toolbar="#toolbar2" pagination="true" pageSize="20" pagePosition="top" rownumbers="true" fitColumns="true" singleSelect="true" rownumbers="true" pagination="true" url="/admin/share/findOrder">
+                <thead>
+                <tr>
+                    <th field="number" width="9">订单号</th>
+                    <th field="customer" width="4">客户姓名</th>
+                    <th field="phone_name" width="10">手机型号</th>
+                    <th field="category" formatter="formatOrderCategory" width="5">上门类型</th>
+                    <th field="malfunctions" width="10">故障</th>
+                    <th field="clearing_time" width="10">下单时间</th>
+                    <th field="status"  width="5" formatter="formatOrderStatus">状态</th>
+                    <th field="reference_price" width="10">预计价格</th>
+                    <th field="actual_price" width="10">实际价格</th>
+                    <th field="payment_method" formatter="formatOrderPaymentMethod" width="10">付款方式</th>
+                    <th field="is_clearing" width="5" formatter="formatOrderIsClearing" >结算</th>
+                </tr>
+                </thead>
+            </table>
+        </div>
+</body>
+</html>

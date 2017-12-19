@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>user</title>
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/default/easyui.css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/icon.css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/css/user.css">
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/locale/easyui-lang-zh_CN.js"></script>
+    <script type="text/javascript">
+        $(function(){
+            $('#search-start-time').datebox('setValue', '<?php echo $startTime;?>');
+            $('#search-end-time').datebox('setValue', '<?php echo $endTime;?>');
+        });
+    </script>
+</head>
+<body>
+<body class="easyui-layout">
+    <table id="dg" title="订单完成情况" class="easyui-datagrid" style="width:100%; max-height: 800px;" toolbar="#toolbar" rownumbers="true" fitColumns="true" singleSelect="true">
+        <thead>
+            <tr>
+                <th field="date" width="25" rowspan="2" align="center">日期</th>
+                <th field="total" colspan="2" width="30" align="center">总计</th>
+                <?php $i = 0;?>
+                <?php foreach ($address as $k => $v) {?>
+                <th field="order<?php echo $i++;?>" width="30" colspan="2" align="center"><?php echo $v;?></th>
+                <?php }?>
+                <th field="mail" colspan="2" width="25" align="center">邮寄</th>
+            </tr>
+            <tr>
+            	<th width="10" field="order<?php echo $i++;?>">单量</th>
+                <th width="20" field="order<?php echo $i++;?>">收款金额</th>
+                <?php foreach ($address as $k => $v) {?>
+                <th width="10" field="amount<?php echo $k;?>">单量</th>
+                <th width="20" field="order<?php echo $i++;?>">收款金额</th>
+                <?php }?>
+                <th width="10" field="order<?php echo $i++;?>">单量</th>
+                <th width="15" field="order<?php echo $i++;?>">收款金额</th>
+            </tr>
+        </thead>
+        <?php foreach ($data as $date => $item) {?>
+        <tr>
+            <td><?php echo $date;?></td>
+            <td><?php echo $item[0]['amount'];?></td>
+            <td><?php echo $item[0]['price'];?></td>
+            <?php foreach ($address as $k => $v) {?>
+            <td><?php echo $item[$k]['amount'];?></td>
+            <td><?php echo $item[$k]['price'];?></td>
+            <?php }?>
+            <td><?php echo $item[1]['amount'];?></td>
+            <td><?php echo $item[1]['price'];?></td>
+        </tr>
+        <?php }?>
+    </table>
+    <div id="toolbar">
+        <form id="search" method="post" action="<?php echo U('admin/statistics/orderFinishExport');?>">
+        <p>
+            <span>日期:</span>
+            <input type="text" class="easyui-datebox" id='search-start-time' name="start_time" panelHeight="auto"> 至
+            <input type="text" class="easyui-datebox" id='search-end-time' name="end_time" panelHeight="auto">
+            <a href="javascript:void(0)" class="easyui-linkbutton" plain="true" iconCls="icon-search" onclick="$('#search').submit();">搜索</a>
+        </p>
+        </form>
+    </div>
+</body>
+</html>

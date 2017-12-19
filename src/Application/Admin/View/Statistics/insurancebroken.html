@@ -1,0 +1,107 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+    <meta charset="UTF-8">
+    <title>user</title>
+    <link href="__PUBLIC__/vendor/bui/assets/css/dpl-min.css" rel="stylesheet" type="text/css" />
+    <link href="__PUBLIC__/vendor/bui/assets/css/bui-min.css" rel="stylesheet" type="text/css" />
+    <link href="__PUBLIC__/vendor/bui/assets/css/page-min.css" rel="stylesheet" type="text/css" />
+    <script type="text/javascript" src="__PUBLIC__/vendor/bui/assets/js/jquery-1.8.1.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/bui/assets/js/bui.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/bui/assets/js/config.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/highcharts/js/highcharts.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/highcharts/js/themes/dark-unica.js"></script>
+    <script type="text/javascript">
+    $(function () {
+        var Calendar = BUI.Calendar
+        var datepicker = new Calendar.DatePicker({
+            trigger:'.calendar-time',
+            showTime:true,
+            autoRender : true
+        });
+
+        // ------------------------------------------------------------------------
+        var $address = <?php echo json_encode(array_values($address)); ?>;
+        var $data = <?php echo json_encode(array_values($count)); ?>;
+
+        $('#container').highcharts({
+            chart: {
+                type: 'column'
+            },
+            title: {
+                text: '闪修侠出险订单统计'
+            },
+            colors: ['#7cb5ec', '#90ed7d', '#f7a35c','#f15c80', '#e4d354', '#8085e8', '#8d4653', '#91e8e1'],
+            xAxis: {
+                categories: $address,
+                crosshair: true,
+                labels: {
+                    rotation: -45,
+                    align: 'right',
+                    style: {
+                        fontSize: '12px',
+                        fontFamily: 'Verdana, sans-serif'
+                    }
+                }
+            },
+            yAxis: {
+                min: 0,
+                title: {
+                    text: '单'
+                }
+            },
+            tooltip: {
+                headerFormat: '<span style="font-size:10px">{point.key}</span><table>',
+                pointFormat: '<tr><td style="color:{series.color};padding:0">{series.name}: </td>' +
+                '<td style="padding:0"><b> {point.y}</b></td></tr>',
+                footerFormat: '</table>',
+                shared: true,
+                useHTML: true
+            },
+            credits: {
+                enabled: false
+            },
+            series: $data
+        });
+
+        <?php if (I('get.day') == 2) {?>
+        $('#today').removeClass('button-success');
+        $('#yesterday').addClass('button-success');
+        <?php } else if (I('get.day') == 1 || !IS_POST) {?>
+        $('#yesterday').removeClass('button-success');
+        $('#today').addClass('button-success');
+        <?php }?>
+    });
+    </script>
+    </head>
+    <body>
+        <div class="demo-content">
+            <div class="row">
+                <div class="offset1 doc-content">
+                    <form id="search_form" class="form-panel" method="post" action="<?php echo U('admin/statistics/insurancebroken'); ?>">
+                        <ul class="panel-content">
+                            <li>
+                                <div class="button-group" style="margin: 9px 0;">
+                                    <a href="javascript:void(0);" id="today" class="button" onclick="location.href='<?php echo U('admin/statistics/insurancebroken/day/1'); ?>'">今日</a>
+                                    <a href="javascript:void(0);" id="yesterday"  class="button" id="yesterday" onclick="location.href='<?php echo U('admin/statistics/insurancebroken/day/2'); ?>'">昨日</a>
+                                </div>
+                            </li>
+                            <li>
+                                <span>
+                                    <label for="search_start_time">日期：</label>
+                                    <input type="text" class="calendar calendar-time" style="width:150px;" name="startTime" id="search_start_time" value="<?php echo I('post.startTime')?>"> 
+                                    <label for="search_end_time">至</label>
+                                    <input type="text" class="calendar calendar-time" style="width:150px;" name="endTime" id="search_end_time" value="<?php echo I('post.endTime')?>">
+                                </span>
+                                &nbsp;&nbsp;
+                                <button type="submit" class="button button-primary">查询&gt;&gt;</button>
+                            </li>
+                        </ul>
+                    </form>
+                    <div id="container" style="min-width:700px;height:600px"></div>
+                </div>
+            </div>
+        </div>
+	</div>
+    <body>
+</html>

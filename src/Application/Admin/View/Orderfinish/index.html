@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/default/easyui.css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/icon.css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/css/user.css">
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/locale/easyui-lang-zh_CN.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/highcharts/js/highcharts.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/highcharts/js/themes/dark-unica.js"></script>
+    <script>
+
+        var searchObject = (function() {
+
+            var instance;
+
+            function init() {
+
+                // 图表标题
+                var title;
+                this.setTitle = function(title) {
+                    this.title = title;
+                };
+                this.getTitle = function () {
+                    return this.title;
+                };
+
+                // 设置服务器返回的结果
+                this.setRes = function(res) {
+//                    console.log(res);
+                    if (res.code == 0) {
+                        this.setXAxis(res.xAxis);
+                        this.setTitle(res.title);
+                        this.setData(res.data);
+                    } else if (res.code < 0) {
+                        this.alertError(res.msg);
+                    } else {
+                        this.alertError('服务器出错');
+                    }
+                };
+
+                // 按组织分组后的数据
+                var data = [];
+                this.setData = function(data) {
+                    this.data = data;
+                    this.showOrganizationChart();
+                };
+                this.getData = function() {
+                    return this.data;
+                };
+
+                this.showOrganizationChart = function() {
+                    var xAxis = this.getXAxis();
+                    var series = [];
+                    var data = this.getShowOrganizationData();
+                    if (data) {
+                        $.each(data, function(index, organization) {
+                            var tempOgz = {};
+                            tempOgz.name = organization.name;
+
+                            var tempData = [];
+                            $.each(xAxis, function(inde, axis) {
+                                var xAxisFitNumber = 0;
+                                var xAxisAllfitNumber = 0;
+                                $.each(organization.engineerList, function(ind, engineer) {
+                                    $.each(engineer.xAxis, function(i, tempXAxis) {
+                                        if (tempXAxis.name == axis) {
+                                            xAxisFitNumber += parseInt(tempXAxis.fitOrderNumber);
+                                            xAxisAllfitNumber +=  parseInt(tempXAxis.allfitOrderNumber);
+                                        }
+                                    });
+                                });
+
+                                var percent = 0;
+
+                                if (xAxisAllfitNumber != 0) {
+                                    percent = parseFloat(((xAxisFitNumber * 1.0 / xAxisAllfitNumber) * 100).toFixed(2));
+                                }
+
+                                tempData.push(percent);
+                            });
+
+                            tempOgz.data = tempData;
+                            series.push(tempOgz);
+                        });
+
+                        console.log(series);
+
+                        this.setOrganizationChartSeries(series);
+                    }
+                };
+
+                //
+                this.getShowOrganizationData = function() {
+                    var data = this.getData();
+                    var organizationID = this.getOrganizationID();
+                    var returnData = []
+
+                    if (organizationID == 'all') {
+                        returnData = data;
+                    } else {
+                        $.each (data, function(index, organization) {
+                            if (organization.id == organizationID) {
+                                returnData.push(organization);
+                                return false;
+                            }
+                        });
+                    }
+
+                    return returnData;
+                };
+
+                // 设置组织图表内容
+                this.setOrganizationChartSeries = function(series) {
+                    var that = this;
+                    $('#id-div-chart').highcharts({
+                        chart: {
+                            type: 'line'
+                        },
+                        title: {
+                            text: that.getTitle()
+                        },
+                        xAxis: {
+                            categories: that.getXAxis()
+                        },
+                        plotOptions: {
+                            line: {
+                                dataLabels: {
+                                    enabled: false
+                                },
+                                enableMouseTracking: true
+                            },
+                            series: {
+                                cursor: 'pointer',
+                                point: {
+                                    events: {
+                                        click: function () {
+                                            that.setOrganizationTableCategory(this.category);
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        series: series
+                    });
+                };
+
+                // x 轴数组
+                var xAxis = [];
+                this.setXAxis = function(xAxis) {
+                    this.xAxis = xAxis;
+                };
+                this.getXAxis = function() {
+                    return this.xAxis;
+                };
+
+                /**
+                 * 根据 category 设置组织列表
+                 */
+                this.setOrganizationTableCategory = function(category) {
+                    this.category = category;
+                    var columnsData = [];
+                    var data = this.getData();
+                    $.each(data, function(index, organization) {
+                        var tempOgz = {};
+                        var xAxisFitNumber = 0;
+                        var xAxisAllfitNumber = 0;
+
+                        $.each(organization.engineerList, function(ind, engineer) {
+                            $.each(engineer.xAxis, function(i, tempXAxis) {
+                                if (tempXAxis.name == category) {
+                                    xAxisFitNumber += parseInt(tempXAxis.fitOrderNumber);
+                                    xAxisAllfitNumber +=  parseInt(tempXAxis.allfitOrderNumber);
+
+                                    return false;
+                                }
+                            });
+                        });
+
+                        tempOgz.id = organization.id;
+                        tempOgz.name = organization.name;
+                        tempOgz.fitNumber = xAxisFitNumber;
+                        tempOgz.unfitNumber = xAxisAllfitNumber;
+                        var percent = 0;
+                        if (xAxisAllfitNumber != 0) {
+                            percent = parseFloat(((xAxisFitNumber * 1.0 / xAxisAllfitNumber) * 100).toFixed(2));
+                        }
+                        tempOgz.precent = percent;
+                        columnsData.push(tempOgz);
+                    });
+
+                    this.setOrganizationTable(columnsData);
+                };
+
+                // 设置组织列表
+                this.setOrganizationTable = function(columns) {
+
+                    var that = this;
+                    $('#id-div-table').datagrid({
+                        data: columns,
+                        columns:this.getOrganizationTableColumns(),
+                        // 行上的点击
+                        onClickRow: function(index, data) {
+                            that.setShowOrganizationID(data.id);
+                        }
+                    });
+                };
+
+                // 默认结束时间
+                this.getEndDefaultDate = function() {
+
+                    var date = new Date();
+                    var year = date.getFullYear();
+                    var month = (date.getMonth() + 1);
+                    var day = date.getDate();
+
+                    return this.formatDate(year, month, day);
+                };
+
+                // 默认开始时间
+                this.getBeginDefaultDate = function() {
+                    var date = new Date();
+                    date.setDate(1);
+                    var year = date.getFullYear();
+                    var month = (date.getMonth() + 1);
+                    var day = date.getDate();
+
+                    return this.formatDate(year, month, day);
+                };
+
+                // 格式化日期
+                this.formatDate = function(year, month, day) {
+                    return year + "-" + month + "-" + day;
+                };
+
+                this.setDefaultBeginDate = function() {
+                    $('#id-date-search-begin').datebox('setValue', this.getBeginDefaultDate());
+                };
+
+                this.setDefaultEndDate = function() {
+                    $('#id-date-search-end').datebox('setValue', this.getEndDefaultDate());
+                };
+
+                // 得到开始日期
+                this.getBeginDate = function() {
+                    return $('#id-date-search-begin').datebox('getValue');
+                };
+
+                // 得到结束日期
+                this.getEndDate = function() {
+                    return $('#id-date-search-end').datebox('getValue');
+                };
+
+                // 得到统计单元
+                this.getDateQuantum = function() {
+                    return $("input[name='unit-type']:checked").val();
+                };
+
+                var type;
+                // 得到统计类型
+                this.getType = function() {
+                    if (typeof(this.type) == 'undefined' || this.type == null) {
+                        this.type = $('#id-select-type').combobox('getValue');
+                    }
+                    return this.type;
+                };
+                this.setType = function(type) {
+                    this.type = type;
+                    switch (type) {
+                        case '2':
+                            $('#id-span-finish-time').show();
+                            $('#id-span-finish-discount').hide();
+                            break;
+                        case '3':
+                            $('#id-span-finish-time').hide();
+                            $('#id-span-finish-discount').show();
+                            break;
+                        default :
+                            $('#id-span-finish-time').hide();
+                            $('#id-span-finish-discount').hide();
+                            break;
+                    }
+                };
+
+                this.getFitTitle = function() {
+                    var type = parseInt(this.getType());
+                    var fitTitle = '';
+                    switch (type) {
+                        case 0:
+                            fitTitle = '完成订单数';
+                            break;
+
+                        case 1:
+                            fitTitle = '返修订单数';
+                            break;
+
+                        case 2:
+                            fitTitle = this.getHour() + '小时订单数';
+                            break;
+
+                        case 3:
+                            fitTitle = '折扣订单数';
+                            break;
+                        default :
+                            break;
+                    }
+
+                    return fitTitle;
+                };
+
+                this.getOrganizationTableColumns = function() {
+                    return [[
+                        {field:'name', title:'组织', align:'center'},
+                        {field:'fitNumber', title:this.getFitTitle(), align:'center'},
+                        {field:'unfitNumber', title:'所有订单数', align:'center'},
+                        {field:'precent', title:'百分比（%）', align:'center'}
+                    ]];
+                }
+
+                // 得到小时完成
+                this.getHour = function() {
+                    return $('#id-select-finish-time').combobox('getValue');
+                };
+
+                // 得到折扣
+                this.getDiscount = function() {
+                    return $('#id-select-finish-discount').combobox('getValue');
+                };
+
+                // 组织ID
+                var organizationID;
+                this.getOrganizationID = function() {
+
+                    if (typeof(this.organizationID) == 'undefined' || this.organizationID == null) {
+                        this.organizationID = $('#id-select-organization').combobox('getValue');
+                    }
+
+                    return this.organizationID;
+                };
+                this.setOrganizationID = function(value) {
+                    this.organizationID = value;
+                    this.showOrganizationChart();
+                };
+
+                // 显示工程师数据时的组织ID
+                var showOrganizationID;
+                this.setShowOrganizationID = function(organizationID) {
+                    this.showOrganizationID = organizationID;
+                    this.setSelectEngineerValue(); // 设置工程师下拉选择框内容
+                    this.showEngineerChart(); // 显示工程师折线图
+                };
+                this.getShowOrganizationID = function() {
+                    return this.showOrganizationID;
+                };
+
+                // 设置工程师下拉选择框内容
+                this.setSelectEngineerValue = function() {
+                    var ogzID = this.getShowOrganizationID();
+                    var engineerList = this.getEngineerListByOrganizationID(ogzID);
+                    engineerList.unshift({id: 'all', name: '全部'});
+                    $('#id-engineer-select').combobox({
+                        data: engineerList,
+                        valueField: 'id',
+                        textField: 'name'
+                    });
+                };
+
+                /**
+                 * 根据组织ID得到工程师列表
+                 */
+                this.getEngineerListByOrganizationID = function(organizationID) {
+
+                    if (typeof(organizationID) == 'undefined' || organizationID == null || organizationID < 0) {
+                        return [];
+                    }
+
+                    var data = this.getData();
+                    var engineerList = [];
+                    $.each(data, function (index, value) {
+                        if (value.id == organizationID) {
+                            $.each(value.engineerList, function(i, v) {
+                                var engineer = {};
+                                engineer.id = v.id;
+                                engineer.name = v.name;
+                                engineerList.push(engineer);
+                            });
+                            return false;
+                        }
+                    });
+
+                    return engineerList;
+                };
+
+                // 显示工程师数据
+                var showEngineerID;
+                this.getShowEngineerID = function() {
+                    if (typeof(this.showEngineerID) == 'undefined' || this.showEngineerID == null) {
+                        this.showEngineerID = $('#id-engineer-select').combobox('getValue');
+                    }
+
+                    return this.showEngineerID;
+                };
+                this.setShowEngineerID = function(engineerID) {
+                    this.showEngineerID = engineerID;
+                    this.showEngineerChart();
+                };
+
+                // 显示工程师折线图
+                this.showEngineerChart = function() {
+
+                    var tempData = this.getData();
+                    var showOgzID = this.getShowOrganizationID();
+                    var ogzData = null;
+
+                    $.each(tempData, function(index, value) {
+                        if (value.id == showOgzID) {
+                            ogzData = value;
+                            return false;
+                        }
+                    });
+                    var showEngineerID = this.getShowEngineerID();
+
+                    var series = [];
+                    var engineerList = [];
+
+                    if (showEngineerID == 'all' || typeof(showEngineerID) == 'undefined' || showEngineerID == null || showEngineerID == '') {
+                        engineerList = ogzData.engineerList;
+                    } else {
+                        $.each(ogzData.engineerList, function(index, value) {
+                            if (value.id == showEngineerID) {
+                                engineerList = [value];
+                                return false;
+                            }
+                        });
+                    }
+                    var xAxis = this.getXAxis();
+                    if (!engineerList) {
+                        this.alertError('数据出错');
+                        return ;
+                    }
+
+                    $.each(engineerList, function(index, engineer) {
+                        var engineerInfo = {};
+                        var data = [];
+                        $.each(xAxis, function (inde, val) {
+                            var percent = 0;
+                            $.each(engineer.xAxis, function (i, v) {
+                                if (val == v.name) {
+                                    var xAxisFitNumber = parseInt(v.fitOrderNumber);
+                                    var xAxisAllfitNumber = parseInt(v.allfitOrderNumber);
+                                    if (xAxisAllfitNumber != 0) {
+                                        percent = parseFloat(((xAxisFitNumber * 1.0 / xAxisAllfitNumber) * 100).toFixed(2));
+                                    }
+
+                                    return false;
+                                }
+                            });
+                            data.push(percent);
+                        });
+                        engineerInfo.id = engineer.id;
+                        engineerInfo.name = engineer.name;
+                        engineerInfo.data = data;
+                        series.push(engineerInfo);
+                    });
+
+                    var that = this;
+                    $('#id-div-chart-engineer').highcharts({
+                        chart: {
+                            type: 'line'
+                        },
+                        title: {
+                            text: ''
+                        },
+                        xAxis: {
+                            categories: this.getXAxis()
+                        },
+                        plotOptions: {
+                            line: {
+                                dataLabels: {
+                                    enabled: false
+                                },
+                                enableMouseTracking: true
+                            },
+                            series: {
+                                cursor: 'pointer',
+                                point: {
+                                    events: {
+                                        click: function () {
+                                            that.setEngineerCategory(this.category);
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        series: series
+                    });
+
+                    $('#id-engineer-window').window('open');
+                };
+
+                this.setEngineerCategory = function(category) {
+                    var orgID = this.getShowOrganizationID();
+                    var columns = [];
+
+                    var data = this.getData();
+                    $.each(data, function(index, ogz) {
+                        if (ogz.id == orgID) {
+                            $.each(ogz.engineerList, function(i, engineer) {
+                                var tempEng = {};
+                                var xAxisFitNumber = 0;
+                                var xAxisAllfitNumber = 0;
+                                $.each(engineer.xAxis, function(ind, x) {
+                                    if (x.name == category) {
+                                        xAxisFitNumber = parseInt(x.fitOrderNumber);
+                                        xAxisAllfitNumber = parseInt(x.allfitOrderNumber);
+                                        return false;
+                                    }
+                                });
+
+                                var percent = 0;
+                                if (xAxisAllfitNumber != 0) {
+                                    percent = parseFloat(((xAxisFitNumber * 1.0 / xAxisAllfitNumber) * 100).toFixed(2));
+                                }
+
+                                tempEng.name = engineer.name;
+                                tempEng.fitNumber = xAxisFitNumber;
+                                tempEng.unfitNumber = xAxisAllfitNumber;
+                                tempEng.precent = percent;
+
+                                columns.push(tempEng);
+                            });
+                            return false;
+                        }
+                    });
+
+                    $('#id-div-table-engineer').datagrid({
+                        data: columns,
+                        columns:this.getEngineerTableColumns()
+                    });
+                };
+
+                this.clearEngineeerTable = function() {
+                    $('#id-div-table-engineer').datagrid('loadData', {total: 0, rows: []});
+                };
+
+                this.clearOrgnizationTable = function() {
+                    $('#id-div-table').datagrid('loadData', {total: 0, rows: []});
+                };
+
+                this.getEngineerTableColumns = function() {
+                    return [[
+                        {field:'name', title:'工程师', align:'center'},
+                        {field:'fitNumber', title:this.getFitTitle(), align:'center'},
+                        {field:'unfitNumber', title:'所有订单数', align:'center'},
+                        {field:'precent', title:'百分比（%）', align:'center'}
+                    ]];
+                }
+
+                // 加载中
+                var loading;
+                this.getLoading = function() {
+                    if (typeof(this.loading) == 'undefined' || this.loading == null) {
+                        this.loading = false;
+                    }
+                    return this.loading;
+                };
+                this.setLoading = function(loading) {
+
+                    if (loading == true) {
+                        $.messager.progress({
+                            title: '正在加载',
+                            msg: '',
+                            text: '加载中...'
+                        });
+                    } else {
+                        this.clearOrgnizationTable();
+                        this.clearEngineeerTable();
+                        $.messager.progress('close');
+                    }
+                    this.loading = loading;
+                };
+
+                /**
+                 * 加载数据
+                 */
+                this.loadData = function() {
+                    if (this.getLoading() == false) {
+                        var beginDate = this.getBeginDate();
+                        var endDate = this.getEndDate();
+                        var dateQuantumValue = this.getDateQuantum();
+                        var type = this.getType();
+
+                        if (!beginDate || !endDate) {
+                            this.alertError('开始日期与结束日期不能为空！');
+                            return;
+                        }
+
+                        var hourValue = null;
+                        var discountValue = null;
+
+                        if (type == '2') { // 小时
+                            hourValue = this.getHour();
+                            discountValue = null;
+                        } else if (type == '3') { // 折扣
+                            discountValue = this.getDiscount();
+                            hourValue = null;
+                        }
+
+                        var params = {
+                            beginDateValue: beginDate,
+                            endDateValue: endDate,
+                            dateQuantumValue: dateQuantumValue,
+                            type: type,
+                            hourValue: hourValue,
+                            discountValue: discountValue
+                        };
+                        var that = this;
+                        $.ajax({
+                            url: '/admin/orderfinish/search',
+                            data: params,
+                            method: 'POST',
+                            beforeSend: function() {
+                                that.setLoading(true);
+                            },
+                            success: function(res) {
+                                that.setRes(res);
+                                that.setLoading(false);
+                            }
+                        });
+                    }
+                };
+
+                this.alertError = function (message) {
+                    $.messager.alert('出错了', message, 'error')
+                }
+            };
+
+            return {
+                getInstance:function() {
+
+                    return instance || (instance = new init());
+                },
+
+                destroyInstance:function() {
+
+                    if(instance) {
+                        instance = null;
+                    }
+                }
+            };
+        })();
+
+        $(function () {
+            var object = searchObject.getInstance();
+
+            object.setDefaultBeginDate();
+            object.setDefaultEndDate();
+            object.loadData();
+
+            $('#id-select-type').combobox({
+                onSelect: function(record) {
+                    object.setType(record.value);
+                }
+            });
+
+            $('#id-select-organization').combobox({
+                onSelect: function(record) {
+                    object.setOrganizationID(record.value);
+                }
+            });
+
+            $('#id-engineer-select').combobox({
+                onSelect: function(record) {
+                    object.setShowEngineerID(record.id);
+                }
+            });
+        });
+    </script>
+</head>
+
+<body class="easyui-layout">
+
+    <div data-options="region:'north',title:'过滤条件',split:true,collapsible:false" style="height:80px;">
+
+        <!-- 过滤条件开始-->
+        <div style="padding-top: 10px;">
+            &nbsp;&nbsp;
+            统计时间：从
+            <input id="id-date-search-begin" name="date-search-begin" type="text" class="easyui-datebox">
+            到
+            <input id="id-date-search-end" name="date-search-end" type="text" class="easyui-datebox">
+
+            &nbsp;&nbsp;
+            <label for="dateQuantum">统计单元：</label>
+            <foreach name="dateQuantum" item="quantum">
+                <if condition="$quantum.checked eq true">
+                    <input type="radio" name="unit-type" value={$quantum.value} checked="checked">{$quantum.text}
+                    <else />
+                    <input type="radio" name="unit-type" value={$quantum.value}>{$quantum.text}
+                </if>
+            </foreach>
+
+            &nbsp;&nbsp;
+            <label for="select-type">统计类型：</label>
+            <select name="select-type" id="id-select-type" class="easyui-combobox" editable="false">
+                <foreach name="selectType" item="type">
+                    <option value={$type.value}>{$type.text}</option>
+                </foreach>
+            </select>
+
+            <span id="id-span-finish-time" hidden="hidden">
+                &nbsp;&nbsp;
+                <select name="select-finish-time" id="id-select-finish-time" class="easyui-combobox">
+                    <option value="12" selected="selected">12</option>
+                    <option value="24">24</option>
+                    <option value="36">36</option>
+                    <option value="other">自定义</option>
+                </select>
+                <label for="select-finish-time">小时完成率</label>
+            </span>
+
+            <span id="id-span-finish-discount" hidden="hidden">
+                &nbsp;&nbsp;
+                <label for="select-finish-discount">折扣率：</label>
+                <select name="select-finish-time" id="id-select-finish-discount" class="easyui-combobox">
+                    <option value="0.9">0.9</option>
+                    <option value="0.8" selected="selected">0.8</option>
+                    <option value="0.7">0.7</option>
+                    <option value="other">自定义</option>
+                </select>
+            </span>
+
+            &nbsp;&nbsp;
+            <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['搜索'])) { echo 'hide';} ?>" plain="true" iconCls="icon-search" onclick="searchObject.getInstance().loadData();">搜索</a>
+
+            &nbsp;&nbsp;
+            <label for="select-organization">组织：</label>
+            <select name="select-organization" id="id-select-organization" class="easyui-combobox">
+                <option value="all">全部</option>
+                <foreach name="organizationList" item="organization">
+                    <option value={$organization.id}>{$organization.name}</option>
+                </foreach>
+            </select>
+
+        </div>
+        <!-- 过滤条件结束-->
+
+    </div>
+
+    <div id="id-div-chart" data-options="region:'center'">
+
+    </div>
+
+    <div data-options="region:'east',collapsible:false" style="width: 280px;" title="">
+        <table id="id-div-table" class="easyui-datagrid" singleSelect="true">
+
+        </table>
+    </div>
+
+    <!-- 工程师内容开始-->
+    <div id="id-engineer-window" class="easyui-window easyui-layout" title="工程师数据" style="width:100%;height:100%" closed="true" maximizable="false" minimizable="false">
+
+        <div data-options="region:'north',title:''" style="height: 50px; padding-top: 10px;">
+            &nbsp;&nbsp;
+            <label for="name-engineer">工程师：</label>
+            <select id="id-engineer-select" name="name-engineer">
+
+            </select>
+        </div>
+
+        <div data-options="region:'center',title:''" id="id-div-chart-engineer">
+
+        </div>
+
+        <div data-options="region:'east',title:'',split:true,collapsible:false" style="width:350px;">
+            <table id="id-div-table-engineer" class="easyui-datagrid"  singleSelect="true">
+
+            </table>
+        </div>
+    </div>
+    <!-- 工程师内容结束-->
+
+</body>
+</html>

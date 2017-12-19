@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>user</title>
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/default/easyui.css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/icon.css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/css/user.css">
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/locale/easyui-lang-zh_CN.js"></script>
+    <script type="text/javascript">
+        $(function(){
+            $('#search-start-time').datebox('setValue', '<?php echo $startTime;?>');
+            $('#search-end-time').datebox('setValue', '<?php echo $endTime;?>');
+        });
+        
+        function searchItem()
+        {
+        	$('#search').attr('action', "<?php echo U('admin/statistics/engineerFittings');?>");
+        	$('#search').submit();
+        }
+        
+        function exportItem()
+        {
+        	$('#search').attr('action', "<?php echo U('admin/statistics/exportEngineerFittings');?>");
+        	$('#search').submit();
+        }
+    </script>
+</head>
+<body>
+<body class="easyui-layout">
+    <table id="dg" title="工程师用料" class="easyui-datagrid" style="width:100%; max-height:800px;" toolbar="#toolbar" rownumbers="true" fitColumns="true" singleSelect="true" nowrap="false">
+        <thead>
+            <tr>
+                <th field="field<?php echo $i++;?>" width="30">配件 \ 地区（数量）</th>
+            	<?php $i = 0; foreach($address as $city) {?>
+                <th field="field<?php echo $i++;?>" width="10"><?php echo $city;?></th>
+                <?php }?>
+            </tr>
+        </thead>
+        <?php foreach($data as $item) {?>
+        <tr>
+        	<td><?php echo $item['fitting_title'];?></td>
+        	<?php foreach($item['area'] as $city => $amount) {?>
+        	<td><?php echo $amount;?></td>
+        	<?php }?>
+        </tr>
+        <?php }?>
+    </table>
+    <div id="toolbar">
+        <form id="search" method="post" action="<?php echo U('admin/statistics/engineerFittings');?>">
+        <p>
+            <span>日期:</span>
+            <input type="text" class="easyui-datebox" id='search-start-time' name="start_time" panelHeight="auto"> 至
+            <input type="text" class="easyui-datebox" id='search-end-time' name="end_time" panelHeight="auto">
+            <a href="javascript:void(0)" class="easyui-linkbutton" plain="true" iconCls="icon-search" onclick="searchItem();">搜索</a>
+            <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['导出'])) { echo 'hide';} ?>" plain="true" iconCls="icon-export" onclick="exportItem();">导出</a>
+        </p>
+        </form>
+    </div>
+</body>
+</html>

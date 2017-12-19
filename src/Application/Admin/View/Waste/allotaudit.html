@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>user</title>
+	<link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/default/easyui.css">
+	<link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/icon.css">
+	<link rel="stylesheet" type="text/css" href="__PUBLIC__/css/user.css">
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/datagrid-cellediting.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/js/user.js"></script>
+    <script type="text/javascript">
+        var url;
+
+        function saveItem() {
+            $('#fm').form('submit',{
+                url: url,
+                onSubmit: function(){
+                    if ($(this).form('validate')) {
+                        $('#load').dialog('open');
+                    };
+                    return $(this).form('validate');
+                },
+                success: function(result){
+                    $('#load').dialog('close');
+                    var result = eval('('+result+')');
+
+                    if (result.success){
+                        $('#dlg').dialog('close');
+                        $('#dg').datagrid('reload');
+                    } else {
+                        $.messager.show({
+                            title: '错误',
+                            msg: result.errorMsg,
+                            showType:'fade',
+                            style:{
+                                right:'',
+                                bottom:''
+                            }
+                        });
+                    }
+                }
+            });
+        }
+
+        function deleteItem(){
+            var row = $('#dg').datagrid('getSelected');
+            if (row){
+                $.messager.confirm('Confirm', '确认删除此记录?',function(r){
+                    if (r){
+                        $.post('/admin/fiting/delete',{id:row.id},function(result){
+                            if (result.success){
+                                $('#dg').datagrid('reload');
+                            } else {
+                                $.messager.show({
+                                    title: '错误',
+                                    msg: result.errorMsg,
+                                    showType:'fade',
+                                    style:{
+                                        right:'',
+                                        bottom:''
+                                    }
+                                });
+                            }
+                        },'json');
+                    }
+                });
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+        function searchItem(){
+            $('#dg').datagrid({
+                queryParams: {
+                    id: $('#search-organization').combobox('getValue'),
+                }
+            });
+        }
+
+
+        $(function(){
+
+            $('#mm').menu();
+            $(document).bind('contextmenu',function(e){
+                e.preventDefault();
+                $('#mm').menu('show', {
+                    left: e.pageX,
+                    top: e.pageY
+                });
+            });
+        });
+        
+        function formStatus(val){
+            var arr = new Array();
+            arr[1] = '<span class="label label-bg">入库</span>';
+            arr[2] = '<span class="label label-bg1">调拨</span>';
+            arr[3] = '<span class="label label-bg4">回收</span>';
+            arr[-1] = '<span class="label label-bg3">取消</span>';
+            return arr[val];
+        }
+
+        function allotApply(val){
+            var arr = new Array();
+            arr[-1] = '<span class="label label-bg3">已拒绝</span>';
+            arr[0] = '<span class="label label-bg5">待审核</span>';
+            arr[1] = '<span class="label label-bg2">审核通过</span>';
+            arr[2] = '<span class="label label-bg1">已发货</span>';
+            arr[3] = '<span class="label label-bg4">已收货</span>';
+            return arr[val];
+        }
+
+        function audit(obj,val){
+            var row = $('#dg').datagrid('getSelected');
+            console.log();
+            var url = "/admin/waste/applyAudit";
+
+
+            var id= obj.parent().parent().parent().children().children().html();
+
+            if (val == false) {
+                val = -1;
+
+            }
+            $.post(url,
+                    {
+                        id:id,
+                        status:val
+                    },
+                    function(data){
+                        if (data.errorStatus){
+//                            $('#win').window('open');
+//                            $('#win').append(data.msg);
+                            $.messager.show({
+                                title: '错误',
+                                msg: data.msg,
+                                showType:'fade',
+                                style:{
+                                    right:'',
+                                    bottom:''
+                                }
+                            });
+
+                        }
+                        $('#dg').datagrid('reload')
+                    });
+
+        }
+
+        function rightAudit(val){
+            var row = $('#dg').datagrid('getSelected');
+            var url = "/admin/waste/applyAudit";
+
+
+            var id= row.id;
+
+            if (val == false) {
+                val = -1;
+
+            }
+            $.post(url,
+                    {
+                        id:id,
+                        status:val
+                    },
+                    function(data){
+                        if (data.errorStatus){
+//                            $('#win').window('open');
+//                            $('#win').append(data.msg);
+                            $.messager.show({
+                                title: '错误',
+                                msg: data.msg,
+                                showType:'fade',
+                                style:{
+                                    right:'',
+                                    bottom:''
+                                }
+                            });
+
+                        }
+                        $('#dg').datagrid('reload')
+                    });
+
+        }
+
+        function formatType(val){
+        	if (val == '1'){
+                return '<span class="label label-bg1">申请</span>';
+            } else {
+                return '<span class="label label-bg">退还</span>';
+            }
+        }
+
+        function getDetailed(){
+            var row = $('#dg').datagrid('getSelected');
+
+            if (row){
+
+                $("#box").dialog("open").dialog("setTitle", "废件详情");
+                $('#joinex').datagrid({
+                    url:'/admin/waste/applyDetail/id/' + row.id,
+                });
+                $('#fm').form('clear');
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+
+        function editItem(){
+            var row = $('#dg').datagrid('getSelected');
+
+            if (row) {
+                url = '/admin/purchase/save/id/' + row.id;
+
+                $('#dlg').dialog('open').dialog('center').dialog('setTitle','编辑');
+                $('#fm').form('load', row);
+
+                var fittitngs = $.parseJSON(row.fittings);;
+                $('#dg-fitting').datagrid({data: fittitngs});
+
+                if (row.type == 1) {
+                    $('#batch').hide();
+                    $('#provider').hide();
+                } else {
+                    $('#batch').show();
+                    $('#provider').show();
+                }
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+        function newApply(){
+            $('#dlg').dialog('open').dialog('center').dialog('setTitle', '新增申请');
+            url = '/admin/waste/newApply';
+        }
+        
+        //行操作按钮
+        function formatAllotAuditRowActionButton(val, row)
+        {
+            var html = $('#rowmenu').html();
+            
+            if (row.status == 1 || row.status == -1 || row.status == 2 || row.status == 3) {
+                html = html.replace(/pass/, 'hide');
+                html = html.replace(/nopass/, 'hide');
+            }
+            
+            return html;
+        }
+    </script>
+</head>
+<body class="easyui-layout">
+        <div id="box" class="easyui-dialog" style="width: 900px;min-height: 400px;" closed="true">
+            <div data-options="region:'east'" style="width:880px;">
+                <table id="joinex" class="easyui-datagrid" singleSelect="true" pagination="true" pageSize="20">
+                    <thead>
+                    <tr>
+                        <th field="phone" width="33%">机型</th>
+                        <th field="name" width="33%">名称</th>
+                        <th field="amount" width="33%">数量</th>
+                    </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+        <table id="dg" title="废件列表" class="easyui-datagrid" style="width:100%;" url="/admin/waste/auditRows" toolbar="#toolbar" pagination="true" pageSize="30" pagePosition="top" rownumbers="true" fitColumns="true" singleSelect="true" rownumbers="true" pagination="true">
+            <thead>
+            <tr>
+                <th field="id" id="id" width="10%">ID</th>
+                <th field="proposer" width="10%">申请人</th>
+                <th field="proposer_org" width="10%">申请地区</th>
+                <th field="auditor" width="10%">审核人</th>
+                <th field="auditor_org" width="10%">审核地区</th>
+                <th field="type" formatter="formatType"width="15%">类型</th>
+                <th field="time" formatter="formatDate"width="10%">时间</th>
+                <th field="status" formatter="allotApply" width="10%">状态</th>
+                <th field="operation" formatter="formatAllotAuditRowActionButton"  width="15%">操作</th>
+            </tr>
+            </thead>
+    </table>
+
+    <div id="toolbar">
+        <span>地区:</span>
+        <select class="easyui-combobox" limitToList="true" id='search-organization' url="/admin/waste/organization" valueField="id" textField="name" style="width:150px;">
+        </select>
+		<a href="javascript:void(0)" class="easyui-linkbutton" plain="true" iconCls="icon-search" onclick="searchItem()">搜索</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-member" plain="true" onclick="getDetailed()">废件详情</a>
+    </div>
+    <div id="mm" style="width:120px;">
+        <div iconCls="icon-pass"  onclick="rightAudit(1);"><span>通过</span></div>
+        <div iconCls="icon-nopass" onclick="rightAudit(false)"><span>不通过</span></div>
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-member" plain="true" onclick="getDetailed()">废件详情</a>
+    </div>
+    <div id="rowmenu" class="hide">
+        <a href="javascript:void(0)" class="easyui-linkbutton pass" iconCls="icon-pass" plain="true" onclick="audit($(this),1);">通过</a>&nbsp;
+        <a href="javascript:void(0)" class="easyui-linkbutton nopass" iconCls="icon-nopass" plain="true" onclick="audit($(this),false);">不通过</a>
+
+    </div>
+    <div id="load" class="easyui-dialog" title="消息" closed="true" style="width:200px;height:100px;padding:10px">
+        <span>处理中...</span>
+    </div>
+        <div id="dlg" class="easyui-dialog" style="width:800px;height:480px;padding:10px 20px"
+             closed="true" buttons="#dlg-buttons">
+            <div class="ftitle">栏目管理</div>
+            <form id="fm" method="post">
+                <div class="fitem">
+                    <div class="fitem">
+                        <label>目标仓库:</label>
+                        <select class="easyui-combobox" limitToList="true" name="auditor_org" url="/admin/waste/organization" valueField="id" textField="name" style="width:150px;">
+                        </select>
+
+                    </div>
+                    <div class="fitem">
+                        <label>废料:</label>
+                        <!--<a href="javascript:void(0)" onclick="open()" class="easyui-linkbutton">添加</a>-->
+                        <table id="tt" title="Checkbox Select" class="easyui-datagrid" style="width:600px;height:250px"
+                               url="/admin/waste/stockRows"
+                               idField="itemid" pagination="true"
+                               iconCls="icon-edit"
+                               singleSelect="true",>
+                            <thead>
+                            <tr>
+                                <th field="ck" width="5%" checkbox="true"></th>
+                                <th field="id" width="5%">ID</th>
+                                <th field="phone" width="30%">机型</th>
+                                <th field="title" width="40%">废件名称</th>
+                                <th field="amount" width="10%">库存数量</th>
+                                <th data-options="field:'unitcost',width:80,align:'right',editor:{type:'textbox'}">Unit Cost</th>
+                            </tr>
+                            </thead>
+                        </table>
+                    </div>
+                    <div class="fitem">
+                        <label>类型:</label>
+                        申请:
+                        <input class="easyui-validatebox" name="status" type="radio" required="true" value="1" validType="requireRadio['input[name=\'status\']']">
+                        退还:
+                        <input class="easyui-validatebox" name="status" type="radio" required="true" value="2">
+
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div id="dlg-buttons">
+            <a href="#" class="easyui-linkbutton" iconCls="icon-ok" onclick="saveUser()">保存</a>
+            <a href="#" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg').dialog('close')">取消</a>
+        </div>
+
+        <div id="win" class="easyui-dialog" style="width: 900px;min-height: 400px;" closed="true">
+            <div data-options="region:'east'" style="width:880px;">
+
+            </div>
+        </div>
+        <div id="w" class="easyui-window" closed="true" data-options="title:'错误',inline:true" style="width:50px;height:25px;padding:10px">
+
+        </div>
+</body>
+</html>

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/default/easyui.css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/icon.css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/css/user.css">
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/locale/easyui-lang-zh_CN.js"></script>
+    <!--<script type="text/javascript" src="__PUBLIC__/js/user.js"></script>-->
+
+    <script>
+
+        function params() {
+            var params = {
+                clean_time_start: $('#search-clean-time-start').datebox('getValue'),   // 结算时间开始
+                clean_time_end: $('#search-clean-time-end').datebox('getValue'),   // 结算时间结始
+                engineer: $('#search-engineer').combobox('getValue'),   // 工程师
+                order_number: $('#search-order-number').val()   // 订单编号
+            };
+            return params;
+        }
+
+        /**
+         * 搜索
+         */
+        function searchItem() {
+            console.log(params());
+            $('#dg').datagrid({
+                queryParams: params()
+            });
+        }
+
+        /**
+         * 导出
+         */
+        function exportItem() {
+            $('#export_id').form('submit', {
+                url: '/admin/engineerprofit/export',
+                queryParams: params()
+            });
+        }
+
+    </script>
+</head>
+<body class="easyui-layout">
+
+<!-- 过滤条件开始-->
+    <div id="toolbar">
+        <form id="export_id" method="post">
+            &nbsp;&nbsp;
+            <span>付款日期:</span>
+            <input type="text" class="easyui-datebox" id='search-clean-time-start' panelHeight="auto">
+            至
+            <input type="text" class="easyui-datebox" id='search-clean-time-end' panelHeight="auto">
+            &nbsp;&nbsp;
+            <span>工程师:</span>
+            <select class="easyui-combobox" id='search-engineer'>
+                <foreach name="engineers" item="val">
+                    <option value="{$val.id}">{$val.name}</option>
+                </foreach>
+            </select>
+            &nbsp;&nbsp;
+            <span>订单号:</span>
+            <input type="text" class="easyui-textbox" id='search-order-number' panelHeight="auto" style="width:300px;">
+            &nbsp;&nbsp;
+            <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['搜索'])) { echo 'hide';} ?>" plain="true" iconCls="icon-search" onclick="searchItem()">搜索</a>
+            <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['导出'])) { echo 'hide';} ?>" plain="true" iconCls="icon-export" onclick="exportItem()">导出</a>
+        </form>
+    </div>
+    <!-- 过滤条件结束-->
+
+    <!-- 列表开始-->
+    <table class="easyui-datagrid" id="dg" name="工程师收益" url="/admin/engineerprofit/rows" style="width:100%; max-height:100%;" toolbar="#toolbar"  pagination="true" pageSize="30" pagePosition="top" rownumbers="true" fitColumns="true" singleSelect="true" nowrap="false">
+        <thead>
+        <tr>
+            <th field="engineer_id" data-options="width:60">工程师ID</th>
+            <th field="name" data-options="width:60">姓名</th>
+            <th field="order_number" data-options="width:120">订单号</th>
+            <th field="work_number" data-options="width:60">工号</th>
+            <th field="cellphone" data-options="width:120">手机</th>
+            <th field="earning" data-options="width:60">实际收益</th>
+            <th field="is_clear" data-options="width:60">是否已发放</th>
+            <th field="clearing_time" data-options="width:60">付款时间</th>
+            <!--<th field='action' width="40" formatter="formatOrderRowActionButton">操作</th>-->
+        </tr>
+        </thead>
+    </table>
+    <!-- 列表结束-->
+</body>
+</html>

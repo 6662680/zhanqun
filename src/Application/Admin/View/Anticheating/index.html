@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>user</title>
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/default/easyui.css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/icon.css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/css/user.css">
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/locale/easyui-lang-zh_CN.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/js/user.js"></script>
+    <script>
+
+        /**
+         * 得到搜索导出条件
+         * @returns {{create_time_start: jQuery, create_time_end: jQuery, clearing_time_start: jQuery, clearing_time_end: jQuery, action_time_start: jQuery, action_time_end: jQuery, organization: jQuery, engineer: jQuery, action: (*|jQuery)}}
+         */
+        function params() {
+            var params = {
+                create_time_start: $('#search-create-time-start').datebox('getValue'),   // 下单时间开始
+                create_time_end: $('#search-create-time-end').datebox('getValue'),   // 下单时间结始
+                clearing_time_start: $('#search-clearing-time-start').datebox('getValue'),  // 结单时间开始
+                clearing_time_end: $('#search-clearing-time-end').datebox('getValue'),  // 结单时间结束
+                action_time_start: $('#search-action-time-start').datebox('getValue'),  // 操作时间开始
+                action_time_end: $('#search-action-time-end').datebox('getValue'),  // 操作时间结束
+                organization: $('#search-organization').combobox('getValue'),   // 组织
+                engineer: $('#search-engineer').combobox('getValue'),   // 工程师
+                action: $('#search-action').val()   // 操作关键字
+            };
+            return params;
+        }
+
+        /**
+         * 搜索
+         */
+        function searchItem() {
+            $('#dg').datagrid({
+                queryParams: params()
+            });
+        }
+
+        function exportItem() {
+            $('#export_id').form('submit', {
+                url: '/admin/anticheating/export',
+                queryParams: params()
+            });
+        }
+
+    </script>
+</head>
+<body class="easyui-layout">
+
+    <!-- 过滤条件开始-->
+    <div id="toolbar">
+        &nbsp;&nbsp;
+        <span>下单日期:</span>
+        <input type="text" class="easyui-datebox" id='search-create-time-start' panelHeight="auto">
+        至
+        <input type="text" class="easyui-datebox" id='search-create-time-end' panelHeight="auto">
+        &nbsp;&nbsp;
+        <span>组织:</span>
+        <select class="easyui-combobox" id='search-organization'>
+            <option value="all">全部</option>
+            <foreach name="organizations" item="val">
+                <option value="{$val.id}">{$val.alias}</option>
+            </foreach>
+        </select>
+        <br>
+
+        &nbsp;&nbsp;
+        <span>结单日期:</span>
+        <input type="text" class="easyui-datebox" id='search-clearing-time-start' panelHeight="auto">
+        至
+        <input type="text" class="easyui-datebox" id='search-clearing-time-end' panelHeight="auto">
+        &nbsp;&nbsp;
+        <span>工程师:</span>
+        <select class="easyui-combobox" id='search-engineer'>
+            <foreach name="engineers" item="val">
+                <option value="{$val.id}">{$val.name}</option>
+            </foreach>
+        </select>
+        <br>
+
+        &nbsp;&nbsp;
+        <span>操作日期:</span>
+        <input type="text" class="easyui-datebox" id='search-action-time-start' panelHeight="auto">
+        至
+        <input type="text" class="easyui-datebox" id='search-action-time-end' panelHeight="auto">
+        &nbsp;&nbsp;
+        <span>操作:</span>
+        <input type="text" class="easyui-textbox" id='search-action' panelHeight="auto" style="width:300px;">
+        <a href="javascript:void(0)" class="easyui-linkbutton" plain="true" iconCls="icon-search" onclick="searchItem()">搜索</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" plain="true" iconCls="icon-export" onclick="exportItem()">导出</a>
+    </div>
+    <!-- 过滤条件结束-->
+
+    <!-- 列表开始-->
+    <table class="easyui-datagrid" id="dg" name="订单操作记录" url="/admin/anticheating/rows" style="width:100%; max-height:100%;" toolbar="#toolbar"  pagination="true" pageSize="30" pagePosition="top" rownumbers="true" fitColumns="true" singleSelect="true" nowrap="false">
+        <thead>
+        <tr>
+            <th field="id">ID</th>
+            <th field="number">订单编号</th>
+            <th field="action">操作</th>
+            <th field="phone_name">机型</th>
+            <th field="time" formatter="formatDate">操作时间</th>
+            <th field="create_time" formatter="formatDate">下单时间</th>
+            <th field="end_time" formatter="formatDate">结单时间</th>
+            <th field="is_clearing">是否结单</th>
+            <th field="organization_name">组织</th>
+            <th field="engineer_name">工程师</th>
+            <th field="customer">客户</th>
+            <th field="cellphone">客户电话</th>
+        </tr>
+        </thead>
+    </table>
+    <!-- 列表结束-->
+
+    <!-- 导出表单开始-->
+    <form id="export_id" method="post">
+    </form>
+    <!-- 导出表单结束-->
+
+</body>
+
+</html>

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>user</title>
+	<link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/default/easyui.css">
+	<link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/icon.css">
+	<link rel="stylesheet" type="text/css" href="__PUBLIC__/css/user.css">
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/datagrid-cellediting.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/js/user.js"></script>
+    <script type="text/javascript">
+        var url;
+
+        function searchItem(){
+            $('#dg').datagrid({
+                queryParams: {
+                    id: $('#search-organization').combobox('getValue'),
+                    type: $('#search-type').combobox('getValue'),
+                    inout: $('#search-inout').combobox('getValue'),
+                    starttime: $('#search-starttime').combobox('getValue'),
+                    endtime: $('#search-endtime').combobox('getValue'),
+                    keyword: $('#search-keyword').val(),
+                    user: $('#search-auditor').combobox('getValue')
+                }
+            });
+        }
+
+        //导出
+        function exportItem()
+        {
+
+            $('#export').form('submit', {
+                url: '/admin/waste/inoutexport',
+                queryParams: {
+                    id: $('#search-organization').combobox('getValue'),
+                    type: $('#search-type').combobox('getValue'),
+                    inout: $('#search-inout').combobox('getValue'),
+                    starttime: $('#search-starttime').combobox('getValue'),
+                    endtime: $('#search-endtime').combobox('getValue'),
+                    keyword: $('#search-keyword').val(),
+                    user: $('#search-auditor').combobox('getValue')
+                }
+            });
+        }
+
+        $(function(){
+            $('#mm').menu();
+            $(document).bind('contextmenu',function(e){
+                e.preventDefault();
+                $('#mm').menu('show', {
+                    left: e.pageX,
+                    top: e.pageY
+                });
+            });
+        });
+
+        function formatType(val){
+            var arr = new Array();
+            arr[1] = '<span class="label label-bg4">出入库</span>';
+            arr[2] = '<span class="label label-bg1">调拨</span>';
+            arr[3] = '<span class="label label-bg2">工程师退还</span>';
+            arr[4] = '<span class="label label-bg3">报损</span>';
+            arr[5] = '<span class="label label-bg5">回收出库</span>';
+            return arr[val];
+        }
+
+        // 格式化类型
+        function formatInout(val, row) {
+            switch (val)
+            {
+                case '1':
+                    return '<span class="label label-bg2">入库</span>';
+                    break;
+                case '2':
+                    return '<span class="label label-bg3">出库</span>';
+                    break;
+            }
+        }
+
+        $(function() {
+            // 获取经手人
+            $('#search-organization').combobox({
+                onChange: function (newValue, oldValue) {
+                    $.get('/admin/waste/auditor', {id: newValue}, function (data) {
+
+                        if (data.length > 0) {
+                            $('#search-auditor').combobox('loadData', data);
+                        }
+                        ;
+                    });
+                }
+            });
+        })
+
+
+    </script>
+</head>
+<body class="easyui-layout">
+        <table id="dg" title="出入库记录" class="easyui-datagrid" style="width:100%; max-height:800px;" url="/admin/waste/inoutRow" toolbar="#toolbar" pagination="true" pageSize="30" pagePosition="top" rownumbers="true" fitColumns="true" singleSelect="true" rownumbers="true" pagination="true">
+            <thead>
+            <tr>
+                <th field="id" id="id" width="5">ID</th>
+                <th field="org" width="5">地区</th>
+                <th field="inout"formatter="formatInout" width="8">出入库</th>
+                <th field="type" formatter="formatType"width="8">类型</th>
+                <th field="title"  width="15">废料</th>
+                <th field="phone_name"  width="10">机型</th>
+                <th field="amount"  width="5">数量</th>
+                <th field="name" width="10">工程师</th>
+                <th field="number" width="10">订单号</th>
+                <th field="time" formatter="formatDate"width="10">时间</th>
+                <th field="price" width="10">价格</th>
+                <th field="residue"width="10">剩余</th>
+                <th field="realname"width="10">经手人</th>
+            </tr>
+            </thead>
+    </table>
+    <div id="toolbar">
+        <form id="export" method="post">
+        <span>地区:</span>
+        <select class="easyui-combobox" limitToList="true" id='search-organization' url="/admin/waste/belong" valueField="id" textField="alias" style="width:150px;">
+        </select>
+        <span>经手人:</span>
+        <select class="easyui-combobox" limitToList="true" id='search-auditor' url="/admin/waste/auditor" valueField="id" textField="realname" style="width:150px;">
+        </select>
+        &nbsp;
+        <span>出入:</span>
+        <select class="easyui-combobox" limitToList="true" id='search-inout' style="width:150px;">
+            <option value="">全部</option>
+            <option value="2">出库</option>
+            <option value="1">入库</option>
+        </select>
+        &nbsp;
+        <span>类型:</span>
+        <select class="easyui-combobox" limitToList="true" id='search-type' style="width:150px;">
+            <option value="">全部</option>
+            <option value="1">出库</option>
+            <option value="2">入库</option>
+        </select>
+        &nbsp;
+        <span>开始时间:</span>
+        <input class="easyui-datetimebox" id="search-starttime">
+        <span>结束时间:</span>
+        <input class="easyui-datetimebox" id="search-endtime">
+        &nbsp;
+        <span>关键字(配件名称/配件编号):</span>
+        <input type="text" class="easyui-textbox" id='search-keyword' panelHeight="auto" style="width:300px;">
+        </select>
+		<a href="javascript:void(0)" class="easyui-linkbutton" plain="true" iconCls="icon-search" onclick="searchItem()">搜索</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['导出'])) { echo 'hide';} ?>" iconCls="icon-export" plain="true" onclick="exportItem();">导出</a>
+        </form>
+    </div>
+</body>
+</html>

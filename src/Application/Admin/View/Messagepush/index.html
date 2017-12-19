@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/default/easyui.css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/icon.css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/css/user.css">
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/locale/easyui-lang-zh_CN.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/js/user.js"></script>
+    <script>
+
+        /**
+         * 加载未选中工程师
+         */
+        function loadUnselectEngineerTable(organization_id) {
+            $.ajax({
+                url: '/admin/messagepush/engineerlist',
+                data: {organization_id: organization_id},
+                success: function(data) {
+                    var unRows = data.rows;
+                    var selectedRows = $('#selected-engineer-table').datagrid('getRows');
+                    var rows = [];
+                    if (selectedRows && selectedRows.length > 0) {
+                        $.each(unRows, function(key, value){
+                            var flag = false;
+                            $.each(selectedRows, function(k, va){
+                                if (value.id == va.id) {
+                                    flag = true;
+                                    return false;
+                                }
+                            });
+
+                            if (!flag) {
+                                rows.push(value);
+                            }
+                        });
+                    } else {
+                        rows = unRows;
+                    }
+
+                    $('#unselect-engineer-table').datagrid('loadData', rows);
+                }
+            });
+        }
+
+        /**
+         * 添加消息
+         */
+        function addMessage() {
+            $('#win-edit-message').window('open');
+            loadUnselectEngineerTable(0);
+        }
+
+        /**
+         * 搜索消息
+         */
+        function searchMessage() {
+            $('#dg').datagrid('reload', {keyword: $('#id-toolbar-keyword').val()});
+        }
+
+        /**
+         * 消息详情
+         */
+        function detailItem() {
+            $('#win-edit-message').window('close');
+            var row = $('#dg').datagrid('getSelected');
+            if (row) {
+                $('#wid-detail-message').window()
+                $('#table-message-detail').datagrid({
+                    url: '/admin/messagepush/detail',
+                    queryParams: {
+                        id: row.id
+                    }
+                });
+            }
+        }
+
+        /**
+         * 添加新消息上的保存
+         */
+        function saveMessage() {
+            // 选中了的
+            var selectioneds = $('#selected-engineer-table').datagrid('getRows');
+            var eids = [];
+            if (selectioneds.length > 0) {
+                $.each(selectioneds, function(key, value){
+                    eids.push(value.id);
+                });
+            }
+            // 参数
+
+            var type = $('#form-add-message-type').combobox('getValue');
+            var title = (type == '2') ? $('#form-add-message-title').val() : $('#form-add-message-reason').val();
+            var content = (type == '2') ? $('#form-add-message-content').val() : $('#form-add-message-des').val();;
+
+            var params = {
+                id: $('#form-message-id').val(),
+                title: title,
+                content: content,
+                type: type,
+                eids: (eids.length > 0) ? eids : null
+            }
+            console.log(params);
+            $('#form-message-edit').form('submit', {
+                url: '/admin/messagepush/add',
+                method: 'post',
+                queryParams: params,
+                method: 'post',
+                onSubmit: function() {
+                    return $(this).form('enableValidation').form('validate');
+                },
+                success: function(data){
+                    console.log(data);
+                    var parsedJson = jQuery.parseJSON(data)
+                    if (parsedJson.res == 0) {
+                        $('#form-add-message').form('reset');
+                        $('#win-edit-message').window('close');
+                        $('#dg').datagrid('reload');
+                    } else {
+                        alert(parsedJson.msg);
+                    }
+                }
+            });
+        }
+
+        function pushMessage() {
+            var row = $('#dg').datagrid('getSelected');
+            if (row) {
+                $.messager.confirm('确认', '您确认要发送信息“'+row.title+'”吗？', function(res){
+                    if (res == true) {
+                        var message_id = row.id;
+                        if (message_id > 0) {
+                            $.ajax({
+                                url: '/admin/messagepush/push',
+                                data: {id: message_id},
+                                success: function(res) {
+//                                    console.log(res);
+                                    if (res.code == 0) {
+                                        $.messager.show({
+                                            title: '成功',
+                                            msg: '消息“' + row.title + '”推送成功',
+                                            timeout: 1000,
+                                            showType: 'slide',
+                                            style: {
+                                                top: document.body.scrollTop + document.documentElement.scrollTop,
+                                            }
+                                        });
+                                        $('#dg').datagrid('reload');
+                                    } else {
+                                        $.messager.alert('出错了', res.msg);
+                                    }
+                                }
+                            });
+                        }
+                    }
+                });
+            }
+        }
+
+        function editMessage() {
+            var row = $('#dg').datagrid('getSelected');
+            if (row) {
+                $('#win-edit-message').window('open');
+                $('#form-message-edit').form('reset');
+                $.ajax({
+                    url: '/admin/messagepush/edit/id/'+row.id,
+                    success: function(data) {
+                        // 已选中的工程师
+                        var engineers = [];
+                        if (data.engineer_ids != null && data.engineer_names != null) {
+                            var ids = data.engineer_ids.split(',');
+                            var names = data.engineer_names.split(',');
+                            $.each(ids, function(key, value){
+                                engineers.push({id: value, name: names[key], organization_id: data.organization_id});
+                            });
+                        }
+                        $('#selected-engineer-table').datagrid('loadData', engineers);
+                        loadUnselectEngineerTable(0);
+                        showAppOrSms(data.type);
+                        $('#form-message-edit').form('load', {
+                            id: data.id,
+                            title: data.title,
+                            type: data.type,
+                            content: data.content
+                        });
+                    }
+                });
+            }
+        }
+
+        function cancel() {
+            $('#selected-engineer-table').datagrid('loadData', []);
+            $('#unselect-engineer-table').datagrid('loadData', []);
+            $('#form-message-edit').form('reset');
+            $('#win-edit-message').window('close');
+        }
+
+        function showAppOrSms(value) {
+            value = parseInt(value);
+            switch (value) {
+                case 1:
+                    $('#id-message-app').hide();
+                    $('#id-message-sms').show();
+                    break;
+                case 2:
+                    $('#id-message-app').show();
+                    $('#id-message-sms').hide();
+                    break;
+                default :
+                    break;
+            }
+        }
+
+
+        /**
+         * 操作处理
+         * @param val
+         * @returns {*|jQuery}
+         */
+        function actionButtons(val) {
+            var html = $('#rowButtons').html();
+            if (val == true) {  // 已推送
+                html = html.replace(/edit-class/, 'hide');
+                html = html.replace(/push-class/, 'hide');
+            }
+            return html;
+        }
+
+        /**
+         * 未选工程师=>已选工程师
+         */
+        function join() {
+            var rows = $('#unselect-engineer-table').datagrid('getSelections');
+            if (rows) {
+                var selectData = $('#selected-engineer-table').datagrid('getRows');
+                var unSelectData = $('#unselect-engineer-table').datagrid('getRows');
+
+                $.each(rows, function(key, value){
+                    unSelectData.splice($.inArray(value, unSelectData), 1);
+                });
+                selectData = selectData.concat(rows);
+                $('#selected-engineer-table').datagrid('loadData', selectData);
+                $('#unselect-engineer-table').datagrid('loadData', unSelectData);
+            }
+        }
+
+        /**
+         * 已选工程师=>未选工程师
+         */
+        function exit() {
+            var rows = $('#selected-engineer-table').datagrid('getSelections');
+            if (rows) {
+                var selectRows = $('#selected-engineer-table').datagrid('getRows');
+
+                $.each(rows, function(key, value){
+                    selectRows.splice($.inArray(value, selectRows), 1);
+                });
+
+                $('#selected-engineer-table').datagrid('loadData', selectRows);
+            }
+
+            var oid = $('#id_organization').combobox('getValue');
+            loadUnselectEngineerTable(oid);
+        }
+
+        $(function() {
+            $('#id_organization').combobox({
+                onSelect: function(record) {
+                    loadUnselectEngineerTable(record.value);
+                }
+            });
+
+            $('#form-add-message-type').combobox({
+                onSelect: function(record) {
+                    showAppOrSms(record.value);
+                }
+            });
+        });
+
+    </script>
+</head>
+
+<body class="easyui-layout">
+
+    <!-- 过滤条件开始-->
+    <div id="toolbar">
+        &nbsp;&nbsp;
+        <label for="organization">关键字（标题或内容）:</label>
+        <input type="text" class="easyui-textbox" id="id-toolbar-keyword" name="title_content" />
+        <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['搜索'])) { echo 'hide';} ?>" plain="true" iconCls="icon-search" onclick="searchMessage()">搜索</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['新增消息'])) { echo 'hide';} ?>" plain="true" iconCls="icon-add" onclick="addMessage()">新增消息</a>
+    </div>
+    <!-- 过滤条件结束-->
+
+    <!-- 列表开始-->
+    <table id="dg" class="easyui-datagrid" toolbar="#toolbar" url="/admin/messagepush/rows" style="width:100%; max-height:100%;" pagination="true" pageSize="30" pagePosition="top" rownumbers="true" fitColumns="true" singleSelect="true" nowrap="false">
+        <thead>
+        <tr>
+            <th field="id" data-options="width:20,align:'right'">ID</th>
+            <th field="title" data-options="width:80,align:'center'">标题</th>
+            <th field="content" data-options="width:180,align:'center'">内容</th>
+            <th field="engineers" data-options="width:180,align:'center'">接收工程师</th>
+            <th field="type" data-options="width:20,align:'center'">推送类型</th>
+            <th field="time" data-options="width:40,align:'center'">最后编辑时间</th>
+            <th field="pushed" data-options="width:80,align:'center'" formatter="actionButtons">操作</th>
+        </tr>
+        </thead>
+    </table>
+    <!-- 列表结束-->
+
+    <!-- 操作开始-->
+    <div id="rowButtons" hidden="true">
+        <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['详情'])) { echo 'hide';} ?>" plain="true" onclick="selectedRow($(this));detailItem();">详情</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton edit-class <?php if(!isset($buttons['编辑'])) { echo 'hide';} ?>" iconCls="icon-edit" plain="true" onclick="selectedRow($(this));editMessage();">编辑</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton push-class <?php if(!isset($buttons['推送'])) { echo 'hide';} ?>" iconCls="icon-edit" plain="true" onclick="selectedRow($(this));pushMessage();">推送</a>
+    </div>
+    <!-- 操作结束-->
+
+    <!-- 新增（编辑）消息窗口开始-->
+    <div id="win-edit-message" class="easyui-window" title="新增信息" closed="true" maximizable="false" minimizable="false" closable="false" collapsible="false">
+        <div class="easyui-layout" style="width:800px; height:410px;">
+            <form action="" id="form-message-edit">
+                <input name="id" id="form-message-id" hidden="true" />
+                <!-- 消息内容开始-->
+                <div data-options="region:'west',collapsible:false" title="" style="width:350px; height:400px;">
+                    <div style="padding:10px 10px 10px 10px">
+
+                        <div class="fitem">
+                            <label>推送类型:</label>
+                            <select name="type" id="form-add-message-type" class="easyui-combobox">
+                                <foreach name="types" item="type" key="key">
+                                    <option value="{$key}">{$type}</option>
+                                </foreach>
+                            </select>
+                        </div>
+
+                        <div class="fitem" id="id-message-sms">
+                            <br>
+                            <div><span style="color:red;">注意：推荐使用APP推送，若为短信推送，一次只能200条</span></div>
+                            <br>
+                            由于<input name="title" id="form-add-message-reason" class="easyui-textbox" style="width:240px;height:100px" multiline="true"><br><br>
+                            现对<input name="content" id="form-add-message-des" class="easyui-textbox" style="width:240px;height:140px" multiline="true"><br><br>进行调整,请大家相互通知，及时传达
+                        </div>
+                        <div id="id-message-app">
+                            <div class="fitem">
+                                <label for="title">标题:</label>
+                                <input name="title" id="form-add-message-title" class="easyui-textbox" style="width:240px;">
+                            </div>
+
+                            <div class="fitem">
+                                <label for="content">内容:</label>
+                                <input name="content" id="form-add-message-content" class="easyui-textbox" style="width:240px;height:310px" multiline="true">
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                <!-- 消息内容结束-->
+
+                <div data-options="region:'center',title:''" style="width:400px; height:400px;">
+                    <div class="easyui-layout" style="width:400px; height:400px;">
+                        <!-- 未选工程师开始-->
+                        <div id="engineer-toolbar">
+                            <select name="organization" id="id_organization" class="easyui-combobox">
+                                <option value="0">全部</option>
+                                <foreach name="organizations" item="organization">
+                                    <option value="{$organization.id}">{$organization.name}</option>
+                                </foreach>
+                            </select>
+                        </div>
+
+                        <div data-options="region:'west',collapsible:false" style="width:175px;">
+                            <table id="unselect-engineer-table" class="easyui-datagrid" toolbar="#engineer-toolbar" fitColumns="true" nowrap="false">
+                                <thead>
+                                <tr>
+                                    <th field="ck" checkbox="true"></th>
+                                    <th field="id">ID</th>
+                                    <th field="name">姓名</th>
+                                </tr>
+                                </thead>
+                            </table>
+                        </div>
+                        <!-- 未选工程师结束-->
+
+                        <!-- 已选工程师开始-->
+                        <div data-options="region:'east',collapsible:false" style="width:150px;">
+                            <table id="selected-engineer-table" class="easyui-datagrid" title="已选工程师" fitColumns="true" nowrap="false">
+                                <thead>
+                                <tr>
+                                    <th field="ck" checkbox="true"></th>
+                                    <th field="id">ID</th>
+                                    <th field="name">工程师</th>
+                                </tr>
+                                </thead>
+                            </table>
+                        </div>
+                        <!-- 已选工程师结束-->
+
+                        <div data-options="region:'center',collapsible:false" title="" style="width:10px;">
+                            <div align="center" style="height:200px;padding:50px 0 30px 0;">
+                                <a href="javascript:exit()" class="easyui-linkbutton">&nbsp;&nbsp;&lt;&lt;&nbsp;&nbsp;</a>
+                            </div>
+                            <div align="center">
+                                <a href="javascript:join()" class="easyui-linkbutton">&nbsp;&nbsp;&gt;&gt;&nbsp;&nbsp;</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div id="dlg-buttons" style="text-align:center;padding:5px">
+            <a href="javascript:void(0)" class="easyui-linkbutton c6" iconCls="icon-ok" onclick="saveMessage()" style="width:90px">保存</a>
+            <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel" onclick="cancel()" style="width:90px">取消</a>
+        </div>
+
+    </div>
+    <!-- 新增（编辑）消息窗口结束-->
+
+    <!-- 消息详情窗口开始-->
+    <div id="wid-detail-message" title="消息接收工程师列表" hidden="true" width="800px">
+        <table id="table-message-detail" class="easyui-datagrid" fitColumns="true" pagination="true" pageSize="10" pagePosition="top">
+            <thead>
+            <tr>
+                <th field="id" width="5px">工程师ID</th>
+                <th field="name" width="5px">工程师</th>
+                <th field="status" width="5px">状态</th>
+                <th field="push_time" width="5px">推送时间</th>
+                <th field="read_time" width="5px">阅读时间</th>
+                <th field="check_time" width="5px">确认时间</th>
+            </tr>
+            </thead>
+        </table>
+    </div>
+    <!-- 消息详情窗口结束-->
+
+</body>
+</html>

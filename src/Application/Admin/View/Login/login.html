@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+	<title>站群管理平台</title>
+	<style>
+		.loginWrap{
+			width: 600px;
+			margin:200px auto 0;
+			border:1px solid #cecece;
+			background-color: #fafafa;
+		}
+		.loginHead{
+			margin:50px 0;
+		}
+		.loginHead h1{
+			text-align: center;
+			font-size: 30px;
+			color:#333;
+		}
+		.loginBody{
+			margin-left: 50px;
+		}
+		.loginBody .field{
+			margin:15px 0;
+			font-size: 13px;
+		}
+		.loginName,.loginPassword{
+			width: 480px;
+			height: 22px;
+			line-height: 22px;
+			border:1px solid #dcdcdc;
+			padding:10px;
+			font-size: 14px;
+			border-radius: 5px;
+		}
+		.loginName:focus,.loginPassword:focus{
+			border-color: #0c9eef;
+		    box-shadow: 0 0 5px #0c9eef;
+		}
+		.loginFoot{
+			text-align: center;
+			margin:40px 0 50px;
+		}
+		.loginSubmit{
+			width: 500px;
+			height: 44px;
+			text-align: center;
+			line-height: 24px;
+			color:#fff;
+			font-size: 16px;
+			background-color: #39b2f5;
+			border:0;
+			cursor: pointer;
+			border-radius: 5px;
+		}
+		.loginSubmit:hover,.loginSubmit:active,.loginSubmit:focus{
+			background-color: #0c9eef;
+		}
+	</style>
+</head>
+<body>
+	<div class="loginWrap">
+		<form action="<?php echo U('Admin/Login/handle'); ?>" method="post">
+			<div class="loginHead">
+				<h1>站群管理平台</h1>
+			</div>
+			<div class="loginBody">
+				<div class="field">
+					<p for="login">用户名</p>
+					<input type="text" name="username" class="loginName" id="login" placeholder="请输入用户名">
+				</div>
+				<div class="field">
+					<p for="password">密码</p>
+					<input type="password" name="password" class="loginPassword" id="password" placeholder="请输入密码">
+				</div>
+			</div>
+			<div class="loginFoot">
+				<button type="submit" class="loginSubmit" id="loginBtn">登录</button>
+			</div>
+		</form>
+	</div>
+</body>
+</html>

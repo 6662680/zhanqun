@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>user</title>
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/default/easyui.css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/icon.css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/css/user.css">
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/locale/easyui-lang-zh_CN.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/js/user.js"></script>
+    <script type="text/javascript">
+        var url;
+        var _fitting_id;
+        
+        function newItem(){
+            _fitting_id = 0;
+            $('#dlg').dialog('open').dialog('center').dialog('setTitle', '添加');
+            $('#fm').form('clear');
+            $('#fitting_id').combobox('loadData', []);
+            url = '/admin/warehouse/addSafeStock';
+        }
+
+        function editItem(){
+            var row = $('#dg').datagrid('getSelected');
+            
+            if (row){
+                _fitting_id = row.fitting_id;
+                $('#dlg').dialog('open').dialog('center').dialog('setTitle', '编辑');
+                $('#organization_id').combobox('setValue', '');
+                $('#fm').form('load', row);
+                url = '/admin/warehouse/editSafeStock/id/' + row.id;
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+        
+        function saveItem(form) {
+            $('#fm').form('submit',{
+                url: url,
+                onSubmit: function(){
+                    if ($(this).form('validate')) {
+                        $('#load').dialog('open');
+                    };
+                    return $(this).form('validate');
+                },
+                success: function(result){
+                    $('#load').dialog('close');
+                    var result = eval('('+result+')');
+                    if (result.success){
+                        $('#dlg').dialog('close');
+                        $('#dg').datagrid('reload');
+                    } else {
+                        $.messager.show({
+                            title: '错误',
+                            msg: result.errorMsg,
+                            showType:'fade',
+                            style:{
+                                right:'',
+                                bottom:''
+                            }
+                        });
+                    }
+                }
+            });
+        }
+        
+        function deleteItem(){
+            var row = $('#dg').datagrid('getSelected');
+            if (row){
+                $.messager.confirm('Confirm', '确认删除此记录?',function(r){
+                    if (r){
+                        $.post('/admin/warehouse/removeSafeStock',{id:row.id},function(result){
+                            if (result.success){
+                                $('#dg').datagrid('reload');
+                            } else {
+                                $.messager.show({
+                                    title: '错误',
+                                    msg: result.errorMsg,
+                                    showType:'fade',
+                                    style:{
+                                        right:'',
+                                        bottom:''
+                                    }
+                                });
+                            }
+                        },'json');
+                    }
+                });
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+    
+        function searchItem() {
+            $('#dg').datagrid({
+                queryParams: {
+                    phone_id: $('#search-phone').combobox('getValue'),
+                    organization_id: $('#search-org').combobox('getValue'),
+                    fitting_id: $('#search-fitting-id').combobox('getValue'),
+                    keyword: $('#search-keyword').val(),
+                }
+            });
+        }
+        
+        function importSafeStock() {
+            $('#dlg-import').dialog('open').dialog('center').dialog('setTitle', '导入');
+            $('#fm-import').form('clear');
+        }
+        
+        function saveImportSafeStock() {
+            $('#fm-import').form('submit',{
+                url: '/admin/warehouse/importSafeStock',
+                onSubmit: function(){
+                    if ($(this).form('validate')) {
+                        $('#load').dialog('open');
+                    };
+                    return $(this).form('validate');
+                },
+                success: function(result){
+                    $('#load').dialog('close');
+                    var result = eval('('+result+')');
+                    if (result.success){
+                        $('#dlg-import').dialog('close');
+                        if (result.errorMsg.length > 0) {
+                            $.messager.alert({
+                                title: '提示',
+                                msg: result.errorMsg,
+                                showType:'error',
+                                style:{
+                                    right:'',
+                                    bottom:'',
+                                }
+                            });
+                        }
+                        
+                        $('#dg').datagrid('reload');
+                    } else {
+                        $.messager.show({
+                            title: '错误',
+                            msg: result.errorMsg,
+                            showType:'fade',
+                            style:{
+                                right:'',
+                                bottom:''
+                            }
+                        });
+                    }
+                }
+            });
+        }
+
+        $(function(){
+            $('#mm').menu();
+            $(document).bind('contextmenu',function(e){
+                e.preventDefault();
+                $('#mm').menu('show', {
+                    left: e.pageX,
+                    top: e.pageY
+                });
+            });
+            
+            //机型配件联动
+            var fitting_id = $('#fitting_id');
+            $('#organization_id').combobox({
+                onChange: function(newValue, oldValue) {
+                    
+                    if (newValue != '') {
+                        fitting_id.combobox({  
+                            disabled:false,  
+                            url:'/admin/warehouse/phoneFittings/organization_id/' + newValue + (_fitting_id ? '/fitting_id/'+_fitting_id : ''), 
+                            valueField:'id',  
+                            textField:'name',  
+                            onLoadSuccess:function(){
+                            }
+                        }); 
+                    } else {
+                    	fitting_id.combobox('setValue', '');
+                        fitting_id.combobox('loadData', []);
+                    }
+                }
+            });
+            
+            //机型配件联动
+            var s_fitting_id = $('#search-fitting-id');
+            $('#search-phone').combobox({
+                onChange: function(newValue, oldValue) {
+            
+                    if (newValue != '') {
+                        s_fitting_id.combobox({  
+                            disabled:false,  
+                            url:'/admin/warehouse/fittings/phone_id/' + newValue, 
+                            valueField:'id',  
+                            textField:'name',  
+                            onLoadSuccess:function(){
+                            }
+                        }); 
+                    } else {
+                    	s_fitting_id.combobox('setValue', '');
+                        s_fitting_id.combobox('loadData', []);
+                    }
+                }
+            });
+        });
+    </script>
+</head>
+<body class="easyui-layout">
+<table id="dg" title="安全库存管理" class="easyui-datagrid" style="width:100%;" url="/admin/warehouse/safeStockRows" toolbar="#toolbar" pagination="true" pageSize="30" pagePosition="top" rownumbers="true" fitColumns="true" singleSelect="true" rownumbers="true" pagination="true">
+        <thead>
+            <tr>
+                <th field="id" width="5">ID</th>
+                <th field="organization" width="5">地区</th>
+                <th field="phone" width="10">机型</th>
+                <th field="fitting" width="10">配件</th>
+                <th field="amount" width="5">安全库存</th>
+                <th field='action' width="10" formatter="formatRowActionButton">操作</th>
+            </tr>
+        </thead>
+    </table>
+    <div id="toolbar">
+        <span>仓库（地区）:</span> 
+        <select class="easyui-combobox nameof" id="search-org" url="/admin/warehouse/organization" valueField="id" textField="alias" style="width: 150px;" prompt="仓库"></select>
+        &nbsp;&nbsp;
+        <span>机型:</span>
+        <select class="easyui-combobox" limitToList="true" id='search-phone' url="/admin/warehouse/phones" valueField="id" textField="alias" style="width:150px;" prompt="机型">
+        </select>
+        &nbsp;&nbsp;
+        <span>配件:</span>
+        <select class="easyui-combobox" limitToList="true" id='search-fitting-id' style="width:220px;">
+        </select>
+           &nbsp;&nbsp;
+        <span>关键字:</span>
+        <input type="text" class="easyui-textbox" id='search-keyword' panelHeight="auto">
+        <a href="javascript:void(0)" class="easyui-linkbutton" plain="true" iconCls="icon-search" onclick="searchItem()">搜索</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['新增'])) { echo 'hide';} ?>" iconCls="icon-add" plain="true" onclick="newItem();">新增</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['导入'])) { echo 'hide';} ?>" iconCls="icon-export" plain="true" onclick="importSafeStock();">导入</a>
+    </div>
+    <div id="mm" style="width:120px;">
+        <div iconCls="icon-add" class="<?php if(!isset($buttons['新增'])) { echo 'hide';} ?>" onclick="newItem();"><span>新增</span></div>
+        <div iconCls="icon-edit" class="<?php if(!isset($buttons['编辑'])) { echo 'hide';} ?>" onclick="editItem();"><span>编辑</span></div>
+        <div iconCls="icon-remove" class="<?php if(!isset($buttons['删除'])) { echo 'hide';} ?>" onclick="deleteItem();"><span>删除</span></div>
+    </div>
+    <div id="rowmenu" class="hide">
+        <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['编辑'])) { echo 'hide';} ?>" iconCls="icon-edit" plain="true" onclick="selectedRow($(this));editItem();">编辑</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['删除'])) { echo 'hide';} ?>" iconCls="icon-remove" plain="true" onclick="selectedRow($(this));deleteItem();">删除</a>
+    </div>
+    <div id="dlg" class="easyui-dialog" style="width:700px;min-height:350px;padding:10px 20px" closed="true" buttons="#dlg-buttons">
+        <div class="ftitle">安全库存信息</div>
+        <form id="fm" method="post">
+            <div class="fitem">
+                <label>仓库（组织）:</label>
+                <select class="easyui-combobox" id="organization_id" name="organization_id" url="/admin/warehouse/organization" valueField="id" textField="alias" style="width: 150px;" data-options="required:true"></select>
+            </div>
+            <div class="fitem">
+                <label>配件:</label>
+                <select class="easyui-combobox" data-options="required:true" id="fitting_id" name="fitting_id" style="width: 400px;"></select>
+            </div>
+            <div class="fitem">
+                <label>安全库存:</label>
+                <input id="amount" name="amount" class="easyui-textbox" required="true">
+            </div>
+            <div class="fitem">
+                <label>备注(50个字):</label>
+                <input class="easyui-textbox" name="remark" style="width:300px;height:60px" data-options="multiline:true">
+            </div>
+        </form>
+    </div>
+    <div id="dlg-buttons">
+        <a href="javascript:void(0)" class="easyui-linkbutton c6" iconCls="icon-ok" onclick="saveItem()" style="width:90px">保存</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg').dialog('close')" style="width:90px">取消</a>
+    </div>
+    <!-- 载入弹窗 -->
+    <div id="load" class="easyui-dialog" title="消息" closed="true" style="width:200px;height:100px;padding:10px">
+        <span>处理中...</span>
+    </div>
+    <div id="dlg-import" class="easyui-dialog" style="width:700px;height:260px;padding:10px 20px" closed="true" buttons="#dlg-import-buttons">
+        <form id="fm-import" method="post" enctype="multipart/form-data">
+            <div class="ftitle">安全库存导入</div>
+            <div class="fitem">
+                <label>安全库存:</label>
+                <input name="data_file" class="easyui-filebox" data-options="required:true">
+            </div>
+            <div class="fitem">
+                <label>下载模板:</label>
+                <a href="__PUBLIC__/templates/import_warehouse_safe_stock.xls">点击下载模板</a>
+            </div>
+        </form>
+    </div>
+    <div id="dlg-import-buttons">
+        <a href="javascript:void(0)" class="easyui-linkbutton c6" iconCls="icon-ok" onclick="saveImportSafeStock()" style="width:90px">导入</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg-import').dialog('close')" style="width:90px">取消</a>
+    </div>
+</body>
+</html>

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+
+
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>user</title>
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/default/easyui.css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/icon.css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/css/user.css">
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/locale/easyui-lang-zh_CN.js"></script>
+    <script type="text/javascript">
+        function searchItem()
+        {
+            $('#search').submit();
+        };
+
+    </script>
+</head>
+<body>
+<body class="easyui-layout">
+    <table id="dg" title="废料日统计表" class="easyui-datagrid"  style="width:100%; max-height:800px;"toolbar="#toolbar" rownumbers="true" fitColumns="true" singleSelect="true"  nowrap="false">
+        <thead>
+            <tr>
+                <th field="alias" width="17" rowspan="2" align="center">物料</th>
+                <th field="price" width="12" rowspan="2" align="center">单价</th>
+                <?php $i = 0; foreach($address as $city) {?>
+                <th field="<?php echo $i++;?>"  colspan="2" width="70"><?php echo $city;?></th>
+                <?php }?>
+                <th field="totalnumber" width="12" rowspan="2" align="center">总数</th>
+                <th field="totalprice" width="12" rowspan="2" align="center">总价</th>
+            </tr>
+            <tr>
+                <?php foreach($address as $city) {?>
+                <th field="<?php echo $i++;?>" width="12" >数量</th>
+                <th field="<?php echo $i++;?>" width="12">总价</th>
+                <?php }?>
+            </tr>
+        </thead>
+        <?php foreach ($rst as $i => $item) {?>
+        <tr>
+            <td><?php echo $item['alias'];?></td>
+            <td><?php echo $item['price'];?></td>
+                <?php $num = 0; $price = 0 ?>
+            <?php foreach ($address as $k => $v) {?>
+            <?php  $num = $data[$i][$v]['amount'] + $num;?>
+            <?php  $price = $data[$i][$v]['number_price'] + $price;?>
+                <td><?php echo $data[$i][$v]['amount'];?></td>
+                <td><?php echo $data[$i][$v]['number_price'];?></td>
+            <?php }?>
+            <td><?php echo $num;?></td>
+            <td><?php echo $price;?></td>
+        </tr>
+        <?php }?>
+    </table>
+
+
+    <div id="toolbar">
+        <form id="search" method="post" action="<?php echo U('admin/statistics/waste');?>">
+        <p>
+            <span>日期:</span>
+            <input type="text" class="easyui-datebox" id='search-start-time' name="start_time" panelHeight="auto"> 至
+            <input type="text" class="easyui-datebox" id='search-end-time' name="end_time" panelHeight="auto">
+            <a href="javascript:void(0)" class="easyui-linkbutton" plain="true" iconCls="icon-search" onclick="searchItem();">搜索</a>
+        </p>
+        </form>
+    </div>
+</body>
+</html>

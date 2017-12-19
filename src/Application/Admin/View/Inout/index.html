@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>user</title>
+	<link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/default/easyui.css">
+	<link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/icon.css">
+	<link rel="stylesheet" type="text/css" href="__PUBLIC__/css/user.css">
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/locale/easyui-lang-zh_CN.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/js/user.js"></script>
+    <script type="text/javascript">
+        function searchItem(){
+            $('#dg').datagrid({
+                queryParams: {
+                	starttime: $('#search-starttime').datetimebox('getValue'),
+                	endtime: $('#search-endtime').datetimebox('getValue'),
+                    organization_id: $('#search-org').combobox('getValue'),
+                    inout: $('#search-inout').combobox('getValue'),
+                    type: $('#search-type').combobox('getValue'),
+                    phone_id: $('#search-phone').combobox('getValue'),
+                    provider_id: $('#search-provider').combobox('getValue'),
+                    user_id: $('#search-user').combobox('getValue'),
+                    engineer_id: $('#search-engineer').combobox('getValue'),
+                    keyword: $('#search-keyword').val()
+                }
+            });
+        }
+
+        $(function(){
+            $('#mm').menu();
+            $(document).bind('contextmenu',function(e){
+                e.preventDefault();
+                $('#mm').menu('show', {
+                    left: e.pageX,
+                    top: e.pageY
+                });
+            });
+        });
+
+        function formatInoutType(val, row) {
+            switch (val)
+            {
+                case '1':
+                    return '<span class="label label-bg4">出入库</span>';
+                    break;
+                case '2':
+                    return '<span class="label label-bg1">调拨';
+                    break;
+                case '3':
+                    return '<span class="label label-bg2">工程师申请</span>';
+                    break;
+                case '4':
+                    return '<span class="label label-bg3">报损</span>';
+                    break;
+            }
+        }
+        
+        function formatInout(val, row){
+        	switch (val)
+            {
+                case '1':
+                    return '<span class="label label-bg1">入库</span>';
+                    break;
+                case '2':
+                    return '<span class="label label-bg3">出库</span>';
+                    break;
+            }
+        }
+        
+        function exportItem() 
+        {
+        	$('#fm-export').form('load', {
+            	starttime: $('#search-starttime').datetimebox('getValue'),
+            	endtime: $('#search-endtime').datetimebox('getValue'),
+                organization_id: $('#search-org').combobox('getValue'),
+                inout: $('#search-inout').combobox('getValue'),
+                type: $('#search-type').combobox('getValue'),
+                phone_id: $('#search-phone').combobox('getValue'),
+                provider_id: $('#search-provider').combobox('getValue'),
+                user_id: $('#search-user').combobox('getValue'),
+                engineer_id: $('#search-engineer').combobox('getValue'),
+                keyword: $('#search-keyword').val()
+            });
+ 	       	
+ 	        $('#fm-export').form('submit',{
+ 	               url: '/admin/inout/export',
+ 	               onSubmit: function(){
+ 	               },
+ 	               success: function(result){
+ 	               }
+            });
+        }
+    </script>
+</head>
+<body class="easyui-layout">
+        <table id="dg" title="库存列表" class="easyui-datagrid" style="width:100%;" url="/admin/inout/rows" toolbar="#toolbar" pagination="true" pageSize="30" pagePosition="top" rownumbers="true" fitColumns="true" singleSelect="true" rownumbers="true" pagination="true">
+        <thead>
+            <tr>
+                <th field="id" width="5">ID</th>
+                <th field="organization" width="8">申请仓库</th>
+                <th field="inout" width="5" formatter="formatInout">出入库</th>
+                <th field="type" width="6" formatter="formatInoutType">类型</th>
+                <th field="organization2" width="8">目标仓库</th>
+                <th field="batch" width="10">批次</th>
+                <th field="phone_name" width="10">机型</th>
+                <th field="fitting" width="10">配件</th>
+                <th field="amount" width="5">数量</th>
+                <th field="price" width="5">价格</th>
+                <th field="provider" width="10">供应商</th>
+                <th field="time" width="7" formatter="formatDate">时间</th>
+                <th field="username" width="8">操作人</th>
+                <th field="engineer" width="8">工程师</th>
+            </tr>
+        </thead>
+    </table>
+    <div id="toolbar">
+        <span>开始时间:</span>
+        <input class="easyui-datebox" id="search-starttime">
+        &nbsp;
+        <span>结束时间:</span>
+        <input class="easyui-datebox" id="search-endtime">
+        &nbsp;
+        <span>仓库（地区）:</span>
+        <select class="easyui-combobox" id="search-org" url="/admin/inout/organization" valueField="id" textField="alias" style="width: 150px;"></select>
+        &nbsp;
+        <span>出入库:</span>
+        <select class="easyui-combobox" id="search-inout" style="width: 150px;">
+        	<option value="all">全部</option>
+            <option value="1">入库</option>
+            <option value="2">出库</option>
+        </select>
+        &nbsp;
+        <span>类型:</span>
+		<select class="easyui-combobox" limitToList="true" id='search-type' style="width:150px;">
+			<option value="all">全部</option>
+            <option value="1">出入库</option>
+            <option value="2">调拨</option>
+            <option value="3">工程师申请</option>
+            <option value="4">报损</option>
+		</select>
+        <p></p>
+        <span>机型:</span>
+		<select class="easyui-combobox" limitToList="true" id='search-phone' url="/admin/inout/phones" valueField="id" textField="alias" style="width:150px;" prompt="机型">
+		</select>
+        &nbsp;&nbsp;
+        <span>供应商:</span>
+        <select class="easyui-combobox" limitToList="true" id='search-provider' url="/admin/inout/provider" valueField="id" textField="title" style="width:150px;">
+        </select>
+        &nbsp;
+        <span>操作人:</span>
+        <select class="easyui-combobox" limitToList="true" id='search-user' url="/admin/inout/user" valueField="id" textField="username" style="width:150px;">
+        </select>
+        &nbsp;
+        <span>工程师:</span>
+        <select class="easyui-combobox" limitToList="true" id='search-engineer' url="/admin/engineer/engineers" valueField="id" textField="name" style="width:150px;">
+        </select>
+        &nbsp;&nbsp;
+        <span>关键字(批次 配件):</span>
+        <input type="text" class="easyui-textbox" id='search-keyword' panelHeight="auto">
+		<a href="javascript:void(0)" class="easyui-linkbutton" plain="true" iconCls="icon-search" onclick="searchItem()">搜索</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['导出'])) { echo 'hide';} ?>" iconCls="icon-export" plain="true" onclick="selectedRow($(this));exportItem();">导出</a>
+    </div>
+    <div id="dlg-export" class="easyui-dialog" style="width:700px;height:260px;padding:10px 20px" closed="true">
+        <form id="fm-export" method="post">
+        	<div class="ftitle">数据导出</div>
+        	<input type="hidden" name="starttime">
+            <input type="hidden" name="endtime">
+            <input type="hidden" name="organization_id">
+            <input type="hidden" name="inout">
+            <input type="hidden" name="type">
+            <input type="hidden" name="phone_id">
+            <input type="hidden" name="provider_id">
+            <input type="hidden" name="user_id">
+            <input type="hidden" name="engineer_id">
+            <input type="hidden" name="keyword">
+        </form>
+    </div>
+</body>
+</html>

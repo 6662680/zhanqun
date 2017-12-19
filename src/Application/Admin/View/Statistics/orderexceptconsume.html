@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>user</title>
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/default/easyui.css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/icon.css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/css/user.css">
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/locale/easyui-lang-zh_CN.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/js/user.js"></script>
+    <script type="text/javascript">
+    $(function(){
+    	$('#city').combobox('setValue', "<?php echo $query['city'];?>");
+    	$('#phone_id').combobox('setValue', "<?php echo $query['phone_id'];?>");
+    });
+    </script>
+</head>
+<body>
+<body class="easyui-layout">
+    <table id="dg" title="订单预计消耗" class="easyui-datagrid" style="width:100%; max-height: 800px;" toolbar="#toolbar" rownumbers="true" fitColumns="true" singleSelect="true">
+        <thead>
+            <tr>
+                <th field="fitting" width="15">配件 </th>
+                <th field="phone" width="15">机型</th>
+                <?php foreach($address as $k => $city) {?>
+                <th field="<?php echo $k?>" width="5"><?php echo $city?></th>
+                <?php }?>
+            </tr>
+        </thead>
+        <?php 
+            foreach($data as $fitting_id => $item) { 
+
+                if (!isset($fittings[$fitting_id])) {
+                    continue;
+                }
+        ?>
+        <tr>
+            <td><?php echo $fittings[$fitting_id]['fitting'];?></td>
+            <td><?php echo $fittings[$fitting_id]['phone'];?></td>
+            <?php foreach($address as $k => $city) {?>
+               <td><?php echo $item[$k];?></td>
+            <?php }?>
+        </tr>
+        <?php }?>
+    </table>
+    <div id="toolbar">
+        <form id="search" method="post" action="<?php echo U('admin/statistics/orderExceptConsume');?>">
+            <span>仓库（地区）:</span>
+            <select class="easyui-combobox nameof" id="city" name="city" url="/admin/statistics/organization" valueField="city" textField="alias" style="width: 150px;" prompt="仓库"></select>
+            &nbsp;
+            <span>机型:</span>
+            <select class="easyui-combobox nameof" id="phone_id" name="phone_id" url="/admin/statistics/phones" valueField="id" textField="alias" style="width: 150px;" prompt="机型"></select>
+            &nbsp;
+            <a href="javascript:void(0)" class="easyui-linkbutton" plain="true" iconCls="icon-search" onclick="$('#search').submit();">搜索</a>
+        </form>
+    </div>
+</body>
+</html>

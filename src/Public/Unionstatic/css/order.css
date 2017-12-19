@@ -1,0 +1,30 @@
+label{
+    width:auto;
+}
+.mt10{
+    margin-top:10px;
+}
+.mb10{
+    margin-bottom:10px;
+}
+.formContent{
+    margin-top:40px;
+    margin-bottom:100px;
+    font-size:14px;
+}
+.orderListTable{
+    margin-top:20px;
+    font-size:14px;
+}
+.orderListTable th,.orderListTable td{
+    text-align:center;
+}
+.orderListTable tr th{
+    line-height:26px;
+}
+.orderListTable tr td{
+    border-bottom:1px solid #D6D6D6;
+}
+.orderListTable tr:last-child td{
+    border-bottom:0;
+}

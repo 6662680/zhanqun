@@ -1,0 +1,132 @@
+<!DOCTYPE HTML>
+<html>
+<include file="common/header" />
+<body>
+<div class="demo-content">
+    <div class="row">
+        <div class="offset1 doc-content">
+            <form id="search_form" class="form-panel" method="get" action="<?php echo U(MODULE_NAME . '/' . CONTROLLER_NAME .'/screenMalfunction'); ?>">
+                <div class="panel-title">
+                    <span>
+                        <label for="search_start_time">日期：</label>
+                        <input type="text" class="calendar"  name="os_start_time" id="search_start_time" value="<?php echo date('Y-m-d', $startTime);?>">
+                        <label for="search_end_time">至</label>
+                        <input type="text" class="calendar" name="os_end_time" id="search_end_time" value="<?php echo date('Y-m-d', $endTime);?>">
+                    </span>
+                </div>
+
+                <ul class="panel-content">
+                    <li>
+                        <button type="submit" class="button button-primary">查询&gt;&gt;</button>
+                        <button type="button" class="button button-primary" id="search_reset">重置</button>
+                    </li>
+                </ul>
+            </form>
+            <form id="myform">
+                <table cellspacing="0" class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th rowspan="2" style="text-align:center;vertical-align:middle">机型</th>
+                            <th rowspan="2" style="text-align:center;vertical-align:middle">产生废料</th>
+                            <th style="padding: 0px;margin: 0px"><table style="width:100%;padding: 0px;margin: 0px"><tr><td colspan="2" style="text-align:center">总计</td></tr><tr><td style="width:50%">单量</td><td>金额</td></tr></table></th>
+                            <?php foreach ($address as $key => $value): ?>
+                                <th style="padding: 0px;margin: 0px"><table style="width:100%;padding: 0px;margin: 0px"><tr><th colspan="2" style="text-align:center"><?php echo $value; ?></th></tr><tr><td style="width:50%">单量</td><td>金额</td></tr></table></th>
+                            <?php endforeach ?>
+                            <th style="padding: 0px;margin: 0px"><table style="width:100%;padding: 0px;margin: 0px"><tr><th colspan="2" style="text-align:center">其他(邮寄)</th></tr><tr><td style="width:50%">单量</td><td>金额</td></tr></table></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($final_fittings as $key => $data) : ?>
+                        <tr>
+                            <td style="text-align:center"><?php echo $data['phone_name']?></td>
+                            <td style="text-align:center"><?php echo $data['waste']?></td>
+                            <td style="padding: 0px;margin: 0px">
+                                <table style="width:100%;padding: 0px;margin: 0px">
+                                    <tr>
+                                        <td style="width:50%"><?php echo $data['amount'] ?></td>
+                                        <td><?php echo $data['wastes_price'] ?></td>
+                                    </tr>
+                                </table>
+                            </td>
+                            <?php foreach ($address as $x => $y): ?>
+                                <td style="padding: 0px;margin: 0px">
+                                    <table style="width:100%;padding: 0px;margin: 0px">
+                                        <tr>
+                                            <td style="width:50%"><?php echo isset($all_data[$x][$key]) ? $all_data[$x][$key]['amount'] : 0?></td>
+                                            <td><?php echo isset($all_data[$x][$key]) ? $all_data[$x][$key]['wastes_price'] : 0?></td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            <?php endforeach ?>
+                            <td style="padding: 0px;margin: 0px">
+                                <table style="width:100%;padding: 0px;margin: 0px">
+                                    <tr>
+                                        <td style="width:50%"><?php echo isset($all_data['other'][$key]) ? $all_data['other'][$key]['amount'] : 0?></td>
+                                        <td><?php echo isset($all_data['other'][$key]) ? $all_data['other'][$key]['wastes_price'] : 0?></td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                        <?php endforeach?>
+                        <tr>
+                            <td style="text-align:center" colspan="2">总计</td>
+                            <td style="padding: 0px;margin: 0px">
+                                <table style="width:100%;padding: 0px;margin: 0px">
+                                    <tr>
+                                        <td style="width:50%"><?php echo $total_amount ?></td>
+                                        <td><?php echo $total_price ?></td>
+                                    </tr>
+                                </table>
+                            </td>
+                            <?php foreach ($address as $x => $y): ?>
+                                <td style="padding: 0px;margin: 0px">
+                                    <table style="width:100%;padding: 0px;margin: 0px">
+                                        <tr>
+                                            <td style="width:50%"><?php echo $specific_total[$x]['amount']?></td>
+                                            <td><?php echo $specific_total[$x]['price']?></td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            <?php endforeach ?>
+                            <td style="padding: 0px;margin: 0px">
+                                <table style="width:100%;padding: 0px;margin: 0px">
+                                    <tr>
+                                        <td style="width:50%"><?php echo $specific_total['other']['amount'] ?></td>
+                                        <td><?php echo $specific_total['other']['price'] ?></td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </form>
+        </div>
+    </div>
+</div>
+
+<include file="common/footer_js" />
+<script type="text/javascript">
+    var _export = "<?php echo U(MODULE_NAME . '/' . CONTROLLER_NAME .'/orderGrossDetailExport') ?>";
+    $('#J_export').click(function(){
+        _export = _export + '?startTime=' + $('#search_start_time').val() + '&endTime=' + $('#search_end_time').val();
+        window.location.href= _export;
+    });
+
+    var _export_h = "<?php echo U(MODULE_NAME . '/' . CONTROLLER_NAME .'/orderGrossExport') ?>";
+    $('#H_export').click(function(){
+        _export_h = _export_h + '?startTime=' + $('#search_start_time').val() + '&endTime=' + $('#search_end_time').val();
+        window.location.href= _export_h;
+    });
+    var Calendar = BUI.Calendar
+    var datepicker = new Calendar.DatePicker({
+        trigger:'.calendar',
+        autoRender : true
+    });
+
+    // ------------------------------------------
+    $('#search_reset').click(function(){
+        $("#search_form").find(':input, select').not(':button, :submit, :reset').val('').removeAttr('checked').removeAttr('selected');
+    });
+</script>
+</body>
+</html>

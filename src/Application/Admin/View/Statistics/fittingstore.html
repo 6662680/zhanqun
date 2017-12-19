@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>user</title>
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/default/easyui.css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/icon.css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/css/user.css">
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/locale/easyui-lang-zh_CN.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/js/user.js"></script>
+    <script type="text/javascript">
+        $(function(){
+            $('#search-start-time').datebox('setValue', '<?php echo date("Y-m-d");?>');
+            $('#search-end-time').datebox('setValue', '<?php echo date("Y-m-d");?>');
+            
+            //机型配件联动
+            $('#search-phone').combobox({
+                onChange: function(newValue, oldValue) {
+
+                	$('#search-fitting').combobox({  
+                           disabled:false,  
+                           url:'/admin/statistics/fittings/id/'+newValue, 
+                           valueField:'id',  
+                           textField:'name',  
+                           onLoadSuccess:function(){
+                        }
+                    }); 
+                }
+            });
+        });
+        
+        //导出
+        function exportItem()
+        {
+	        $('#export_starttime').val($('#search-start-time').datetimebox('getValue'));
+	        $('#export_endtime').val($('#search-end-time').datetimebox('getValue'));
+	        $('#export_organization_id').val($('#search-org').combobox('getValue'));
+	        $('#export_phone_id').val($('#search-phone').combobox('getValue'));
+	        $('#export_fitting_id').val($('#search-fitting').combobox('getValue'));
+	        $('#export_keyword').val($('#search-keyword').val());
+	        
+	        $('#fm-export').form('submit',{
+                url: '/admin/statistics/fittingStoreExport',
+                onSubmit: function(){
+                },
+                success: function(result){
+                }
+            });
+        }
+        
+        function searchItem(){
+            $('#dg').datagrid({
+                queryParams: {
+                	start_time: $('#search-start-time').datetimebox('getValue'),
+                    end_time: $('#search-end-time').datetimebox('getValue'),
+                    organization_id: $('#search-org').combobox('getValue'),
+                    phone_id: $('#search-phone').combobox('getValue'),
+                    fitting_id:$('#search-fitting').val(),
+                    keyword:$('#search-keyword').val()
+                }
+            });
+        }
+    </script>
+</head>
+<body>
+<body class="easyui-layout">
+    <table id="dg" title="物料堆积情况" class="easyui-datagrid" url="/admin/statistics/fittingStoreRows" style="width:100%;" toolbar="#toolbar" pagination="true" pageSize="30" pagePosition="top" rownumbers="true" fitColumns="true" singleSelect="true">
+        <thead>
+            <tr>
+                <th field="org_name" width="12">地区</th>
+                <th field="phone" width="15">机型</th>
+                <th field="fitting" width="15">配件 </th>
+                <th field="number" width="15">库存编号</th>
+                <th field="create_time" width="12" formatter="formatDate">入库时间 </th>
+            </tr>
+        </thead>
+    </table>
+    <div id="toolbar">
+        <span>日期:</span>
+        <input type="text" class="easyui-datebox" id='search-start-time' name="start_time" panelHeight="auto"> 至
+        <input type="text" class="easyui-datebox" id='search-end-time' name="end_time" panelHeight="auto">
+        &nbsp;
+        <span>仓库（地区）:</span>
+        <select class="easyui-combobox nameof" id="search-org" url="/admin/statistics/organization" valueField="id" textField="alias" style="width: 150px;" prompt="仓库"></select>
+        &nbsp;
+        <span>机型:</span>
+        <select class="easyui-combobox nameof" id="search-phone" url="/admin/statistics/phones" valueField="id" textField="alias" style="width: 150px;" prompt="机型"></select>
+        &nbsp;
+        <span>配件:</span>
+        <select class="easyui-combobox nameof" id="search-fitting" style="width: 150px;" prompt="配件"></select>
+        &nbsp;
+        <span>关键字(机型/配件编码/配件名称):</span>
+        <input type="text" class="easyui-textbox" id='search-keyword' panelHeight="auto" style="width:300px;">
+        <a href="javascript:void(0)" class="easyui-linkbutton" plain="true" iconCls="icon-search" onclick="searchItem()">搜索</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['导出'])) { echo 'hide';} ?>" iconCls="icon-export" plain="true" onclick="exportItem()">导出</a>
+    </div>
+    
+    <div id="dlg-export" class="easyui-dialog" style="width:800px;height:455px;padding:10px 20px" closed="true">
+        <form id="fm-export" method="post">
+             <input type="hidden" id="export_starttime" name="start_time">
+             <input type="hidden" id="export_endtime" name="end_time">
+             <input type="hidden" id="export_organization_id" name="organization_id">
+             <input type="hidden" id="export_phone_id" name="phone_id">
+             <input type="hidden" id="export_fitting_id" name="fitting_id">
+             <input type="hidden" id="export_keyword" name="keyword">
+        </form>
+    </div>
+</body>
+</html>

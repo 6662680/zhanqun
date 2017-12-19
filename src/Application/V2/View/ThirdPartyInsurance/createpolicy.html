@@ -1,0 +1,166 @@
+<include file="./Application/V2/View/common.html" />
+<div class="container">
+    <div class="row">
+        <div class="col-lg-10">
+            <div class="page-header"><h3>填写保险信息</h3></div>
+            <div>
+                <form id="from-create" enctype="multipart/form-data" role="form" class="form-horizontal" method="post" action="{:u('generatePolicy',array('source'=>$source,'token'=>$token))}">
+                    <input type="hidden" name="source" value="{$source}">
+                    <input type="hidden" name="token" value="{$token}">
+                    <div class="form-group">
+                        <label for="customer" class="control-label col-lg-2">客户名称<span style="color:red"> *</span></label>
+                        <div class="col-lg-3">
+                            <input type="text" class="form-control" name="customer" id="customer" />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="cellphone" class="control-label col-lg-2">手 机 号<span style="color:red"> *</span></label>
+                        <div class="col-lg-3">
+                            <input type="text" class="form-control" name="cellphone" id="cellphone" />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="brands" class="control-label col-lg-2">手机型号<span style="color:red"> *</span></label>
+                        <div class="col-lg-2">
+                            <select class="form-control" name="brand_id" id="brands">
+                                <option value="0">请选择品牌</option>
+                                <foreach name="brands" item="item">
+                                    <option value="{$item.id}">{$item.name}</option>
+                                </foreach>
+                            </select>
+                        </div>
+                        <div class="col-lg-3">
+                            <select class="form-control" name="phone_id" id="phone_id">
+                                <option value="0">请选择型号</option>
+                            </select>
+                            <input type="hidden" name="phone_name" id="phone_name" value="">
+                        </div>
+                        <div class="col-lg-3">
+                            <select class="form-control" name="color_name" id="color_name">
+                                <option value="0">请选择颜色</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="phone_imei" class="control-label col-lg-2">手机imei<span style="color:red"> *</span></label>
+                        <div class="col-lg-3">
+                            <input type="text" class="form-control" name="phone_imei" id="phone_imei"/>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="order_price" class="control-label col-lg-2">购买价格<span style="color:red"> *</span></label>
+                        <div class="col-lg-3">
+                            <input type="text" class="form-control" name="order_price" id="order_price"/>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="comment" class="control-label col-lg-2">发　票<span style="color:red"> *</span></label>
+                        <div class="col-lg-3">
+                            <input type="file"  name="file" />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="imei_file" class="control-label col-lg-2">IMEI图片<span style="color:red"> *</span></label>
+                        <div class="col-lg-3">
+                            <input type="file"  name="imei_file" id="imei_file"/>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="comment" class="control-label col-lg-2">备注</label>
+                        <div class="col-lg-5">
+                            <textarea class="form-control" rows="5" name="comment" id="comment"></textarea>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-lg-2 col-lg-offset-2">
+                            <input type="submit" name="submit" value="提交" class="btn btn-success">
+                            <input type="reset" name="reset" value="重置" class="btn btn-default">
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    $(function(){
+        $('#from-create').validate({
+            rules:{
+                customer:"required",
+                cellphone:{
+                    required: true,
+                    minlength: 11,
+                    maxlength:11,
+                    digits:true
+                },
+                brand_id:{
+                    required:true,
+                    min:1
+                },
+                phone_id:{
+                    required:true,
+                    min:1
+                },
+                phone_imei:"required",
+                order_price:"required",
+                file:'required',
+                imei_file:'required'
+            },
+            messages:{
+                customer:'请填写客户名称',
+                cellphone:{
+                    required:'请填写手机号',
+                    minlength:"手机号格式不正确",
+                    maxlength:"手机号格式不正确",
+                    digits:"手机号格式不正确"
+                },
+                brand_id:{
+                    min:'请选择品牌',
+                },
+                phone_id:{
+                    min:'请选择手机型号',
+                },
+                phone_imei:'请填写手机imei号',
+                order_price:'请填写手机价格',
+                file:'请上传发票图片',
+                imei_file:'请上传手机imei图片',
+            }
+        });
+        var colorList={}
+        $('#brands').change(function () {
+            var id=$(this).val();
+            var _this=this;
+            optionHtml='<option value="0">请选择型号</option>';
+            $.ajax({
+                type : "POST",  //提交方式
+                url : "{$baseurl}/V2/Phone/pattern",//路径
+                data:{'id':id},
+                dataType:'json',
+                success:function(result){
+                    //$(_this).html("<option value=''></option>");
+                    for (item in result.data){
+                        optionHtml+="<option value='"+result.data[item]['id']+"'>"+result.data[item]['name']+"</option>"
+                        colorList[result.data[item]['id']]=result.data[item]['color_info']
+                    }
+
+                    $('#phone_id').html(optionHtml);
+                }
+            });
+        });
+        $('#phone_id').change(function(){
+            var colorHtml='<option value="0">请选择颜色</option>';
+            var name='';
+            $('#phone_name').val($(this).find("option:selected").text());
+            for (index in colorList[$(this).val()]){
+                name=colorList[$(this).val()][index]['name']
+                colorHtml+="<option value='"+name+"'>"+name+"</option>"
+            }
+            $('#color_name').html(colorHtml);
+        });
+    })
+</script>
+<style>
+    label.error{
+        color:#9d261d;
+    }
+</style>

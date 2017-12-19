@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>user</title>
+	<link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/default/easyui.css">
+	<link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/icon.css">
+	<link rel="stylesheet" type="text/css" href="__PUBLIC__/css/user.css">
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/datagrid-cellediting.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/locale/easyui-lang-zh_CN.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/js/user.js"></script>
+    <script type="text/javascript">
+        var url;
+        
+        function searchItem()
+        {
+            $('#dg').datagrid({
+                queryParams: {
+                	broken_stime: $('#search-broken-stime').combobox('getValue'),
+                	broken_etime: $('#search-broken-etime').combobox('getValue'),
+                	source:$('#search-source').combobox('getValue'),
+                    status: $('#search-status').combobox('getValue'),
+                    keyword: $('#search-keyword').val()
+                }
+            });
+        }
+        
+        function detailItem()
+        {
+            var row = $('#dg').datagrid('getSelected');
+            
+            if (row) {
+                $('#dlg-detail').dialog('open').dialog('center').dialog('setTitle','保险详情');
+                $('#fm').form('clear');
+                $('#fm').form('load', row);
+                $('#broken_img2').attr('src', row.broken_img);
+                $('#broken_img_href2').attr('href', row.broken_img);
+                
+                $('#order_log').datagrid({  
+                    url:'/admin/thirdinsurance/orderLogs/id/' + row.id
+                });
+                
+                $('#create_time').textbox('setValue', formatDate(row.create_time));
+                $('#pay_time').textbox('setValue', formatDate(row.pay_time));
+                $('#effect_time').textbox('setValue', formatDate(row.effect_time));
+                $('#failure_time').textbox('setValue', formatDate(row.failure_time));
+                $('#broken_time').textbox('setValue', formatDate(row.broken_time));
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+        
+        function auditorItem()
+        {
+			var row = $('#dg').datagrid('getSelected');
+            
+            if (row) {
+            	$('#dlg-audit').dialog('open').dialog('center').dialog('setTitle','审核');
+                $('#fm-audit').form('clear');
+                $('#fm-audit').form('load', row);
+                $('#broken_img').attr('src', row.broken_img);
+                $('#broken_img_href').attr('href', row.broken_img);
+            	
+            	url = '/admin/thirdinsurance/audit/id/' + row.id;
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+        
+        function cancelItem()
+        {
+			var row = $('#dg').datagrid('getSelected');
+            
+            if (row) {
+            	$('#dlg-cancel').dialog('open').dialog('center').dialog('setTitle','取消');
+            	$('#fm-cancel').form('clear');
+            	url = '/admin/thirdinsurance/brokencancel/id/' + row.id;
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+        function rollBack()
+        {
+            var row = $('#dg').datagrid('getSelected');
+
+            if (row) {
+                $.post('/admin/thirdinsurance/rollBack/id/' + row.id,
+                        function(data){
+                            if (data.success == true) {
+                                $('#dg').datagrid('reload');
+                            } else {
+                                $.messager.show({
+                                    title: '错误',
+                                    msg: data.errorMsg,
+                                    showType:'fade',
+                                    style:{
+                                        right:'',
+                                        bottom:''
+                                    }
+                                });
+                            }
+
+                        });
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+        
+        function saveItem(form) 
+        {
+            $(form).form('submit',{
+                url: url,
+                onSubmit: function(){
+                    if ($(this).form('validate')) {
+                        $('#load').dialog('open');
+                    };
+                    
+                    return $(this).form('validate');
+                },
+                success: function(result){
+                	$('#load').dialog('close');
+                    var result = eval('('+result+')');
+                    
+                    if (result.success){
+                        $('#dlg-audit').dialog('close');
+                        $('#dlg-cancel').dialog('close');
+                        $('#dg').datagrid('reload');
+                    } else {
+                        $.messager.show({
+                            title: '错误',
+                            msg: result.errorMsg,
+                            showType:'fade',
+                            style:{
+                                right:'',
+                                bottom:''
+                            }
+                        });
+                    }
+                }
+            });
+        }
+
+        //预约
+        function appointment(){
+            var row = $('#dg').datagrid('getSelected');
+
+            if (row){
+                $('#dlg-appointment').dialog('open').dialog('center').dialog('setTitle', '预约');
+                $('#fm-appointment').form('load', row);
+                url = '/admin/thirdinsurance/appointmentOrder/id/'+ row.id;
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+        function saveUser(){
+
+            $('#fm-appointment').form('submit',{
+                url: url,
+                onSubmit: function(){
+                    return $(this).form('validate');
+                },
+                success: function(result){
+                    var result = eval('('+result+')');
+                    if (result.success == false){
+                        $.messager.show({
+                            title: '错误',
+                            msg: result.errorMsg,
+                            showType:'fade',
+                            style:{
+                                right:'',
+                                bottom:''
+                            }
+                        });
+                    } else {
+                        $.messager.show({
+                            title: '成功',
+                            msg: result.msg,
+                            showType:'fade',
+                            timeout:2,
+                            style:{
+                                right:'',
+                                bottom:''
+                            }
+                        });
+                    }
+                    $('#dlg-appointment').dialog('close');		// close the dialog
+                    $('#dg').datagrid('reload');	// reload the user data
+                }
+            });
+        }
+
+        //结单
+        function finish() {
+            var row = $('#dg').datagrid('getSelected');
+
+            if (row) {
+                $('#dlg-finish').dialog('open').dialog('center').dialog('setTitle', '完结');
+                url = '/admin/thirdinsurance/finishOrder/id/'+ row.id;
+                $('#fm-finish').form('clear');
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+        function finishSave() {
+            $('#fm-finish').form('submit', {
+                url: url,
+                onSubmit: function() {
+                    return $(this).form('validate');
+                },
+                success: function(result) {
+                    var result = eval('('+result+')');
+
+                    if (result.success == false){
+                        $.messager.show({
+                            title: '错误',
+                            msg: result.errorMsg,
+                            showType:'fade',
+                            style:{
+                                right:'',
+                                bottom:''
+                            }
+                        });
+                    }else{
+                        $.messager.show({
+                            title: '成功',
+                            msg: result.msg,
+                            showType:'fade',
+                            timeout:2,
+                            style:{
+                                right:'',
+                                bottom:''
+                            }
+                        });
+                    }
+
+                    $('#dlg-finish').dialog('close');
+                    $('#dg').datagrid('reload');
+                }
+            });
+        }
+
+
+        function formatStatus(val) 
+        {
+        	if (val == 5) {  
+                return '<span class="label label-bg">服务完成<span>';  
+            } else if (val == 4) {  
+                return '<span class="label label-bg4">失效<span>';  
+            } else if (val == 3) {  
+                return '<span class="label label-bg3">出险<span>';  
+            } else if (val == 2) {  
+                return '<span class="label label-bg7">生效<span>';  
+            } else if (val == 1) {  
+                return '<span class="label label-bg2">已付款<span>';  
+            } else if (val == 0) {  
+                return '<span class="label label-bg6">未付款<span>';  
+            } else if (val == -1) {  
+                return '<span class="label label-bg3">取消<span>';  
+            } else if (val == -2) {  
+                return '<span class="label label-bg3">原单取消<span>';  
+            } else {
+            	return '';  
+            }
+        }
+        
+        function formatFlag(val)
+        {
+        	if (val == 1) {  
+                return '<span class="label label-bg7">通过<span>';  
+            } else if (val == -1) {  
+                return '<span class="label label-bg3">不通过<span>';  
+            } else {
+            	return '<span class="label label-bg1">申请<span>';  
+            }
+        }
+        
+      //订单行操作按钮
+        function formatOrderRowActionButton(val, row)
+        {
+            var html = $('#rowmenu').html();
+
+//            if (row.broken_flag == 1 || row.broken_flag == 0) {
+//            	html = html.replace(/cancel/, 'hide');
+//            }
+
+            if (row.broken_flag != 0) {
+
+            	html = html.replace(/auditor/, 'hide');
+
+
+            }
+
+            if (row.broken_flag == 0) {
+                html = html.replace(/rollBack/, 'hide');
+            }
+
+            if (row.broken_flag == 0 || row.status == 5) {
+                html = html.replace(/btn-appointment/, 'hide');
+                html = html.replace(/btn-send/, 'hide');
+            }
+
+            return html;
+        }
+
+        $(function(){
+            $('#mm').menu();
+            $(document).bind('contextmenu',function(e){
+                e.preventDefault();
+                $('#mm').menu('show', {
+                    left: e.pageX,
+                    top: e.pageY
+                });
+            });
+        });
+    </script>
+</head>
+<body class="easyui-layout">
+        <table id="dg" title="出险订单" class="easyui-datagrid" style="width:100%; max-height:800px;" url="/admin/thirdinsurance/brokenRows" nowrap="false" toolbar="#toolbar" pagination="true" pageSize="30" pagePosition="top" rownumbers="true" fitColumns="true" singleSelect="true" rownumbers="true" pagination="true">
+            <thead>
+            <tr>
+                <th field="id" width="5">ID</th>
+                <th field="customer" width="10">客户</th>
+                <th field="cellphone" width="10">手机号</th>
+                <!--<th field="pi_title" width="12">保险名称</th>-->
+                <th field="engineer" width="12">服务工程师</th>
+                <th field="number" width="12">保险单号</th>
+                <th field="phone_name" width="10">机型</th>
+                <th field="old_order_number" width="15">第三方订单号</th>
+                <th field="phone_imei" width="15">IMEI号</th>
+                <th field="status" width="5" formatter="formatStatus">状态</th>
+                <th field="broken_time" width="10" formatter="formatDate">报险时间</th>
+                <th field="broken_flag" width="7" formatter="formatFlag">审核状态</th>
+                <th field="username" width="8">审核人</th>
+                <!--<th field="remark" width="15">备注</th>-->
+                <th field="action" width="20" formatter="formatOrderRowActionButton">操作</th>
+            </tr>
+            </thead>
+    </table>
+    <div id="toolbar">
+    	<span>报险时间:</span>
+        <input type="text" class="easyui-datebox" id='search-broken-stime' panelHeight="auto"> 至 <input type="text" class="easyui-datebox" id='search-broken-etime' panelHeight="auto">
+        &nbsp;
+        <span>状态:</span>
+        <select class="easyui-combobox" id='search-status' panelHeight="auto">
+            <option value="all">全部</option>
+            <option value="3">出险</option>
+            <option value="5">服务完成</option>
+        </select>
+        <span>来源:</span>
+        <select class="easyui-combobox" limitToList="true" id='search-source' url="/admin/thirdinsurance/source" valueField="source" textField="name" style="width:80px;">
+        </select>
+        &nbsp;
+        &nbsp;
+        <span>关键字:</span>
+        <input type="text" class="easyui-textbox" id='search-keyword' panelHeight="auto">
+		<a href="javascript:void(0)" class="easyui-linkbutton" plain="true" iconCls="icon-search" onclick="searchItem()">搜索</a>
+    </div>
+    <div id="rowmenu" class="hide">
+       <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['详情'])) { echo 'hide';} ?>" iconCls="icon-detail" plain="true" onclick="selectedRow($(this));detailItem();">详情</a>
+       <a href="javascript:void(0)" class="easyui-linkbutton auditor <?php if(!isset($buttons['审核'])) { echo 'hide';} ?>" iconCls="icon-detail" plain="true" onclick="selectedRow($(this));auditorItem();">审核</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton rollBack <?php if(!isset($buttons['回退'])) { echo 'hide';} ?>" iconCls="icon-cancel" plain="true" onclick="selectedRow($(this));rollBack();">回退</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton btn-appointment <?php if(!isset($buttons['预约'])) { echo 'hide';} ?>" iconCls="icon-receive" plain="true" id="btn-appointment" onclick="selectedRow($(this));appointment()">预约</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton btn-convention <?php if(!isset($buttons['重新预约'])) { echo 'hide';} ?>" iconCls="icon-receive" plain="true" id="btn-convention" onclick="selectedRow($(this));appointment()">重新预约</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton btn-send <?php if(!isset($buttons['结单'])) { echo 'hide';} ?>" iconCls="icon-pass" plain="true" id="btn-send" onclick="selectedRow($(this));finish();">结单</a>
+       <!--<a href="javascript:void(0)" class="easyui-linkbutton cancel <?php if(!isset($buttons['取消'])) { echo 'hide';} ?>" iconCls="icon-cancel" plain="true" onclick="selectedRow($(this));cancelItem();">取消</a>-->
+    </div>
+    <div id="load" class="easyui-dialog" title="消息" closed="true" style="width:200px;height:100px;padding:10px">
+        <span>处理中...</span>
+    </div>
+    <div id="dlg-detail" class="easyui-dialog" style="width:900px;max-height:500px;padding:10px 20px" closed="true" buttons="#dlg-buttons">
+    	<form id="fm">
+    	    <div class="ftitle">保险单日志</div>
+            <div class="fitem">
+                <table id="order_log" class="easyui-datagrid" nowrap="false" style="width:650px; max-height:300px;">
+                    <thead>
+                        <tr>
+                            <th field="id" width="50">ID</th>
+                            <th field="time" width="150" formatter="formatDate">时间</th>
+                            <th field="action" width="400">操作</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+    	   <div class="ftitle">客户信息</div>
+           <div class="fitem">
+               <label>客户:</label>
+               <input name="customer" class="easyui-textbox">
+           </div>
+           <div class="fitem">
+               <label>手机:</label>
+               <input name="cellphone" class="easyui-textbox">
+           </div>
+           <div class="ftitle">保险信息</div>
+           <div class="fitem">
+               <label>保险名称:</label>
+               <input name="pi_title" class="easyui-textbox" style="width:300px;">
+           </div>
+           <div class="fitem">
+               <label>保险单号:</label>
+               <input name="number" class="easyui-textbox" style="width:200px;">
+           </div>
+           <div class="fitem">
+               <label>保险机型:</label>
+               <input name="phone_name" class="easyui-textbox">
+           </div>
+           <div class="fitem">
+               <label>手机IMEI号:</label>
+               <input name="phone_imei" class="easyui-textbox">
+           </div>
+           <!--<div class="fitem">
+               <label>保险价格:</label>
+               <input name="price" class="easyui-textbox">
+           </div>-->
+           <div class="fitem">
+               <label>投保时间:</label>
+               <input id="create_time" name="create_time" class="easyui-textbox">
+           </div>
+           <!--<div class="fitem">
+               <label>付款时间:</label>
+               <input id="pay_time" name="pay_time" class="easyui-textbox">
+           </div>
+           <div class="fitem">
+               <label>付款账号:</label>
+               <input name="pay_account" class="easyui-textbox">
+           </div>
+           <div class="fitem">
+               <label>付款记录号:</label>
+               <input name="pay_number" class="easyui-textbox" style="width:300px;">
+           </div>-->
+           <div class="fitem">
+                <label>状态:</label>
+               <!--原单取消:
+               <input class="easyui-validatebox" name="status" type="radio" required="true" value="-2">
+               取消:
+               <!-put class="easyui-validatebox" name="status" type="radio" required="true" value="-1">
+               未付款:
+               <input class="easyui-validatebox" name="status" type="radio" required="true" value="0">
+               已付款:
+               <input class="easyui-validatebox" name="status" type="radio" required="true" value="1">-->
+                生效:
+                <input class="easyui-validatebox" name="status" type="radio" required="true" value="2">
+                出险:
+                <input class="easyui-validatebox" name="status" type="radio" required="true" value="3">
+                失效:
+                <input class="easyui-validatebox" name="status" type="radio" required="true" value="4">
+                服务完成:
+                <input class="easyui-validatebox" name="status" type="radio" required="true" value="5">
+            </div>
+            <div class="fitem">
+               <label>生效时间:</label>
+               <input id="effect_time" name="effect_time" class="easyui-textbox">
+           </div>
+           <div class="fitem">
+               <label>失效时间:</label>
+               <input id="failure_time" name="failure_time" class="easyui-textbox">
+           </div>
+            <div class="ftitle">原订单信息</div>
+            <div class="fitem">
+                <label>原订单号:</label>
+                <input name="old_order_number" class="easyui-textbox">
+            </div>
+            <div class="fitem">
+               <label>手机IMEI号:</label>
+               <input name="phone_imei" class="easyui-textbox">
+           </div>
+            <div class="ftitle">出险信息</div>
+            <div class="fitem">
+                <label>出险时间:</label>
+                <input id="broken_time" name="broken_time" class="easyui-textbox">
+            </div>
+            <div class="fitem">
+                <label>出险图片:</label>
+                <a id="broken_img_href2" target="_blank">
+                <img id="broken_img2" style="max-width:800px;">
+                </a>
+            </div>
+            <div class="fitem">
+                <label>审核状态:</label>
+                不通过:
+                <input class="easyui-validatebox" name="broken_flag" type="radio" required="true" value="-1">
+                申请:
+                <input class="easyui-validatebox" name="broken_flag" type="radio" required="true" value="0">
+                通过:
+                <input class="easyui-validatebox" name="broken_flag" type="radio" required="true" value="1">
+            </div>
+            <div class="fitem">
+                <label>审核人:</label>
+                <input name="username" class="easyui-textbox">
+            </div>
+            <div class="fitem">
+                <label>备注:</label>
+                <input name="remark" class="easyui-textbox" style="width:400px; height:60px;" multiline="true">
+            </div>
+            <div class="ftitle">出险订单信息</div>
+            <div class="fitem">
+                <label>订单号:</label>
+                <input name="order_number" class="easyui-textbox">
+            </div>
+        </form>
+    </div>
+    <div id="dlg-buttons">
+        <a href="#" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg-detail').dialog('close')">关闭</a>
+    </div>
+    
+    <div id="dlg-audit" class="easyui-dialog" style="width:900px;max-height:500px;padding:10px 20px" closed="true" buttons="#dlg-audit-buttons">
+    	<form id="fm-audit" method="post">
+    	   <div class="ftitle">审核客户报险信息</div>
+           <div class="fitem">
+               <label>审核状态:</label>
+                 不通过:
+                <input class="easyui-validatebox" name="flag" type="radio" required="true" value="-1">
+                通过:
+                <input class="easyui-validatebox" name="flag" type="radio" required="true" value="1" validType="requireRadio['input[name=\'flag\']']">
+           </div>
+           <div class="fitem">
+               <label>手机IMEI号:</label>
+               <input name="phone_imei" class="easyui-textbox">
+           </div>
+           <div class="fitem">
+               <label>报险图片:</label>
+               <a id="broken_img_href" target="_blank"><img id="broken_img" style="max-width:330px;"></a>
+           </div>
+           <div class="fitem">
+               <label>备注:</label>
+               <input name="remark" class="easyui-textbox" style="width:400px; height:60px;" multiline="true">
+           </div>
+        </form>
+    </div>
+    <div id="dlg-audit-buttons">
+        <a href="#" class="easyui-linkbutton" iconCls="icon-ok" onclick="saveItem('#fm-audit')">确定</a>
+        <a href="#" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg-audit').dialog('close')">关闭</a>
+    </div>
+    <div id="dlg-cancel" class="easyui-dialog" style="width:750px;max-height:500px;padding:10px 20px" closed="true" buttons="#dlg-cancel-buttons">
+    	<form id="fm-cancel" method="post">
+    	   <div class="ftitle">取消客户报险信息</div>
+           <div class="fitem">
+               <label>备注:</label>
+               <input name="remark" class="easyui-textbox" style="width:400px; height:60px;" multiline="true" required="true">
+           </div>
+        </form>
+    </div>
+    <!--<div id="dlg-roll-back" class="easyui-dialog" style="width:750px;max-height:500px;padding:10px 20px" closed="true" buttons="#dlg-roll-back-buttons">-->
+        <!--<form id="fm-roll-back" method="post">-->
+            <!--<div class="ftitle">确定回退？</div>-->
+        <!--</form>-->
+    <!--</div>-->
+
+    <div id="dlg-cancel-buttons">
+        <a href="#" class="easyui-linkbutton" iconCls="icon-ok" onclick="saveItem('#fm-cancel')">确定</a>
+        <a href="#" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg-cancel').dialog('close')">关闭</a>
+    </div>
+    <!--<div id="dlg-roll-back-buttons" style="width: 200px">-->
+        <!--<a href="#" class="easyui-linkbutton" iconCls="icon-ok" onclick="saveItem('#fm-cancel')">确定</a>-->
+        <!--<a href="#" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg-cancel').dialog('close')">关闭</a>-->
+    <!--</div>-->
+
+        <div id="dlg-appointment" class="easyui-dialog" style="width:300px;height:400px;padding:10px 20px" closed="true" buttons="#dlg-appointment-buttons">
+            <form id="fm-appointment" method="post">
+                <div class="fitem">
+                    <div class="fitem">
+                        <label>预约时间:</label>
+                        <input name="service_time" class="easyui-datetimebox" style="width:150px">
+                        <label>工程师:</label>
+                        <select class="easyui-combobox" limitToList="true" name="contact_engineer"  url="/admin/engineer/engineers" valueField="id" textField="name" style="width:150px;">
+                        </select>
+                        <label>地址:</label>
+                        <input name="address" class="easyui-textbox"  data-options="multiline:true"  prompt="地址" >
+                        <label>备注:</label>
+                        <input name="before_remark" class="easyui-textbox" data-options="multiline:true"  prompt="备注" >
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div id="dlg-appointment-buttons">
+            <a href="#" class="easyui-linkbutton" iconCls="icon-ok" onclick="saveUser()">保存</a>
+            <a href="#" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg-appointment').dialog('close')">取消</a>
+        </div>
+
+        <!-- 完结弹窗 -->
+        <div id="dlg-finish" class="easyui-dialog" style="width:350px;height:400px;padding:10px 20px" closed="true" buttons="#dlg-btnfin">
+            <form id="fm-finish" method="post">
+                <div class="ftitle">完结工单</div>
+                <div class="fitem">
+                    <label>是否上门(必填):</label>
+                    <input class="easyui-validatebox" name="is_visit" type="radio" value="1" checked="checked" data-options="required:true">
+                    <span>是</span>
+                    <input class="easyui-validatebox" name="is_visit" type="radio" value="0">
+                    <span>否</span>
+                </div>
+                <div class="fitem">
+                    <label>结单描述(必填):</label>
+                    <input name="after_remark" class="easyui-textbox" data-options="required:true,multiline:true">
+                </div>
+            </form>
+        </div>
+        <div id="dlg-btnfin">
+            <a href="#" class="easyui-linkbutton" iconCls="icon-ok" onclick="finishSave()">保存</a>
+            <a href="#" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg-finish').dialog('close')">取消</a>
+        </div>
+
+
+</body>
+</html>

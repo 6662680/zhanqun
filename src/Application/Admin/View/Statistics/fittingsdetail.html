@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>user</title>
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/default/easyui.css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/icon.css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/css/user.css">
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/locale/easyui-lang-zh_CN.js"></script>
+    <script type="text/javascript">
+        $(function(){
+            $('#search-end-time').datebox('setValue', '<?php echo date("Y-m-d");?>');
+        });
+        
+        function exportItem() {
+        	$('#addresses').val($('#search-status').combobox('getValues').join(','));
+        	$('#search').submit();
+        }
+    </script>
+</head>
+<body>
+<body class="easyui-layout">
+    <table id="dg" title="良品库存明细" class="easyui-datagrid" style="width:100%;" toolbar="#toolbar" rownumbers="true" fitColumns="true" singleSelect="true">
+        <thead>
+            <tr>
+                <th field="order1" width="5">城市</th>
+                <th field="order2" width="5">手机型号</th>
+                <th field="order3" width="5">物料编码</th>
+                <th field="order4" width="5">物料名称</th>
+                <th field="order5" width="5">库存数量</th>
+                <th field="order6" width="5">分配数量</th>
+                <th field="order7" width="5">可用数量</th>
+                <th field="order8" width="5">单价</th>
+                <th field="order9" width="5">总价</th>
+            </tr>
+        </thead>
+    </table>
+    <div id="toolbar">
+        <form id="search" method="post" action="<?php echo U('admin/statistics/fittingsDetail');?>">
+        <p>
+            <span>日期:</span>
+            <input type="text" class="easyui-datebox" id='search-end-time' name="end_time" panelHeight="auto">
+            <span>城市:</span>
+            <select class="easyui-combobox" id='search-status' multiple="true" style="width:200px;">
+	            <?php foreach(session('organizations') as $v) { ?>
+	            <option value="<?php echo $v['id'];?>"><?php echo $v['alias'];?></option>
+	            <?php }?>
+        	</select>
+        	<input name="addresses" id="addresses" type="hidden" value="">
+            <a href="javascript:void(0)" class="easyui-linkbutton" plain="true" iconCls="icon-search" onclick="exportItem();">导出</a>
+        </p>
+        </form>
+    </div>
+</body>
+</html>

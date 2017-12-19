@@ -1,0 +1,87 @@
+body {
+    font-family:verdana,helvetica,arial,sans-serif;
+    padding:20px;
+    font-size:12px;
+    margin:0;
+}
+h2 {
+    font-size:18px;
+    font-weight:bold;
+    margin:0;
+    margin-bottom:15px;
+}
+
+* {
+    font-size:12px; 
+    font-family:Tahoma,Verdana,微软雅黑,新宋体
+}
+body {
+    background:#D2E0F2;
+}
+a { 
+    color:Black; 
+    text-decoration:none;
+}
+a:hover {
+    color:Red; 
+    text-decoration:underline;
+}
+
+/* menu */
+.easyui-accordion .menu-accordion {
+}
+.easyui-accordion .menu-accordion ul { 
+    list-style-type:none;
+    margin:0px; 
+    padding:10px;
+}
+.easyui-accordion .menu-accordion ul li {
+    display: block;
+    padding: 0px;
+    border: 1px;
+    margin: 2px 0px;
+    padding-left: 10px;
+    padding-top: 2px;
+}
+.easyui-accordion .menu-accordion ul li a {
+    line-height: 24px;
+}
+
+.easyui-accordion .menu-accordion ul li:hover {
+    border:1px dashed #99BBE8; 
+    background:#E0ECFF;
+    cursor:pointer;
+}
+.easyui-accordion .menu-accordion ul li:hover a {
+    color: #416AA3;
+    text-decoration: none;
+}
+.easyui-accordion .menu-accordion ul .selected {
+    border:1px solid #99BBE8; 
+    background:#E0ECFF;
+    cursor:default;
+}
+.easyui-accordion .menu-accordion ul .selected a {
+    color:#416AA3; 
+    font-weight:bold;
+}
+
+/* icon */
+.icon{ background:url(../images/tabicons.png) no-repeat;width:18px; line-height:18px; display:inline-block;}
+.icon-sys{ background-position:0px -200px;}
+.icon-set{ background-position:-380px -200px;}
+.icon-add{background-position: -20px 0px;}
+.icon-add1{background:url('icon/edit_add.png') no-repeat;}
+.icon-nav{background-position: -100px -20px; }
+.icon-users{background-position: -100px -480px;}
+.icon-role{background-position: -360px -200px;}
+.icon-set{background-position: -380px -200px;}
+.icon-log{background-position: -380px -80px;}
+.icon-delete16{background:url('icon/delete.gif') no-repeat;width:18px; line-height:18px; display:inline-block;}
+.icon-delete{ background-position:-140px -120px;}
+.icon-edit{ background-position:-380px -320px;}
+.icon-magic{ background-position:0px -500px;}
+.icon-database{ background-position:-20px -140px;}
+.icon-expand{ background:url('/images/coll2.gif') no-repeat;}
+.icon-collapse{ background:url('/images/coll3.gif') no-repeat;}
+.icon-reload{ background:url('/images/coll3.gif') no-repeat;}

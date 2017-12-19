@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>user</title>
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/default/easyui.css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/icon.css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/css/user.css">
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/js/user.js"></script>
+    <script type="text/javascript">
+        $(function(){
+            $('#mm').menu();
+            $(document).bind('contextmenu',function(e){
+                e.preventDefault();
+                $('#mm').menu('show', {
+                    left: e.pageX,
+                    top: e.pageY
+                });
+            });
+        });
+        
+        function searchItem(){
+            $('#dg').datagrid({
+                queryParams: {
+                    id: $('#search-organization').combobox('getValue'),
+                    phone: $('#search-phone').combobox('getValue'),
+                }
+            });
+        }
+        
+        function formStatus(val){
+            var arr = new Array();
+            arr[1] = "入库";
+            arr[2] = "调拨";
+            arr[3] = "回收";
+            arr[-1] = "取消";
+            return arr[val];
+        }
+
+        function getDetailed(){
+            var row = $('#dg').datagrid('getSelected');
+            if (row){
+
+                $("#dlg-detail").dialog("open").dialog("setTitle", "废件详情");
+                $('#fm').form('clear');
+                $('#dg-detail').datagrid({
+                    url:'/admin/waste/detail/waste_id/' + row.waste_id + '/organization_id/' + row.organization_id,
+                });
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+        
+        function inoutItem() {
+            var row = $('#dg').datagrid('getSelected');
+
+            if (row) {
+                $('#dg-inout').datagrid({
+                    queryParams: {
+                        waste_id: row.waste_id,
+                        organization_id: row.organization_id,
+                    }
+                });
+
+                $('#dlg-inout').dialog('open').dialog('center').dialog('setTitle', '出入库');
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+        
+         // 格式化类型
+        function formatInout(val, row) {
+            switch (val)
+            {
+                case '1':
+                    return '<span class="label label-bg2">入库</span>';
+                    break;
+                case '2':
+                    return '<span class="label label-bg3">出库</span>';
+                    break;
+            }     
+        }
+
+        // 格式化出入库
+        function formatInoutType(val, row) {
+            switch (val)
+            {
+                case '1':
+                    return '<span class="label label_bg4">出入库</span>';
+                    break;
+                case '2':
+                    return '<span class="label label_bg1">调拨</span>';
+                    break;
+                case '3':
+                    return '<span class="label label_bg2">工程师退还</span>';
+                    break;
+                case '4':
+                    return '<span class="label label_bg3">报损</span>';
+                    break;
+                case '5':
+                    return '<span class="label label_bg5">回收出库</span>';
+                    break;
+            }     
+        }
+        
+        function setWasteWarehouseItem()
+        {
+            var row = $('#dg').datagrid('getSelected');
+
+            if (row) {
+                $('#dlg-reset-warehouse').dialog('open').dialog('center').dialog('setTitle', '更新库存');
+                $('#fm-reset').form('clear');
+                $('#fm-reset').form('load', row);
+                
+                url = '/admin/waste/setWasteWarehouse/id/' + row.id;
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+        
+        function saveSetWasteWarehouseItem(form)
+        {
+            $(form).form('submit',{
+                url: url,
+                onSubmit: function(){
+                    
+                    if ($(this).form('validate')) {
+                        $('#load').dialog('open');
+                    };
+                    
+                    return $(this).form('validate');
+                },
+                success: function(result){
+                    $('#load').dialog('close');
+                    var result = eval('('+result+')');
+                    if (result.success){
+                        $('#dlg-reset-warehouse').dialog('close');
+                        $('#dg').datagrid('reload');
+                    } else {
+                        $.messager.show({
+                            title: '错误',
+                            msg: result.errorMsg,
+                            showType:'fade',
+                            style:{
+                                right:'',
+                                bottom:''
+                            }
+                        });
+                    }
+                }
+            });
+        }
+        
+        //导出
+        function exportItem()
+        {
+            $('#organization_id').val($('#search-organization').combobox('getValue'));
+            $('#phone_id').val($('#search-phone').val());
+                
+            $('#fm-export').form('submit',{
+                    url: '/admin/waste/exportWasteStocks',
+                    onSubmit: function(){
+                    },
+                    success: function(result){
+                    }
+            });
+        }
+
+        function menu(){
+            return $('#rowmenu').html;
+        }
+    </script>
+</head>
+<body class="easyui-layout">
+    <table id="dg" title="废件列表" class="easyui-datagrid" style="width:100%; max-height:800px;" url="/admin/waste/stockRows" toolbar="#toolbar" pagination="true" pageSize="30" pagePosition="top" rownumbers="true" fitColumns="true" singleSelect="true" rownumbers="true" pagination="true">
+            <thead>
+            <tr>
+                <th field="id" width="5">ID</th>
+                <th field="org" width="5">组织</th>
+                <th field="phone" width="10">机型</th>
+                <th field="title" width="10">废件名称</th>
+                <th field="number" width="10">废件编号</th>
+                <th field="amount" width="5">数量</th>
+                <th field="action" width="10" formatter="formatRowActionButton">操作</th>
+            </tr>
+            </thead>
+    </table>
+    <div id="toolbar">
+        <span>地区:</span>
+        <select class="easyui-combobox" limitToList="true" id='search-organization' url="/admin/waste/belong" valueField="id" textField="alias" style="width:150px;">
+        </select>
+        &nbsp;
+        <span>机型:</span>
+        <select class="easyui-combobox" limitToList="true" id='search-phone' url="/admin/waste/phones" valueField="id" textField="alias" style="width:150px;">
+        </select>
+        &nbsp;
+        <a href="javascript:void(0)" class="easyui-linkbutton" plain="true" iconCls="icon-search" onclick="searchItem()">搜索</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['导出'])) { echo 'hide';} ?>" iconCls="icon-export" plain="true" onclick="exportItem()">导出</a>
+    </div>
+    <div id="rowmenu" class="hide">
+        <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['废料详情'])) { echo 'hide';} ?>" iconCls="icon-detail" plain="true" onclick="selectedRow($(this));getDetailed()">废料详情</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['更新库存'])) { echo 'hide';} ?>" iconCls="icon-edit" plain="true" onclick="selectedRow($(this));setWasteWarehouseItem()">更新库存</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['出入库'])) { echo 'hide';} ?>" iconCls="icon-inout" plain="true" onclick="selectedRow($(this));inoutItem();">出入库</a>
+    </div>
+    <!-- 详情弹窗 -->
+    <div id="dlg-detail" class="easyui-dialog" style="width:800px;max-height:500px;padding:10px 20px" closed="true" buttons="#dlg-detail-buttons">
+        <table id="dg-detail" title="废料库存列表" class="easyui-datagrid" style="width:100%;" pagination="true" pageSize="20" pagePosition="top" fitColumns="true" singleSelect="true" rownumbers="true" pagination="true">
+            <thead>
+                <tr>
+                    <th field="id" width="5">ID</th>
+                    <th field="number" width="10">废件编号</th>
+                    <th field="order_number" width="10">订单编号</th>
+                    <th field="org" width="10">地区</th>
+                    <th field="create_time" formatter="formatDate" width="15">创建时间</th>
+                    <th field="recycle_time" formatter="formatDate" width="15">回收时间</th>
+                    <th field="status" formatter="formStatus" width="10">状态</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+    <div id="dlg-detail-buttons">
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg-detail').dialog('close')" style="width:90px">关闭</a>
+    </div>
+    <!-- 出入库弹窗 -->
+    <div id="dlg-inout" class="easyui-dialog" style="width:1000px;max-height:500px;padding:10px 20px" closed="true" buttons="#dlg-inout-buttons">
+        <table id="dg-inout" title="废料出入库日志" class="easyui-datagrid" style="width:100%;" pagination="true" pageSize="20" pagePosition="top" rownumbers="true" fitColumns="true" singleSelect="true" rownumbers="true" pagination="true" url="/admin/waste/wasteInout">
+            <thead>
+                <tr>
+                    <th field="id" width="5">ID</th>
+                    <th field="type" width="10" formatter="formatInoutType">类型</th>
+                    <th field="inout" width="5" formatter="formatInout">出入库</th>
+                    <th field="organization" width="5">地区</th>
+                    <th field="waste" width="15">废料</th>
+                    <th field="amount" width="5">数量</th>
+                    <th field="price" width="5">价格</th>
+                    <th field="audit" width="8">审核人</th>
+                    <th field="engineer" width="5">工程师</th>
+                    <th field="order_id" width="8">订单ID</th>
+                    <th field="time" width="15" formatter="formatDate">时间</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+    <div id="dlg-inout-buttons">
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg-inout').dialog('close')" style="width:90px">关闭</a>
+    </div>
+    <!-- 出入库弹窗 -->
+    <div id="dlg-reset-warehouse" class="easyui-dialog" style="width:400px;max-height:200px;padding:10px 20px" closed="true" buttons="#dlg-reset-buttons">
+    <form id="fm-reset" method="post">
+        <div class="fitem">
+            <label>订单号:</label>
+            <input class="easyui-textbox" name="order_number">
+        </div>
+        <div class="fitem">
+            <label>增减数量:</label>
+            <input class="easyui-textbox" name="number">
+        </div>
+        </form>
+    </div>
+    <div id="dlg-reset-buttons">
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-ok" onclick="saveSetWasteWarehouseItem('#fm-reset');" style="width:90px">确定</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg-reset-warehouse').dialog('close')" style="width:90px">关闭</a>
+    </div>
+    <div id="load" class="easyui-dialog" title="消息" closed="true" style="width:200px;height:100px;padding:10px">
+        <span>处理中...</span>
+    </div>
+    <div id="dlg-export" class="easyui-dialog" style="width:700px;height:260px;padding:10px 20px" closed="true" buttons="#dlg-buttons">
+        <form id="fm-export" method="post">
+        	<div class="ftitle">数据导出</div>
+            <input type="hidden" name="phone_id" id="phone_id">
+            <input type="hidden" name="organization_id" id="organization_id">
+        </form>
+    </div>
+</body>
+</html>
