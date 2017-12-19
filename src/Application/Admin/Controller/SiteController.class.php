@@ -56,7 +56,6 @@ class SiteController extends BaseController
         $rst['total'] = $count;
 
         $list = D('site')->field('*')
-//            
             ->where($map)->order('id')->limit($this->page())->select();
         $rst['rows'] = $list;
         $this->ajaxReturn($rst);
