@@ -15,7 +15,7 @@
         function newItem(){
             $('#dlg-add').dialog('open').dialog('center').dialog('setTitle', '添加');
             $('#fm').form('clear');
-            url = '/admin/user/add';
+            url = '/admin/site/add';
         }
 
         function editItem(){
@@ -23,7 +23,7 @@
             if (row){
                 $('#dlg-edit').dialog('open').dialog('center').dialog('setTitle','编辑');
                 $('#fm-edit').form('load', row);
-                url = '/admin/user/save/id/' + row.id;
+                url = '/admin/site/save/id/' + row.id;
             } else {
                 $.messager.show({
                     title: '错误',
@@ -77,42 +77,7 @@
             if (row){
                 $.messager.confirm('Confirm', '确认删除此记录?',function(r){
                     if (r){
-                        $.post('/admin/user/delete',{id:row.id},function(result){
-                            if (result.success){
-                                $('#dg').datagrid('reload');
-                            } else {
-                                $.messager.show({
-                                    title: '错误',
-                                    msg: result.errorMsg,
-                                    showType:'fade',
-                                    style:{
-                                        right:'',
-                                        bottom:''
-                                    }
-                                });
-                            }
-                        },'json');
-                    }
-                });
-            } else {
-                $.messager.show({
-                    title: '错误',
-                    msg: '请选择一条记录！',
-                    showType:'fade',
-                    style:{
-                        right:'',
-                        bottom:''
-                    }
-                });
-            }
-        }
-
-        function resetItem(){
-            var row = $('#dg').datagrid('getSelected');
-            if (row){
-                $.messager.confirm('Confirm', '确认重置(重置后密码[12345678])?',function(r){
-                    if (r){
-                        $.post('/admin/user/reset',{id:row.id},function(result){
+                        $.post('/admin/site/delete',{id:row.id},function(result){
                             if (result.success){
                                 $('#dg').datagrid('reload');
                             } else {
@@ -145,24 +110,29 @@
         function searchItem(){
             $('#dg').datagrid({
                 queryParams: {
-                    organization_id: $('#search-organization').combobox('getValue'),
                     status: $('#search-status').combobox('getValue'),
                     keyword: $('#search-keyword').val(),
                 }
             });
         }
 
-        function organization(){
+        // 栏目管理
+        function memberItem(){
+        	
             var row = $("#dg").datagrid('getSelected');
-
+				window.rows = row;
             if(row) {
-                $("#org").dialog("open").dialog("setTitle", "所属组织");
+            
+                $("#aur").dialog("open").dialog("setTitle",row.site_name+'栏目管理');
+                
                 $('#inr').datagrid({    
-                    url:'/admin/user/joined/id/' + row.id,        
+                    url:'/admin/site/incolumn/id/' + row.id,        
                 });
+                
                 $('#notr').datagrid({    
-                    url:'/admin/user/unorganized/id/' + row.id,        
+                    url:'/admin/site/notincolumn/id/' + row.id,        
                 });
+                
             } else {
                 $.messager.show({
                     title: '错误',
@@ -176,26 +146,12 @@
             }
         }
 
-        function unlock() {
-            var row = $("#dg").datagrid('getSelected');
-            if (row) {
-                console.log(row);
-                $.ajax({
-                    url: '/admin/user/unlock',
-                    data: {username: row.username},
-                    success: function(data) {
-                        $.messager.alert('', data.msg);
-                    }
-                });
-            }
-        }
-        
-        function join(){
+        function addColumn(){
             var row = $("#dg").datagrid('getSelected'); 
             var row1 = $("#notr").datagrid('getSelected');
 
             if(row1){
-                $.post('/admin/user/join',{userId:row.id, organizationId:row1.id}, function(result){
+                $.post('/admin/site/addColumn',{siteId:row.id,columnId:row1.id},function(result){
                     if (result.success){
                         $('#inr').datagrid('reload');
                         $('#notr').datagrid('reload');
@@ -224,12 +180,12 @@
             }
         }
         
-       function exit(){
+       	function removeColumn(){
             var row = $("#dg").datagrid('getSelected'); 
             var row1 = $("#inr").datagrid('getSelected');
 
             if(row1){
-                $.post('/admin/user/exits',{userId:row.id, organizationId:row1.id}, function(result){
+                $.post('/admin/site/removeColumn',{siteId:row.id,columnId:row1.id},function(result){
                     if (result.success){
                         $('#inr').datagrid('reload');
                         $('#notr').datagrid('reload');
@@ -258,14 +214,111 @@
             }
         }
 
-        // 格式化类型
-        function formatOrgStatus(val) {
-            if (val == 1) {
-                return '<span class="label label-bg5">公司组织</span>';
-            } else if (val == 2) {
-                return '<span class="label label-bg2">虚拟库位</span>';
+		//网站下所含栏目新闻管理操作按钮
+		function formatButtonzh() {
+		    return $('#rowmenuzh').html();
+		}
+
+		// 新闻管理
+        function manageItem(){
+        	
+        
+            var row1 = $("#inr").datagrid('getSelected');
+			
+            if(row1) {
+            
+                $("#news").dialog("open").dialog("setTitle",window.rows.site_name+row1.column_name+"新闻管理");
+                
+                $('#innews').datagrid({    
+                    url:'/admin/site/inNews/id/' + row1.id,        
+                });
+                
+                $('#notinnews').datagrid({    
+                    url:'/admin/site/notinNews/id/' + row1.id,        
+                });
+                
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
             }
         }
+
+        /*function addNews(){
+            var row = $("#dg").datagrid('getSelected'); 
+            var row1 = $("#notr").datagrid('getSelected');
+
+            if(row1){
+                $.post('/admin/site/addColumn',{siteId:row.id,columnId:row1.id},function(result){
+                    if (result.success){
+                        $('#inr').datagrid('reload');
+                        $('#notr').datagrid('reload');
+                    } else {
+                        $.messager.show({
+                            title: '错误',
+                            msg: result.errorMsg,
+                            showType:'fade',
+                            style:{
+                                right:'',
+                                bottom:''
+                            }
+                        });
+                    }
+                },'json');
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+        
+       	function removeNews(){
+            var row = $("#dg").datagrid('getSelected'); 
+            var row1 = $("#inr").datagrid('getSelected');
+
+            if(row1){
+                $.post('/admin/site/removeColumn',{siteId:row.id,columnId:row1.id},function(result){
+                    if (result.success){
+                        $('#inr').datagrid('reload');
+                        $('#notr').datagrid('reload');
+                    } else {
+                        $.messager.show({
+                            title: '错误',
+                            msg: result.errorMsg,
+                            showType:'fade',
+                            style:{
+                                right:'',
+                                bottom:''
+                            }
+                        });
+                    }
+                },'json');
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }*/
+
+
 
         $(function(){
             $('#mm').menu();
@@ -287,17 +340,14 @@
                 <th field="site_name" width="20">网站名称</th>
                 <th field="site_address" width="10">域名</th>
                 <th field="site_ip" width="10">网址</th>
+                <th field="remark" width="20">备注</th>
                 <th field="status" width="10" formatter="formatStatus">状态</th>
                 <th field='action' width="35" formatter="formatRowActionButton">操作</th>
             </tr>
         </thead>
     </table>
     <div id="toolbar">
-        <span>组织:</span>
-		<select class="easyui-combobox" limitToList="true" id='search-organization' url="/admin/user/organization" valueField="id" textField="alias" style="width:150px;">
-		</select>
-        &nbsp;&nbsp;
-        <span>状态:</span>
+        <span>状态:</span>&nbsp;&nbsp;
         <select class="easyui-combobox" id='search-status' panelHeight="auto">
             <option value="all">全部</option>
             <option value="1">启用</option>
@@ -313,39 +363,32 @@
         <div iconCls="icon-add" class="<?php if(!isset($buttons['添加'])) { echo 'hide';} ?>" onclick="newItem()"><span>添加</span></div>
         <div iconCls="icon-edit" class="<?php if(!isset($buttons['编辑'])) { echo 'hide';} ?>" onclick="editItem()"><span>编辑</span></div>
         <div iconCls="icon-remove" class="<?php if(!isset($buttons['删除'])) { echo 'hide';} ?>" onclick="deleteItem()"><span>删除</span></div>
-        <div iconCls="icon-reset" class="<?php if(!isset($buttons['重置密码'])) { echo 'hide';} ?>" onclick="resetItem()"><span>重置密码</span></div>
-        <div iconCls="icon-member" class="<?php if(!isset($buttons['所属组织'])) { echo 'hide';} ?>" onclick="organization()"><span>所属组织</span></div>
+        <div iconCls="icon-more" class="<?php if(!isset($buttons['包含栏目管理'])) { echo 'hide';} ?>" onclick="memberItem()"><span>包含栏目管理</span></div>
     </div>
     <div id="rowmenu" class="hide">
         <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['编辑'])) { echo 'hide';} ?>" iconCls="icon-edit" plain="true" onclick="selectedRow($(this));editItem();">编辑</a>
         <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['删除'])) { echo 'hide';} ?>" iconCls="icon-remove" plain="true" onclick="selectedRow($(this));deleteItem();">删除</a>
-        <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['重置密码'])) { echo 'hide';} ?>" iconCls="icon-reset" plain="true" onclick="selectedRow($(this));resetItem();">重置密码</a>
-        <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['所属组织'])) { echo 'hide';} ?>" iconCls="icon-member" plain="true" onclick="selectedRow($(this));organization();">所属组织</a>
-        <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['解锁'])) { echo 'hide';} ?>" plain="true" onclick="selectedRow($(this));unlock();">解锁</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['包含栏目管理'])) { echo 'hide';} ?>" iconCls="icon-more" plain="true" onclick="selectedRow($(this));memberItem();">包含栏目管理</a>
     </div>
+    
+    <div id="rowmenuzh" class="hide">
+        <a href="javascript:void(0)" class="easyui-linkbutton " iconCls="icon-edit" plain="true" onclick="selectedRow($(this));manageItem();">新闻管理</a>
+    </div>
+    
     <div id="dlg-add" class="easyui-dialog" style="width:500px;min-height:350px;padding:10px 20px" closed="true" buttons="#dlg-buttons">
-        <div class="ftitle">用户信息</div>
+        <div class="ftitle">网站信息</div>
         <form id="fm" method="post">
             <div class="fitem">
-                <label>用户名:</label>
-                <input name="username" class="easyui-textbox" prompt="用户名"  data-options="required:true,validType:{length:[6,16]}">
-                <!-- remote:['/admin/user/exists', 'username'] -->
+                <label>网站名称:</label>
+                <input name="site_name" class="easyui-textbox" prompt="网站名称"  data-options="required:true,validType:{length:[1,16]}">
             </div>
             <div class="fitem">
-                <label>密码:</label>
-                <input id="pass" name="password" class="easyui-passwordbox" prompt="密码" iconWidth="28" data-options="required:true,validType:'length[6,16]'">
+                <label>域名:</label>
+                <input name="site_address" class="easyui-textbox" prompt="域名"  data-options="required:true,validType:{length:[1,16]}">
             </div>
             <div class="fitem">
-                <label>重复密码:</label>
-                <input class="easyui-passwordbox" prompt="重复密码" iconWidth="28" validType="confirmPass['#pass']" required="true">
-            </div>
-            <div class="fitem">
-                <label>真实姓名:</label>
-                <input name="realname" class="easyui-textbox" prompt="真实姓名" required="true" >
-            </div>
-            <div class="fitem">
-                <label>电话号码:</label>
-                <input name="telphone" class="easyui-textbox" prompt="电话号码"  required="true">
+                <label>网址:</label>
+                <input name="site_ip" class="easyui-textbox" prompt="网址"  data-options="required:true,validType:{length:[1,16]}">
             </div>
             <div class="fitem">
                 <label>状态:</label>
@@ -365,20 +408,20 @@
         <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg-add').dialog('close')" style="width:90px">取消</a>
     </div>
     <div id="dlg-edit" class="easyui-dialog" style="width:500px;min-height:350px;padding:10px 20px" closed="true" buttons="#dlg-buttons">
-        <div class="ftitle">用户信息</div>
+        <div class="ftitle">网站信息</div>
         <form id="fm-edit" method="post">
             <div class="fitem">
-                <label>用户名:</label>
-                <input name="username" class="easyui-textbox" prompt="用户名" required="true">
+                <label>网站名称:</label>
+                <input name="site_name" class="easyui-textbox" prompt="网站名称" required="true">
                 <!-- <input name="username" class="easyui-textbox" prompt="用户名" data-options="readonly:true"> -->
             </div>
             <div class="fitem">
-                <label>真实姓名:</label>
-                <input name="realname" class="easyui-textbox" prompt="真实姓名" required="true">
+                <label>域名:</label>
+                <input name="site_address" class="easyui-textbox" prompt="域名" required="true">
             </div>
             <div class="fitem">
-                <label>电话号码:</label>
-                <input name="telphone" class="easyui-textbox" prompt="电话号码"  required="true">
+                <label>网址:</label>
+                <input name="site_ip" class="easyui-textbox" prompt="网址"  required="true">
             </div>
             <div class="fitem">
                 <label>状态:</label>
@@ -397,42 +440,77 @@
         <a href="javascript:void(0)" class="easyui-linkbutton c6" iconCls="icon-ok" onclick="saveItem('#fm-edit')" style="width:90px">保存</a>
         <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg-edit').dialog('close')" style="width:90px">取消</a>
     </div>
-     <div id="org" class="easyui-dialog" style="width: 600px;min-height: 400px;" closed="true">
+     
+    <div id="load" class="easyui-dialog" title="消息" closed="true" style="width:200px;height:100px;padding:10px">
+        <span>处理中...</span>
+    </div>
+    <div id="aur" class="easyui-dialog" style="width: 800px;min-height: 400px;" closed="true">
         <div id="cc" class="easyui-layout" fit="true">     
-            <div data-options="region:'west'" style="width:200px;">
-                <table id="notr" class="easyui-datagrid" singleSelect="true" title="组织列表">
+            <div data-options="region:'west'" style="width:300px;">
+                <table id="notr" class="easyui-datagrid" singleSelect="true" title="所有栏目列表">
                     <thead>
                         <tr>
-                            <th field="id" align="center">ID</th>
-                            <th field="type" align="center" formatter="formatOrgStatus">类型</th>
-                            <th field="name" align="center">名称</th>
+                            <th field="id" width="60" align="center">ID</th>
+                            <th field="column_name" width="60" align="center">栏目名称</th>
+                            
                         </tr>
                     </thead>
                 </table>
             </div>   
-            <div data-options="region:'east'" style="width:200px;">
-                <table id="inr" class="easyui-datagrid" singleSelect="true" title="所属组织">
+            <div data-options="region:'east'" style="width:300px;">
+                <table id="inr" class="easyui-datagrid" singleSelect="true" title="成员栏目列表">
                     <thead>
                         <tr>
-                            <th field="id" align="center">ID</th>
-                            <th field="type" align="center" formatter="formatOrgStatus">类型</th>
-                            <th field="name" align="center">名称</th>
+                           <th field="id" width="60" align="center">ID</th>
+                           <th field="column_name" width="60" align="center">栏目名称</th>
+                           <th field='action' width="120" align="center" formatter="formatButtonzh">操作</th>
                         </tr>
                     </thead>
                 </table>        
             </div>   
             <div data-options="region:'center'">
                 <div align="center" style="height:200px;padding:30px;">
-                    <a href="javascript:join()" class="easyui-linkbutton">&nbsp;&nbsp;&gt;&gt;&nbsp;&nbsp;</a>
+                    <a href="javascript:addColumn()" class="easyui-linkbutton">&nbsp;&nbsp;&gt;&gt;&nbsp;&nbsp;</a>
                 </div>
                 <div align="center">
-                    <a href="javascript:exit()" class="easyui-linkbutton">&nbsp;&nbsp;&lt;&lt;&nbsp;&nbsp;</a>
+                    <a href="javascript:removeColumn()" class="easyui-linkbutton">&nbsp;&nbsp;&lt;&lt;&nbsp;&nbsp;</a>
                 </div>      
             </div>   
         </div> 
     </div>
-    <div id="load" class="easyui-dialog" title="消息" closed="true" style="width:200px;height:100px;padding:10px">
-        <span>处理中...</span>
+    <div id="news" class="easyui-dialog" style="width: 1000px;min-height: 600px;" closed="true">
+        <div id="zzhh" class="easyui-layout" fit="true">     
+            <div data-options="region:'west'" style="width:420px;">
+                <table id="notinnews" class="easyui-datagrid" singleSelect="true" title="所有新闻列表">
+                    <thead>
+                        <tr>
+                            <th field="id" width="60" align="center">ID</th>
+                            <th field="title" width="120" align="center">新闻标题</th>
+                            
+                        </tr>
+                    </thead>
+                </table>
+            </div>   
+            <div data-options="region:'east'" style="width:420px;">
+                <table id="innews" class="easyui-datagrid" singleSelect="true" title="成员新闻列表">
+                    <thead>
+                        <tr>
+                           <th field="id" width="60" align="center">ID</th>
+                           <th field="title" width="120" align="center">新闻标题</th>
+                           
+                        </tr>
+                    </thead>
+                </table>        
+            </div>   
+            <div data-options="region:'center'">
+                <div align="center" style="height:200px;padding:30px;">
+                    <a href="javascript:addnews()" class="easyui-linkbutton">&nbsp;&nbsp;&gt;&gt;&nbsp;&nbsp;</a>
+                </div>
+                <div align="center">
+                    <a href="javascript:removenews()" class="easyui-linkbutton">&nbsp;&nbsp;&lt;&lt;&nbsp;&nbsp;</a>
+                </div>      
+            </div>   
+        </div> 
     </div>
 </body>
 </html>
