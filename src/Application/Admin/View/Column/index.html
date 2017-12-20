@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>user</title>
+	<link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/default/easyui.css">
+	<link rel="stylesheet" type="text/css" href="__PUBLIC__/vendor/easyui/themes/icon.css">
+	<link rel="stylesheet" type="text/css" href="__PUBLIC__/css/user.css">
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/vendor/easyui/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/js/user.js"></script>
+    <script type="text/javascript">
+        var url;
+
+        function newItem(){
+            $('#dlg-add').dialog('open').dialog('center').dialog('setTitle', '添加');
+            $('#fm').form('clear');
+            url = '/admin/column/add';
+        }
+
+        function editItem(){
+            var row = $('#dg').datagrid('getSelected');
+            if (row){
+                $('#dlg-edit').dialog('open').dialog('center').dialog('setTitle','编辑');
+                $('#fm-edit').form('load', row);
+                url = '/admin/column/save/id/' + row.id;
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+        function saveItem(form) {
+            $(form).form('submit',{
+                url: url,
+                onSubmit: function(){
+                    var rst = $(this).form('validate');
+
+                    if (rst) {
+                        $('#load').dialog('open');
+                        return true;
+                    } else {
+                        return false;
+                    }
+                },
+                success: function(result){
+                    $('#load').dialog('close');
+                    var result = eval('('+result+')');
+                    if (result.success){
+                        $('#dlg-add').dialog('close');
+                        $('#dlg-edit').dialog('close');
+                        $('#dg').datagrid('reload');
+                    } else {
+                        $.messager.show({
+                            title: '错误',
+                            msg: result.errorMsg,
+                            showType:'fade',
+                            style:{
+                                right:'',
+                                bottom:''
+                            }
+                        });
+                    }
+                }
+            });
+        }
+
+        function deleteItem(){
+            var row = $('#dg').datagrid('getSelected');
+            if (row){
+                $.messager.confirm('Confirm', '确认删除此记录?',function(r){
+                    if (r){
+                        $.post('/admin/column/delete',{id:row.id},function(result){
+                            if (result.success){
+                                $('#dg').datagrid('reload');
+                            } else {
+                                $.messager.show({
+                                    title: '错误',
+                                    msg: result.errorMsg,
+                                    showType:'fade',
+                                    style:{
+                                        right:'',
+                                        bottom:''
+                                    }
+                                });
+                            }
+                        },'json');
+                    }
+                });
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+        function resetItem(){
+            var row = $('#dg').datagrid('getSelected');
+            if (row){
+                $.messager.confirm('Confirm', '确认重置(重置后密码[12345678])?',function(r){
+                    if (r){
+                        $.post('/admin/user/reset',{id:row.id},function(result){
+                            if (result.success){
+                                $('#dg').datagrid('reload');
+                            } else {
+                                $.messager.show({
+                                    title: '错误',
+                                    msg: result.errorMsg,
+                                    showType:'fade',
+                                    style:{
+                                        right:'',
+                                        bottom:''
+                                    }
+                                });
+                            }
+                        },'json');
+                    }
+                });
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+        function searchItem(){
+            $('#dg').datagrid({
+                queryParams: {
+                    status: $('#search-status').combobox('getValue'),
+                    keyword: $('#search-keyword').val(),
+                }
+            });
+        }
+
+        function organization(){
+            var row = $("#dg").datagrid('getSelected');
+
+            if(row) {
+                $("#org").dialog("open").dialog("setTitle", "所属组织");
+                $('#inr').datagrid({    
+                    url:'/admin/user/joined/id/' + row.id,        
+                });
+                $('#notr').datagrid({    
+                    url:'/admin/user/unorganized/id/' + row.id,        
+                });
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+        function unlock() {
+            var row = $("#dg").datagrid('getSelected');
+            if (row) {
+                console.log(row);
+                $.ajax({
+                    url: '/admin/user/unlock',
+                    data: {username: row.username},
+                    success: function(data) {
+                        $.messager.alert('', data.msg);
+                    }
+                });
+            }
+        }
+        
+        function join(){
+            var row = $("#dg").datagrid('getSelected'); 
+            var row1 = $("#notr").datagrid('getSelected');
+
+            if(row1){
+                $.post('/admin/user/join',{userId:row.id, organizationId:row1.id}, function(result){
+                    if (result.success){
+                        $('#inr').datagrid('reload');
+                        $('#notr').datagrid('reload');
+                    } else {
+                        $.messager.show({
+                            title: '错误',
+                            msg: result.errorMsg,
+                            showType:'fade',
+                            style:{
+                                right:'',
+                                bottom:''
+                            }
+                        });
+                    }
+                },'json');
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+        
+       function exit(){
+            var row = $("#dg").datagrid('getSelected'); 
+            var row1 = $("#inr").datagrid('getSelected');
+
+            if(row1){
+                $.post('/admin/user/exits',{userId:row.id, organizationId:row1.id}, function(result){
+                    if (result.success){
+                        $('#inr').datagrid('reload');
+                        $('#notr').datagrid('reload');
+                    } else {
+                        $.messager.show({
+                            title: '错误',
+                            msg: result.errorMsg,
+                            showType:'fade',
+                            style:{
+                                right:'',
+                                bottom:''
+                            }
+                        });
+                    }
+                },'json');
+            } else {
+                $.messager.show({
+                    title: '错误',
+                    msg: '请选择一条记录！',
+                    showType:'fade',
+                    style:{
+                        right:'',
+                        bottom:''
+                    }
+                });
+            }
+        }
+
+        // 格式化类型
+        function formatOrgStatus(val) {
+            if (val == 1) {
+                return '<span class="label label-bg5">公司组织</span>';
+            } else if (val == 2) {
+                return '<span class="label label-bg2">虚拟库位</span>';
+            }
+        }
+
+        $(function(){
+            $('#mm').menu();
+            $(document).bind('contextmenu',function(e){
+                e.preventDefault();
+                $('#mm').menu('show', {
+                    left: e.pageX,
+                    top: e.pageY
+                });
+            });
+        });
+    </script>
+</head>
+<body class="easyui-layout">
+        <table id="dg" title="栏目列表" class="easyui-datagrid" style="width:100%;" url="/admin/column/rows" toolbar="#toolbar" pagination="true" pageSize="30" pagePosition="top" rownumbers="true" fitColumns="true" singleSelect="true" rownumbers="true" pagination="true">
+        <thead>
+            <tr>
+                <th field="id" width="5">ID</th>
+                <th field="column_name" width="10">栏目名称</th>
+                <th field='action' width="35" formatter="formatRowActionButton">操作</th>
+            </tr>
+        </thead>
+    </table>
+    <div id="toolbar">
+
+        &nbsp;&nbsp;
+        <span>状态:</span>
+        <select class="easyui-combobox" id='search-status' panelHeight="auto">
+            <option value="all">全部</option>
+            <option value="1">启用</option>
+            <option value="0">禁用</option>
+        </select>
+        &nbsp;&nbsp;
+        <span>关键字:</span>
+        <input type="text" class="easyui-textbox" id='search-keyword' panelHeight="auto">
+        <a href="javascript:void(0)" class="easyui-linkbutton" plain="true" iconCls="icon-search" onclick="searchItem()">搜索</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" plain="true" iconCls="icon-add" onclick="newItem()">添加</a>
+    </div>
+    <div id="mm" style="width:120px;">
+        <div iconCls="icon-add" class="<?php if(!isset($buttons['添加'])) { echo 'hide';} ?>" onclick="newItem()"><span>添加</span></div>
+        <div iconCls="icon-edit" class="<?php if(!isset($buttons['编辑'])) { echo 'hide';} ?>" onclick="editItem()"><span>编辑</span></div>
+        <div iconCls="icon-remove" class="<?php if(!isset($buttons['删除'])) { echo 'hide';} ?>" onclick="deleteItem()"><span>删除</span></div>
+
+    </div>
+    <div id="rowmenu" class="hide">
+        <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['编辑'])) { echo 'hide';} ?>" iconCls="icon-edit" plain="true" onclick="selectedRow($(this));editItem();">编辑</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton <?php if(!isset($buttons['删除'])) { echo 'hide';} ?>" iconCls="icon-remove" plain="true" onclick="selectedRow($(this));deleteItem();">删除</a>
+
+    </div>
+    <div id="dlg-add" class="easyui-dialog" style="width:500px;min-height:350px;padding:10px 20px" closed="true" buttons="#dlg-buttons">
+        <div class="ftitle">栏目信息</div>
+        <form id="fm" method="post">
+            <div class="fitem">
+                <label>栏目名称:</label>
+                <input name="column_name" class="easyui-textbox" prompt="栏目名称" required="true" >
+            </div>
+        </form>
+    </div>
+    <div id="dlg-buttons">
+        <a href="javascript:void(0)" class="easyui-linkbutton c6" iconCls="icon-ok" onclick="saveItem('#fm')" style="width:90px">保存</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg-add').dialog('close')" style="width:90px">取消</a>
+    </div>
+    <div id="dlg-edit" class="easyui-dialog" style="width:500px;min-height:350px;padding:10px 20px" closed="true" buttons="#dlg-buttons">
+        <div class="ftitle">用户信息</div>
+        <form id="fm-edit" method="post">
+            <div class="fitem">
+                <label>栏目名称:</label>
+                <input name="column_name" class="easyui-textbox" prompt="用户名" required="true">
+                <!-- <input name="username" class="easyui-textbox" prompt="用户名" data-options="readonly:true"> -->
+            </div>
+        </form>
+    </div>
+    <div id="dlg-buttons">
+        <a href="javascript:void(0)" class="easyui-linkbutton c6" iconCls="icon-ok" onclick="saveItem('#fm-edit')" style="width:90px">保存</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg-edit').dialog('close')" style="width:90px">取消</a>
+    </div>
+     <div id="org" class="easyui-dialog" style="width: 600px;min-height: 400px;" closed="true">
+        <div id="cc" class="easyui-layout" fit="true">     
+            <div data-options="region:'west'" style="width:200px;">
+                <table id="notr" class="easyui-datagrid" singleSelect="true" title="组织列表">
+                    <thead>
+                        <tr>
+                            <th field="id" align="center">ID</th>
+                            <th field="type" align="center" formatter="formatOrgStatus">类型</th>
+                            <th field="name" align="center">名称</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>   
+            <div data-options="region:'east'" style="width:200px;">
+                <table id="inr" class="easyui-datagrid" singleSelect="true" title="所属组织">
+                    <thead>
+                        <tr>
+                            <th field="id" align="center">ID</th>
+                            <th field="type" align="center" formatter="formatOrgStatus">类型</th>
+                            <th field="name" align="center">名称</th>
+                        </tr>
+                    </thead>
+                </table>        
+            </div>   
+            <div data-options="region:'center'">
+                <div align="center" style="height:200px;padding:30px;">
+                    <a href="javascript:join()" class="easyui-linkbutton">&nbsp;&nbsp;&gt;&gt;&nbsp;&nbsp;</a>
+                </div>
+                <div align="center">
+                    <a href="javascript:exit()" class="easyui-linkbutton">&nbsp;&nbsp;&lt;&lt;&nbsp;&nbsp;</a>
+                </div>      
+            </div>   
+        </div> 
+    </div>
+    <div id="load" class="easyui-dialog" title="消息" closed="true" style="width:200px;height:100px;padding:10px">
+        <span>处理中...</span>
+    </div>
+</body>
+</html>
