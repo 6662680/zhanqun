@@ -157,10 +157,10 @@ class SiteController extends BaseController
     public function inColumn()
     {
         $id = I('get.id', 0);
-        $sql = "select col.id, col.column_name from column_class co 
-            left join site s on co.site_id=s.id
-            left join `column` col on co.column_id=col.id 
-            where co.site_id = {$id} order by co.id";
+        $sql = "select col.id, col.column_name,cc.id as ccid from column_class cc 
+            left join site s on cc.site_id=s.id
+            left join `column` col on cc.column_id=col.id 
+            where cc.site_id = {$id} order by cc.id";
         $list = M()->query($sql);
         $this->ajaxReturn($list);
     }
@@ -184,7 +184,7 @@ class SiteController extends BaseController
      *
      * @return void
      */
-    public function addNews()
+    public function addColumn()
     {
         $rst = array();
         $data = array();
@@ -205,7 +205,7 @@ class SiteController extends BaseController
      *
      * @return void
      */
-    public function removeNews()
+    public function removeColumn()
     {
         $rst = array();
         $map = array();
@@ -216,7 +216,7 @@ class SiteController extends BaseController
             $rst['success'] = true;
         } else {
             $rst['success'] = false;
-            $rst['errorMsg'] = '删除失败！';
+            $rst['errorMsg'] = '移除失败！';
         }
         $this->ajaxReturn($rst);
     }
@@ -231,21 +231,27 @@ class SiteController extends BaseController
         $id = I('get.id', 0);
         $sql = "select n.id, n.title from news n 
             left join news_class nc on nc.news_id=n.id
-            where nc.column_class_id = {$id}";
+            left join column_class cc on nc.column_class_id=cc.id
+            where cc.id = {$id}";
         $list = M()->query($sql);
         $this->ajaxReturn($list);
     }
 
     /**
-     * 非当前站点下当前栏目的新闻成员
+     * 当前站点下非当前栏目的新闻成员
      *
      * @return void
      */
     public function notinNews()
     {
         $id = I('get.id', 0);
-        $sql = "select n.id, n.title from news n
-            where n.id not in (select news_id from news_class where news_class.column_class_id = {$id})";
+        $sql = "select n.id, n.title, cc.column_id,c.column_name from news n
+        	left join news_class nc on nc.news_id=n.id
+        	left join column_class cc on nc.column_class_id=cc.id
+        	left join `column` c on cc.column_id=c.id
+            where n.id not in 
+            (select nc.news_id from news_class nc
+            where nc.column_class_id = {$id}) group by n.id";
         $list = M()->query($sql);
         $this->ajaxReturn($list);
     }
@@ -255,14 +261,14 @@ class SiteController extends BaseController
      *
      * @return void
      */
-    public function addColumn()
+    public function addNews()
     {
         $rst = array();
         $data = array();
-        $data['site_id'] = I('post.siteId');
-        $data['column_id'] = I('post.columnId');
+        $data['column_class_id'] = I('post.columnClassId');
+        $data['news_id'] = I('post.newsId');
 
-        if (D('column_class')->add($data) !== false) {
+        if (D('news_class')->add($data) !== false) {
             $rst['success'] = true;
         } else {
             $rst['success'] = false;
@@ -276,18 +282,18 @@ class SiteController extends BaseController
      *
      * @return void
      */
-    public function removeColumn()
+    public function removeNews()
     {
         $rst = array();
         $map = array();
-        $map['site_id'] = I('post.siteId');
-        $map['column_id'] = I('post.columnId');
+        $map['column_class_id'] = I('post.columnClassId');
+        $map['news_id'] = I('post.newsId');
 
-        if (D('column_class')->where($map)->limit(1)->delete() !== false) {
+        if (D('news_class')->where($map)->limit(1)->delete() !== false) {
             $rst['success'] = true;
         } else {
             $rst['success'] = false;
-            $rst['errorMsg'] = '删除失败！';
+            $rst['errorMsg'] = '移除失败！';
         }
         $this->ajaxReturn($rst);
     }

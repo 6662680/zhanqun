@@ -221,7 +221,6 @@
 
 		// 新闻管理
         function manageItem(){
-        	
         
             var row1 = $("#inr").datagrid('getSelected');
 			
@@ -230,11 +229,11 @@
                 $("#news").dialog("open").dialog("setTitle",window.rows.site_name+row1.column_name+"新闻管理");
                 
                 $('#innews').datagrid({    
-                    url:'/admin/site/inNews/id/' + row1.id,        
+                    url:'/admin/site/inNews/id/' + row1.ccid,        
                 });
                 
                 $('#notinnews').datagrid({    
-                    url:'/admin/site/notinNews/id/' + row1.id,        
+                    url:'/admin/site/notinNews/id/' + row1.ccid,        
                 });
                 
             } else {
@@ -250,15 +249,15 @@
             }
         }
 
-        /*function addNews(){
-            var row = $("#dg").datagrid('getSelected'); 
-            var row1 = $("#notr").datagrid('getSelected');
+        function addNews(){
+        	var row = $("#inr").datagrid('getSelected');
+            var row1 = $("#notinnews").datagrid('getSelected');
 
             if(row1){
-                $.post('/admin/site/addColumn',{siteId:row.id,columnId:row1.id},function(result){
+                $.post('/admin/site/addNews',{columnClassId:row.ccid,newsId:row1.id},function(result){
                     if (result.success){
-                        $('#inr').datagrid('reload');
-                        $('#notr').datagrid('reload');
+                        $('#innews').datagrid('reload');
+                        $('#notinnews').datagrid('reload');
                     } else {
                         $.messager.show({
                             title: '错误',
@@ -285,14 +284,14 @@
         }
         
        	function removeNews(){
-            var row = $("#dg").datagrid('getSelected'); 
-            var row1 = $("#inr").datagrid('getSelected');
+       		var row = $("#inr").datagrid('getSelected');
+            var row1 = $("#innews").datagrid('getSelected');
 
             if(row1){
-                $.post('/admin/site/removeColumn',{siteId:row.id,columnId:row1.id},function(result){
+                $.post('/admin/site/removeNews',{columnClassId:row.ccid,newsId:row1.id},function(result){
                     if (result.success){
-                        $('#inr').datagrid('reload');
-                        $('#notr').datagrid('reload');
+                        $('#innews').datagrid('reload');
+                        $('#notinnews').datagrid('reload');
                     } else {
                         $.messager.show({
                             title: '错误',
@@ -316,9 +315,7 @@
                     }
                 });
             }
-        }*/
-
-
+        }
 
         $(function(){
             $('#mm').menu();
@@ -358,6 +355,22 @@
         <input type="text" class="easyui-textbox" id='search-keyword' panelHeight="auto">
         <a href="javascript:void(0)" class="easyui-linkbutton" plain="true" iconCls="icon-search" onclick="searchItem()">搜索</a>
         <a href="javascript:void(0)" class="easyui-linkbutton" plain="true" iconCls="icon-add" onclick="newItem()">添加</a>
+    </div>
+    <div id="toolbar2">
+        <span>栏目:</span>&nbsp;&nbsp;
+        <select class="easyui-combobox" id='search-status' panelHeight="auto">
+            <option value="all">全部</option>
+            <option value="1">娱乐</option>
+            <option value="2">军事</option>
+            <option value="3">体育</option>
+            <option value="4">健康</option>
+            <option value="5">游戏</option>
+            <option value="6">直播</option>
+        </select>
+        &nbsp;&nbsp;
+        <span>关键字:</span>
+        <input type="text" class="easyui-textbox" id='search-keyword' panelHeight="auto">
+        <a href="javascript:void(0)" class="easyui-linkbutton" plain="true" iconCls="icon-search" onclick="searchItem()">搜索</a>
     </div>
     <div id="mm" style="width:120px;">
         <div iconCls="icon-add" class="<?php if(!isset($buttons['添加'])) { echo 'hide';} ?>" onclick="newItem()"><span>添加</span></div>
@@ -450,19 +463,20 @@
                 <table id="notr" class="easyui-datagrid" singleSelect="true" title="所有栏目列表">
                     <thead>
                         <tr>
-                            <th field="id" width="60" align="center">ID</th>
+                            <th field="id" width="60" align="center">栏目ID</th>
                             <th field="column_name" width="60" align="center">栏目名称</th>
                             
                         </tr>
                     </thead>
                 </table>
             </div>   
-            <div data-options="region:'east'" style="width:300px;">
+            <div data-options="region:'east'" style="width:400px;">
                 <table id="inr" class="easyui-datagrid" singleSelect="true" title="成员栏目列表">
                     <thead>
                         <tr>
-                           <th field="id" width="60" align="center">ID</th>
+                           <th field="id" width="60" align="center">栏目ID</th>
                            <th field="column_name" width="60" align="center">栏目名称</th>
+                           <th field="ccid" width="80" align="center">栏目分类ID</th>
                            <th field='action' width="120" align="center" formatter="formatButtonzh">操作</th>
                         </tr>
                     </thead>
@@ -478,14 +492,15 @@
             </div>   
         </div> 
     </div>
-    <div id="news" class="easyui-dialog" style="width: 1000px;min-height: 600px;" closed="true">
+    <div id="news" class="easyui-dialog" style="width: 1000px;min-height: 600px;" closed="true" >
         <div id="zzhh" class="easyui-layout" fit="true">     
             <div data-options="region:'west'" style="width:420px;">
-                <table id="notinnews" class="easyui-datagrid" singleSelect="true" title="所有新闻列表">
+                <table id="notinnews" class="easyui-datagrid" singleSelect="true" title="所有新闻列表" toolbar="#toolbar2">
                     <thead>
                         <tr>
-                            <th field="id" width="60" align="center">ID</th>
+                            <th field="id" width="60" align="center">新闻ID</th>
                             <th field="title" width="120" align="center">新闻标题</th>
+                            <th field="column_name" width="60" align="center">所属栏目</th>
                             
                         </tr>
                     </thead>
@@ -495,7 +510,7 @@
                 <table id="innews" class="easyui-datagrid" singleSelect="true" title="成员新闻列表">
                     <thead>
                         <tr>
-                           <th field="id" width="60" align="center">ID</th>
+                           <th field="id" width="60" align="center">新闻ID</th>
                            <th field="title" width="120" align="center">新闻标题</th>
                            
                         </tr>
@@ -504,10 +519,10 @@
             </div>   
             <div data-options="region:'center'">
                 <div align="center" style="height:200px;padding:30px;">
-                    <a href="javascript:addnews()" class="easyui-linkbutton">&nbsp;&nbsp;&gt;&gt;&nbsp;&nbsp;</a>
+                    <a href="javascript:addNews()" class="easyui-linkbutton">&nbsp;&nbsp;&gt;&gt;&nbsp;&nbsp;</a>
                 </div>
                 <div align="center">
-                    <a href="javascript:removenews()" class="easyui-linkbutton">&nbsp;&nbsp;&lt;&lt;&nbsp;&nbsp;</a>
+                    <a href="javascript:removeNews()" class="easyui-linkbutton">&nbsp;&nbsp;&lt;&lt;&nbsp;&nbsp;</a>
                 </div>      
             </div>   
         </div> 
