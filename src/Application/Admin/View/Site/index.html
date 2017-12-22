@@ -507,10 +507,10 @@
             </div>   
         </div> 
     </div>
-    <div id="news" class="easyui-dialog" style="width: 1000px;min-height: 600px;" closed="true" >
+    <div id="news" class="easyui-dialog" style="width: 1200px;min-height: 600px;" closed="true" >
         <div id="zzhh" class="easyui-layout" fit="true">     
-            <div data-options="region:'west'" style="width:420px;">
-                <table id="notinnews" class="easyui-datagrid" singleSelect="true" title="所有新闻列表" toolbar="#toolbar2">
+            <div data-options="region:'west'" style="width:530px;">
+                <table id="notinnews" class="easyui-datagrid" singleSelect="true" title="所有新闻列表" toolbar="#toolbar2" pagination="true" pageSize="10" pagePosition="top" rownumbers="true" singleSelect="true">
                     <thead>
                         <tr>
                             <th field="id" width="60" align="center">新闻ID</th>
@@ -521,7 +521,7 @@
                     </thead>
                 </table>
             </div>   
-            <div data-options="region:'east'" style="width:420px;">
+            <div data-options="region:'east'" style="width:530px;">
                 <table id="innews" class="easyui-datagrid" singleSelect="true" title="成员新闻列表">
                     <thead>
                         <tr>

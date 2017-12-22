@@ -260,7 +260,20 @@ class SiteController extends BaseController
 		            (select nc.news_id from news_class nc
 		            where nc.column_class_id = {$id}) group by n.id";
         	$list = M()->query($sql);
-       		 $this->ajaxReturn($list);
+        	
+        	$sql2 = " select count(*) as num from (select count(*) from news n
+		            left join news_class nc on nc.news_id=n.id
+		        	left join column_class cc on nc.column_class_id=cc.id
+		        	left join `column` c on cc.column_id=c.id
+		        	where cc.column_id={$column} and 
+		             n.id not in  
+		            (select nc.news_id from news_class nc
+		            where nc.column_class_id = 36) group by n.id) as ssss";
+       	 	$count =M()->query($sql2);
+		
+		 	$rst["total"] = $count[0]['num'];
+       	 	$rst['rows'] = $list;
+       		 $this->ajaxReturn($rst);
         } elseif (!empty($post['newskeyword']) && !is_numeric($post['column'])) {
         	$id = I('get.id', 0);
 			$newskeyword=$post['newskeyword'];
@@ -273,7 +286,20 @@ class SiteController extends BaseController
 		            (select nc.news_id from news_class nc
 		            where nc.column_class_id = {$id}) group by n.id";
         	$list = M()->query($sql);
-       		 $this->ajaxReturn($list);
+        	
+        	$sql2 = " select count(*) as num from (select count(*) from news n
+		            left join news_class nc on nc.news_id=n.id
+		        	left join column_class cc on nc.column_class_id=cc.id
+		        	left join `column` c on cc.column_id=c.id
+		        	where n.title like '%{$newskeyword}%' and 
+		             n.id not in  
+		            (select nc.news_id from news_class nc
+		            where nc.column_class_id = 36) group by n.id) as ssss";
+       	 	$count =M()->query($sql2);
+		
+		 	$rst["total"] = $count[0]['num'];
+       		 $rst['rows'] = $list;
+       		 $this->ajaxReturn($rst);
         } elseif (is_numeric($post['column']) && !empty($post['newskeyword'])) {
         	$id = I('get.id', 0);
         	$column=$post['column'];
@@ -288,8 +314,27 @@ class SiteController extends BaseController
 		            (select nc.news_id from news_class nc
 		            where nc.column_class_id = {$id}) group by n.id";
         	$list = M()->query($sql);
-       		 $this->ajaxReturn($list);
+        	
+        	$sql2 = " select count(*) as num from (select count(*) from news n
+		            left join news_class nc on nc.news_id=n.id
+		        	left join column_class cc on nc.column_class_id=cc.id
+		        	left join `column` c on cc.column_id=c.id
+		        	where n.title like '%{$newskeyword}%' and 
+		        	cc.column_id={$column} and
+		             n.id not in 
+		            (select nc.news_id from news_class nc
+		            where nc.column_class_id = 36) group by n.id) as ssss";
+       	 	$count =M()->query($sql2);
+		
+		 	$rst["total"] = $count[0]['num'];
+       	 	$rst['rows'] = $list;
+       		 $this->ajaxReturn($rst);
         } else {
+        		
+        	$page = isset($_POST['page']) ? intval($_POST['page']) : 1;
+			$rows = isset($_POST['rows']) ? intval($_POST['rows']) : 10;	
+        	$offset=($page-1)*$rows;
+			
         	$id = I('get.id', 0);
         	$sql = "select n.id, n.title, cc.column_id,c.column_name from news n
 		        	left join news_class nc on nc.news_id=n.id
@@ -297,9 +342,18 @@ class SiteController extends BaseController
 		        	left join `column` c on cc.column_id=c.id
 		            where n.id not in 
 		            (select nc.news_id from news_class nc
-		            where nc.column_class_id = {$id}) group by n.id";
+		            where nc.column_class_id = {$id}) group by n.id limit {$offset},{$rows}";
        	 $list = M()->query($sql);
-        	$this->ajaxReturn($list);
+       	 
+       	 $sql2 = " select count(*) as num from (select count(*) from news n
+		            where n.id not in 
+		            (select nc.news_id from news_class nc
+		            where nc.column_class_id = 36) group by n.id) as ssss";
+       	 $count =M()->query($sql2);
+		
+		 $rst["total"] = $count[0]['num'];
+       	 $rst['rows'] = $list;
+        	$this->ajaxReturn($rst);
         }
     }
 	
