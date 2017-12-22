@@ -172,6 +172,7 @@ class SiteController extends BaseController
      */
     public function notinColumn()
     {
+		
         $id = I('get.id', 0);
         $sql = "select col.id, col.column_name from `column` col
             where col.id not in (select column_id from column_class where site_id = {$id})";
@@ -244,16 +245,62 @@ class SiteController extends BaseController
      */
     public function notinNews()
     {
-        $id = I('get.id', 0);
-        $sql = "select n.id, n.title, cc.column_id,c.column_name from news n
-        	left join news_class nc on nc.news_id=n.id
-        	left join column_class cc on nc.column_class_id=cc.id
-        	left join `column` c on cc.column_id=c.id
-            where n.id not in 
-            (select nc.news_id from news_class nc
-            where nc.column_class_id = {$id}) group by n.id";
-        $list = M()->query($sql);
-        $this->ajaxReturn($list);
+       
+        $post = I('post.');
+		
+        if (is_numeric($post['column']) && empty($post['newskeyword'])) {
+        	$id = I('get.id', 0);
+			$column=$post['column'];
+        	$sql = "select n.id, n.title, cc.column_id,c.column_name from news n
+		        	left join news_class nc on nc.news_id=n.id
+		        	left join column_class cc on nc.column_class_id=cc.id
+		        	left join `column` c on cc.column_id=c.id
+		        	where cc.column_id={$column} and 
+		             n.id not in 
+		            (select nc.news_id from news_class nc
+		            where nc.column_class_id = {$id}) group by n.id";
+        	$list = M()->query($sql);
+       		 $this->ajaxReturn($list);
+        } elseif (!empty($post['newskeyword']) && !is_numeric($post['column'])) {
+        	$id = I('get.id', 0);
+			$newskeyword=$post['newskeyword'];
+        	$sql = "select n.id, n.title, cc.column_id,c.column_name from news n
+		        	left join news_class nc on nc.news_id=n.id
+		        	left join column_class cc on nc.column_class_id=cc.id
+		        	left join `column` c on cc.column_id=c.id
+		        	where n.title like '%{$newskeyword}%' and 
+		             n.id not in 
+		            (select nc.news_id from news_class nc
+		            where nc.column_class_id = {$id}) group by n.id";
+        	$list = M()->query($sql);
+       		 $this->ajaxReturn($list);
+        } elseif (is_numeric($post['column']) && !empty($post['newskeyword'])) {
+        	$id = I('get.id', 0);
+        	$column=$post['column'];
+			$newskeyword=$post['newskeyword'];
+        	$sql = "select n.id, n.title, cc.column_id,c.column_name from news n
+		        	left join news_class nc on nc.news_id=n.id
+		        	left join column_class cc on nc.column_class_id=cc.id
+		        	left join `column` c on cc.column_id=c.id
+		        	where n.title like '%{$newskeyword}%' and 
+		        	cc.column_id={$column} and
+		             n.id not in 
+		            (select nc.news_id from news_class nc
+		            where nc.column_class_id = {$id}) group by n.id";
+        	$list = M()->query($sql);
+       		 $this->ajaxReturn($list);
+        } else {
+        	$id = I('get.id', 0);
+        	$sql = "select n.id, n.title, cc.column_id,c.column_name from news n
+		        	left join news_class nc on nc.news_id=n.id
+		        	left join column_class cc on nc.column_class_id=cc.id
+		        	left join `column` c on cc.column_id=c.id
+		            where n.id not in 
+		            (select nc.news_id from news_class nc
+		            where nc.column_class_id = {$id}) group by n.id";
+       	 $list = M()->query($sql);
+        	$this->ajaxReturn($list);
+        }
     }
 	
     /**
