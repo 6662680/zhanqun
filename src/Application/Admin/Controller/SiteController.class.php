@@ -281,7 +281,7 @@ class SiteController extends BaseController
 		        	left join news_class nc on nc.news_id=n.id
 		        	left join column_class cc on nc.column_class_id=cc.id
 		        	left join `column` c on cc.column_id=c.id
-		        	where n.title like '%{$newskeyword}%' and 
+		        	where n.title like '%{$newskeyword}%' or n.id like '%{$newskeyword}%' and 
 		             n.id not in 
 		            (select nc.news_id from news_class nc
 		            where nc.column_class_id = {$id}) group by n.id";
@@ -291,7 +291,7 @@ class SiteController extends BaseController
 		            left join news_class nc on nc.news_id=n.id
 		        	left join column_class cc on nc.column_class_id=cc.id
 		        	left join `column` c on cc.column_id=c.id
-		        	where n.title like '%{$newskeyword}%' and 
+		        	where n.title like '%{$newskeyword}%' or n.id like '%{$newskeyword}%' and 
 		             n.id not in  
 		            (select nc.news_id from news_class nc
 		            where nc.column_class_id = 36) group by n.id) as ssss";
@@ -308,7 +308,7 @@ class SiteController extends BaseController
 		        	left join news_class nc on nc.news_id=n.id
 		        	left join column_class cc on nc.column_class_id=cc.id
 		        	left join `column` c on cc.column_id=c.id
-		        	where n.title like '%{$newskeyword}%' and 
+		        	where n.title like '%{$newskeyword}%' or n.id like '%{$newskeyword}%' and 
 		        	cc.column_id={$column} and
 		             n.id not in 
 		            (select nc.news_id from news_class nc
@@ -319,7 +319,7 @@ class SiteController extends BaseController
 		            left join news_class nc on nc.news_id=n.id
 		        	left join column_class cc on nc.column_class_id=cc.id
 		        	left join `column` c on cc.column_id=c.id
-		        	where n.title like '%{$newskeyword}%' and 
+		        	where n.title like '%{$newskeyword}%' or n.id like '%{$newskeyword}%' and 
 		        	cc.column_id={$column} and
 		             n.id not in 
 		            (select nc.news_id from news_class nc
