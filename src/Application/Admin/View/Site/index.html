@@ -127,8 +127,18 @@
                 }
                 
             });
-            
-            /*url:'/admin/site/notinNews/id/' + row1.ccid, */
+        }
+        
+        function searchInNews(){
+        	
+        	var row1 = $("#inr").datagrid('getSelected');
+        	
+            $('#innews').datagrid({
+                queryParams: {
+                    innewskeyword: $('#search-innewskeyword').val(),
+                }
+                
+            });
         }
 
         // 栏目管理
@@ -387,6 +397,13 @@
         <input type="text" class="easyui-textbox" id='search-newskeyword' panelHeight="auto">
         <a href="javascript:void(0)" class="easyui-linkbutton" plain="true" iconCls="icon-search" onclick="searchNews()">搜索</a>
     </div>
+    <div id="toolbar3">
+        &nbsp;&nbsp;
+        <span>关键字:</span>
+        &nbsp;&nbsp;
+        <input type="text" class="easyui-textbox" id='search-innewskeyword' panelHeight="auto">
+        <a href="javascript:void(0)" class="easyui-linkbutton" plain="true" iconCls="icon-search" onclick="searchInNews()">搜索</a>
+    </div>
     <div id="mm" style="width:120px;">
         <div iconCls="icon-add" class="<?php if(!isset($buttons['添加'])) { echo 'hide';} ?>" onclick="newItem()"><span>添加</span></div>
         <div iconCls="icon-edit" class="<?php if(!isset($buttons['编辑'])) { echo 'hide';} ?>" onclick="editItem()"><span>编辑</span></div>
@@ -522,7 +539,7 @@
                 </table>
             </div>   
             <div data-options="region:'east'" style="width:530px;">
-                <table id="innews" class="easyui-datagrid" singleSelect="true" title="成员新闻列表">
+                <table id="innews" class="easyui-datagrid" singleSelect="true" title="成员新闻列表" toolbar="#toolbar3" pagination="true" pageSize="10" pagePosition="top" rownumbers="true" singleSelect="true">
                     <thead>
                         <tr>
                            <th field="id" width="60" align="center">新闻ID</th>

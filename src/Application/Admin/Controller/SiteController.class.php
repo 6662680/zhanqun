@@ -232,13 +232,56 @@ class SiteController extends BaseController
      */
     public function inNews()
     {
-        $id = I('get.id', 0);
-        $sql = "select n.id, n.title from news n 
-            left join news_class nc on nc.news_id=n.id
-            left join column_class cc on nc.column_class_id=cc.id
-            where cc.id = {$id}";
-        $list = M()->query($sql);
-        $this->ajaxReturn($list);
+    	$post = I('post.');
+		
+		if (!empty($post['innewskeyword'])) {
+			$page = isset($_POST['page']) ? intval($_POST['page']) : 1;
+			$rows = isset($_POST['rows']) ? intval($_POST['rows']) : 10;	
+	        $offset=($page-1)*$rows;
+			
+	        $id = I('get.id', 0);
+			$innewskeyword=$post['innewskeyword'];
+	        $sql = "select n.id, n.title from news n 
+	            left join news_class nc on nc.news_id=n.id
+	            left join column_class cc on nc.column_class_id=cc.id
+	            where (n.title like '%{$innewskeyword}%' or n.id like '%{$innewskeyword}%') and 
+	            cc.id = {$id} limit {$offset},{$rows}";
+	        $list = M()->query($sql);
+			
+			$sql2 = " select count(*) as num from  (select n.id, n.title from news n 
+	            left join news_class nc on nc.news_id=n.id
+	            left join column_class cc on nc.column_class_id=cc.id
+	            where (n.title like '%{$innewskeyword}%' or n.id like '%{$innewskeyword}%') and 
+	            cc.id = {$id}) as ssss";
+	       	$count =M()->query($sql2);
+			
+			$rst["total"] = $count[0]['num'];
+	       	$rst['rows'] = $list;
+			
+	        $this->ajaxReturn($rst);
+		} else {
+			$page = isset($_POST['page']) ? intval($_POST['page']) : 1;
+			$rows = isset($_POST['rows']) ? intval($_POST['rows']) : 10;	
+	        $offset=($page-1)*$rows;
+			
+	        $id = I('get.id', 0);
+	        $sql = "select n.id, n.title from news n 
+	            left join news_class nc on nc.news_id=n.id
+	            left join column_class cc on nc.column_class_id=cc.id
+	            where cc.id = {$id} limit {$offset},{$rows}";
+	        $list = M()->query($sql);
+			
+			$sql2 = " select count(*) as num from  (select n.id, n.title from news n 
+	            left join news_class nc on nc.news_id=n.id
+	            left join column_class cc on nc.column_class_id=cc.id
+	            where cc.id = {$id}) as ssss";
+	       	$count =M()->query($sql2);
+			
+			$rst["total"] = $count[0]['num'];
+	       	$rst['rows'] = $list;
+			
+	        $this->ajaxReturn($rst);
+		}
     }
 
     /**
