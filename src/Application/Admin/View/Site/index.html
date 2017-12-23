@@ -200,7 +200,7 @@
             var row1 = $("#inr").datagrid('getSelected');
 
             if(row1){
-                $.post('/admin/site/removeColumn',{siteId:row.id,columnId:row1.id},function(result){
+                $.post('/admin/site/removeColumn',{siteId:row.id,columnId:row1.id,columnClassId:row1.ccid},function(result){
                     if (result.success){
                         $('#inr').datagrid('reload');
                         $('#notr').datagrid('reload');

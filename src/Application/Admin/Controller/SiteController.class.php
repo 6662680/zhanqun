@@ -210,10 +210,13 @@ class SiteController extends BaseController
     {
         $rst = array();
         $map = array();
+		$map2 = array();
         $map['site_id'] = I('post.siteId');
         $map['column_id'] = I('post.columnId');
+		$map2['column_class_id'] = I('post.columnClassId');
 
         if (D('column_class')->where($map)->limit(1)->delete() !== false) {
+        	D('news_class')->where($map2)->limit(1)->delete();
             $rst['success'] = true;
         } else {
             $rst['success'] = false;
